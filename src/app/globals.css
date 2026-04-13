@@ -4,3 +4,21 @@
   --font-montserrat: var(--font-montserrat);
   --font-open-sans: var(--font-open-sans);
 }
+
+/* remove setas do input number */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/*manter cor quando auto completar*/
+input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0px 1000px #ffffff inset; /* mesma cor de fundo */
+  -webkit-text-fill-color: #333; /* cor do texto */
+  transition: background-color 9999s ease-in-out 0s;
+}
