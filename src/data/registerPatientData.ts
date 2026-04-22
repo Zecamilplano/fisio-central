@@ -1,12 +1,11 @@
+import { summaryCardType, StepType } from "@/types/registerPatientsTypes"
 import {
-  typeOfServiceDataType,
-  summaryCardType,
+  serviceTypeOptionsDataType,
   totalNumberSessionType,
-  StepType,
-} from "@/types/patientsTypes"
+} from "@/types/typeServiceType"
 import { Box, CalendarDays } from "lucide-react"
 
-export const optionsTypeServiceData: typeOfServiceDataType[] = [
+export const serviceTypeOptionsData: serviceTypeOptionsDataType[] = [
   {
     value: "pacote",
     titulo: "Pacote",
@@ -36,13 +35,13 @@ export const InitialStep: StepType = {
   },
 }
 
-export let totalNumberSession: totalNumberSessionType[] = [
-  { label: 4, value: 4 },
-  { label: 6, value: 6 },
-  { label: 8, value: 8 },
-  { label: 10, value: 10 },
+export const totalNumberSession: totalNumberSessionType[] = [
+  { label: 4, value: "4" },
+  { label: 6, value: "6" },
+  { label: 8, value: "8" },
+  { label: 10, value: "10" },
   { label: "+", value: "custom" },
-]
+] as const
 
 export const summaryCardData: summaryCardType[] = [
   {

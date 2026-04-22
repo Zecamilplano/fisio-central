@@ -1,7 +1,7 @@
 "use client"
 
 import ButtonPrevNext from "@/components/buttonPrevNext"
-import {
+import TypeOfService, {
   HeaderFormRegister,
   Profile,
   LineStep,
@@ -10,8 +10,21 @@ import {
 import { useRegisterPatient } from "@/hook/useRegisterPatient"
 
 function RegisterPatient() {
-  const { steps, step1, step2, step3, formRef, form, handleNext, isFormValid } =
-    useRegisterPatient()
+  const {
+    steps,
+    step1,
+    step2,
+    step3,
+    formRef,
+    formProfile,
+    formTypeService,
+    handlePrev,
+    handleNext,
+    isFormValid,
+    isNextActive,
+  } = useRegisterPatient()
+
+  // console.log(steps)
 
   return (
     <main className="bg-green-700 flex-1 flex justify-center items-center">
@@ -28,18 +41,35 @@ function RegisterPatient() {
         </ol>
 
         <form ref={formRef} className="flex flex-col gap-6 px-2">
-          {steps.step1.active && (
+          {step1.active && (
             <>
               <HeaderFormRegister
                 title="Dados do Paciente"
                 subtitle="Preencha as informacoes basicas"
                 icon="person"
               />
-              <Profile form={form} />
+              <Profile form={formProfile} />
               <ButtonPrevNext
                 variant="single"
                 onNext={() => handleNext("step1")}
                 active={isFormValid}
+              />
+            </>
+          )}
+
+          {step2.active && (
+            <>
+              <HeaderFormRegister
+                title="Tipo de  atendimento"
+                subtitle="Escolha entre pacote ou sessoes avulsas"
+                icon="square"
+              />
+              <TypeOfService form={formTypeService} />
+              <ButtonPrevNext
+                variant="double"
+                onPrev={() => handlePrev("step2", "step1")}
+                onNext={() => handleNext("step2")}
+                active={isNextActive}
               />
             </>
           )}

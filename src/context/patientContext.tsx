@@ -1,18 +1,14 @@
 "use client"
-import { InitialStep } from "@/data/registerPatientData"
-import { PatientType, StepType } from "@/types/patientsTypes"
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react"
+import { imageType } from "@/types"
+import { PatientType } from "@/types/registerPatientsTypes"
+import React, { createContext, useContext, useMemo, useState } from "react"
 
 export type PatientContextType = {
   patientGlobal: PatientType
   setPatientGlobal: React.Dispatch<React.SetStateAction<PatientType>>
   isFormValid: boolean
+  image: imageType
+  setImage: React.Dispatch<React.SetStateAction<imageType>>
   hasValidPhoto: boolean
   setHasValidPhoto: React.Dispatch<React.SetStateAction<boolean>>
 }
@@ -30,6 +26,7 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
     neighborhood: "Centro",
     referenceHouse: "",
   })
+  const [image, setImage] = useState<imageType>([])
   const [hasValidPhoto, setHasValidPhoto] = useState<boolean>(false)
 
   const isFormValid = useMemo(() => {
@@ -39,11 +36,11 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
       !!patientGlobal.telephone.trim() &&
       !!patientGlobal.street.trim() &&
       !!patientGlobal.neighborhood.trim() &&
-      (patientGlobal.noNumber || !!patientGlobal.addressNumber !== null) &&
+      (patientGlobal.noNumber || patientGlobal.addressNumber !== null) &&
       hasValidPhoto
     )
   }, [patientGlobal, hasValidPhoto])
-  console.log(isFormValid)
+  console.log("isFormValid:", isFormValid)
 
   return (
     <PatientContext.Provider
@@ -51,6 +48,8 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
         patientGlobal: patientGlobal,
         isFormValid: isFormValid,
         setPatientGlobal: setPatientGlobal,
+        image: image,
+        setImage: setImage,
         hasValidPhoto: hasValidPhoto,
         setHasValidPhoto: setHasValidPhoto,
       }}

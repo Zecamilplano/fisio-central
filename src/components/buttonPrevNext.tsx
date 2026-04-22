@@ -5,7 +5,12 @@ type ButtonPrevNextType = {
   active: boolean
 }
 
-function ButtonPrevNext({ variant, onNext, active }: ButtonPrevNextType) {
+function ButtonPrevNext({
+  variant,
+  onPrev,
+  onNext,
+  active,
+}: ButtonPrevNextType) {
   // console.log(active)
   return (
     <>
@@ -28,14 +33,18 @@ function ButtonPrevNext({ variant, onNext, active }: ButtonPrevNextType) {
           <>
             <button
               type="button"
+              onClick={onPrev}
               className="text-gray-700 text-xl  font-open-sans bg-gray-200 rounded-md py-3 w-full  my-6 cursor-pointer hover:opacity-80 active:opacity-60"
             >
               Anterior
             </button>
 
             <button
-              type="submit"
-              className="text-white text-xl font-bold font-open-sans bg-[#FFA726] rounded-md py-3 w-full  my-6 cursor-pointer hover:opacity-80 active:opacity-60"
+              type="button"
+              onClick={onNext}
+              className={` text-xl  font-open-sans  rounded-md py-3 w-full  my-6 cursor-pointer hover:opacity-80 active:opacity-60
+                      ${active ? "bg-[#FFA725] text-white" : "bg-[#FFCC80] text-[#E65100]"}
+`}
             >
               Próximo
             </button>

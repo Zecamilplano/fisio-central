@@ -1,14 +1,10 @@
-import { useStepContext } from "@/context/stepContext"
-import { imageType } from "@/types/headerFormType"
 import { useEffect, useState } from "react"
-import { useFormProfile } from "./useFormProfile"
 import { useGlobalPatient } from "@/context/patientContext"
 
 function useHeaderForm() {
-  const [images, setImages] = useState<imageType>([])
   const [errorImg, setErrorImg] = useState("")
   const [isDragging, setIsDragging] = useState(false)
-  const { hasValidPhoto, setHasValidPhoto } = useGlobalPatient()
+  const { image, setImage, setHasValidPhoto } = useGlobalPatient()
 
   const dragEvents = {
     onDragEnter: (e: React.DragEvent<HTMLLabelElement>) => {
@@ -46,7 +42,7 @@ function useHeaderForm() {
         }
       })
       if (image.length >= 0) {
-        setImages(image)
+        setImage(image)
         setHasValidPhoto(true)
       } else {
         setHasValidPhoto(false)
@@ -55,7 +51,7 @@ function useHeaderForm() {
   }
 
   function removeImage(index?: number) {
-    setImages((prev) => {
+    setImage((prev) => {
       const updated =
         typeof index === "number" ? prev.filter((_, i) => i !== index) : []
 
@@ -87,12 +83,12 @@ function useHeaderForm() {
       setHasValidPhoto(true)
     }
 
-    setImages(image)
+    setImage(image)
   }
 
   useEffect(() => {
     function handleValidateImage() {
-      if (images.length > 0) {
+      if (image.length > 0) {
         setHasValidPhoto(true)
       } else {
         setHasValidPhoto(false)
@@ -105,12 +101,12 @@ function useHeaderForm() {
     return () => {
       document.removeEventListener("validateImage", handleValidateImage)
     }
-  }, [images])
+  }, [image])
 
   return {
     dragEvents,
     isDragging,
-    images,
+    image,
     errorImg,
     setErrorImg,
     removeImage,

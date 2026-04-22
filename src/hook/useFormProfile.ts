@@ -1,7 +1,7 @@
 "use client"
 
 import { useGlobalPatient } from "@/context/patientContext"
-import { PatientOptionalType, PatientType } from "@/types/patientsTypes"
+import { PatientOptionalType, PatientType } from "@/types/registerPatientsTypes"
 import { formatTelephone } from "@/utils/form/phone"
 import { useState, useRef, useEffect } from "react"
 
@@ -119,8 +119,10 @@ function useFormProfile() {
     fields.forEach(([field, value]) => {
       const error = handleErrors(field as keyof PatientType, value as any)
 
+      // console.log(field, value, "→ erro:", error) // <-- vê qual campo trava
       if (error) hasError = true
     })
+    // console.log("hasError final:", hasError)
 
     return hasError
   }
