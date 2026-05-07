@@ -4,15 +4,8 @@ import { Box, UserRoundPlus, X } from "lucide-react"
 import Image from "next/image"
 
 function HeaderFormRegister({ title, subtitle, icon }: HeaderFormRegisterType) {
-  const {
-    dragEvents,
-    isDragging,
-    image,
-    errorImg,
-    setErrorImg,
-    removeImage,
-    handleFileChange,
-  } = useHeaderForm()
+  const { dragEvents, isDragging, image, removeImage, handleFileChange } =
+    useHeaderForm()
 
   return (
     <fieldset className="font-montserrat my-8 flex flex-col items-center">
@@ -24,7 +17,7 @@ function HeaderFormRegister({ title, subtitle, icon }: HeaderFormRegisterType) {
       </p>
 
       {/*Adicionar foto de perfil*/}
-      <div data-error={!!errorImg} className="flex flex-col items-center">
+      <div className="flex flex-col items-center">
         {icon === "person" &&
           (image.length === 0 ? (
             <>
@@ -44,12 +37,9 @@ function HeaderFormRegister({ title, subtitle, icon }: HeaderFormRegisterType) {
                 id="photo"
                 name="photo"
                 accept="image/*"
-                onChange={(e) => handleFileChange(e, setErrorImg)}
+                onChange={(e) => handleFileChange(e)}
                 hidden
               />
-              {errorImg && (
-                <span className="text-[red] mt-3 text-center">{errorImg}</span>
-              )}
             </>
           ) : (
             image.map((image, index) => (

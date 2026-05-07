@@ -19,8 +19,3 @@ export type StepDataType = {
 }
 
 export type StepType = Record<StepKey, StepDataType>
-
-export type summaryCardType = {
-  value: number
-  label: string
-}

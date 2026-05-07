@@ -1,5 +1,5 @@
 export { default as HeaderFormRegister } from "./register/headerForm"
 export { default as Profile } from "./register/profile"
-export { default as SchedulingSessions } from "./register/scheduling-sessions"
+export { default as SchedulingSessions } from "./register/schedulingSessions"
 export * from "./register/step"
 export { default } from "./register/typeOfService"

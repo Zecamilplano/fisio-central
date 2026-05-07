@@ -1,16 +1,20 @@
-type ButtonPrevNextType = {
-  variant: "single" | "double"
+type ButtonProps = {
+  variant: "single" | "double" | "finish"
   onPrev?: () => void
+  onRegisterAdd?: () => void
+  onRegisterViewPatient?: () => void
   onNext?: () => void
   active: boolean
 }
 
-function ButtonPrevNext({
+function Button({
   variant,
   onPrev,
+  onRegisterAdd,
+  onRegisterViewPatient,
   onNext,
   active,
-}: ButtonPrevNextType) {
+}: ButtonProps) {
   // console.log(active)
   return (
     <>
@@ -50,9 +54,41 @@ function ButtonPrevNext({
             </button>
           </>
         )}
+
+        {variant === "finish" && (
+          <>
+            <button
+              type="button"
+              onClick={onPrev}
+              className="text-gray-700 text-lg  font-open-sans bg-gray-200 rounded-md py-3 w-full  my-6 cursor-pointer hover:opacity-80 active:opacity-60"
+            >
+              Anterior
+            </button>
+
+            <button
+              type="button"
+              onClick={onRegisterAdd}
+              className={` text-lg  font-open-sans  rounded-md py-3 w-full  my-6 cursor-pointer hover:opacity-80 active:opacity-60
+                      ${active ? "bg-[#FFA725] text-white" : "bg-[#FFCC80] text-[#E65100]"}
+`}
+            >
+              Cadastrar e adicionar
+            </button>
+
+            <button
+              type="button"
+              onClick={onRegisterViewPatient}
+              className={` text-lg  font-open-sans  rounded-md py-3 w-full  my-6 cursor-pointer hover:opacity-80 active:opacity-60
+                      ${active ? "bg-[#FFA725] text-white" : "bg-[#FFCC80] text-[#E65100]"}
+`}
+            >
+              Cadastrar e ver paciente
+            </button>
+          </>
+        )}
       </fieldset>
     </>
   )
 }
 
-export default ButtonPrevNext
+export default Button

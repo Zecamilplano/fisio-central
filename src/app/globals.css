@@ -22,3 +22,57 @@ input:-webkit-autofill {
   -webkit-text-fill-color: #333; /* cor do texto */
   transition: background-color 9999s ease-in-out 0s;
 }
+
+/*formatação do calendário*/
+/* remove estilo padrão */
+.react-calendar {
+  border: none;
+  font-family: inherit;
+}
+
+/* header «maio de 2026» */
+.react-calendar__navigation {
+  @apply flex items-center justify-between mb-2;
+}
+
+.react-calendar__navigation button {
+  @apply text-gray-700 font-medium hover:bg-amber-50 rounded-lg px-2 py-1 transition-all;
+  min-width: unset;
+}
+
+.react-calendar__navigation__label {
+  @apply text-base font-medium text-gray-800 capitalize;
+}
+
+/* dias da semana */
+.react-calendar__month-view__weekdays {
+  @apply text-center mb-1;
+}
+
+.react-calendar__month-view__weekdays abbr {
+  @apply no-underline text-xs text-gray-400 font-medium;
+}
+
+/* células dos dias */
+.react-calendar__tile {
+  @apply py-2 text-sm transition-all;
+}
+.react-calendar__tile.selected-day {
+  background-color: #f59e0b;
+  color: white;
+  font-weight: 500;
+}
+/* remove o azul padrão do dia ativo */
+.react-calendar__tile--active {
+  background: none;
+  color: inherit;
+}
+
+.react-calendar__tile--now {
+  background: none;
+}
+
+/* dias de outro mês */
+.react-calendar__month-view__days__day--neighboringMonth {
+  @apply text-gray-300;
+}

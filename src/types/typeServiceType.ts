@@ -15,6 +15,12 @@ export type totalNumberSessionType = {
 }
 export type PackageSelectType = (typeof totalNumberSession)[number]["value"]
 
+export type ServiceForm = {
+  selectService: TypeServiceType | null
+  totalSessions: number | null
+  selectPackage: PackageSelectType | null
+}
+
 export type typeOfServiceParams = {
   selectedService: string | number | null
   customValueSession: string | number | null

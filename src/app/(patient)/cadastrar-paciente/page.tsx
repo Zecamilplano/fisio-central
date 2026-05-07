@@ -1,43 +1,58 @@
 "use client"
 
-import ButtonPrevNext from "@/components/buttonPrevNext"
+import Button from "@/components/buttonCustom"
 import TypeOfService, {
   HeaderFormRegister,
   Profile,
   LineStep,
   StepBall,
+  SchedulingSessions,
 } from "@/components/patient/"
 import { useRegisterPatient } from "@/hook/useRegisterPatient"
 
 function RegisterPatient() {
   const {
-    steps,
     step1,
     step2,
     step3,
     formRef,
     formProfile,
     formTypeService,
+    formScheduling,
     handlePrev,
     handleNext,
+    handleStepClick,
     isFormValid,
     isNextActive,
   } = useRegisterPatient()
 
-  // console.log(steps)
+  const { selectService, totalSessions } = formTypeService.serviceForm
+  // console.log("workflow", formScheduling.isSchedulingFormValid)
 
   return (
     <main className="bg-green-700 flex-1 flex justify-center items-center">
       <section className="bg-white rounded-md px-2 py-2 m-3 w-full max-w-210 h-full flex flex-col items-center  ">
         {/*step*/}
         <ol className="flex items-center mt-6">
-          <StepBall number={1} step={step1} />
+          <StepBall
+            number={1}
+            step={step1}
+            onClick={() => handleStepClick("step1")}
+          />
           <LineStep completed={step1.completed} />
 
-          <StepBall number={2} step={step2} />
+          <StepBall
+            number={2}
+            step={step2}
+            onClick={() => handleStepClick("step2")}
+          />
           <LineStep completed={step2.completed} />
 
-          <StepBall number={3} step={step3} />
+          <StepBall
+            number={3}
+            step={step3}
+            onClick={() => handleStepClick("step3")}
+          />
         </ol>
 
         <form ref={formRef} className="flex flex-col gap-6 px-2">
@@ -49,7 +64,7 @@ function RegisterPatient() {
                 icon="person"
               />
               <Profile form={formProfile} />
-              <ButtonPrevNext
+              <Button
                 variant="single"
                 onNext={() => handleNext("step1")}
                 active={isFormValid}
@@ -65,11 +80,27 @@ function RegisterPatient() {
                 icon="square"
               />
               <TypeOfService form={formTypeService} />
-              <ButtonPrevNext
+              <Button
                 variant="double"
                 onPrev={() => handlePrev("step2", "step1")}
                 onNext={() => handleNext("step2")}
                 active={isNextActive}
+              />
+            </>
+          )}
+
+          {step3.active && (
+            <>
+              <HeaderFormRegister
+                title={`${selectService === "pacote" ? "Agenda sessões do pacote" : "Agenda de sessão avulsas"} `}
+                subtitle={`${(totalSessions ?? 0) ? "Adicione até " + totalSessions + " sessões no pacote" : "Adicione a primeira sessão"}`}
+                icon="square"
+              />
+              <SchedulingSessions form={formScheduling} />
+              <Button
+                variant="finish"
+                onPrev={() => handlePrev("step3", "step2")}
+                active={formScheduling.isSchedulingFormValid}
               />
             </>
           )}

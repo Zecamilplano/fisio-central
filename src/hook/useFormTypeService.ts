@@ -1,16 +1,37 @@
-import { ErrorTypeService, PackageSelectType, TypeServiceType } from "@/types"
+import { ErrorTypeService, ServiceForm } from "@/types"
 import { useEffect, useRef, useState } from "react"
 
+const serviceFormData: ServiceForm = {
+  selectService: null,
+  totalSessions: null,
+  selectPackage: null,
+}
+
+const STORAGE_KEY = "typeServiceForm"
+
 function useFormTypeService() {
-  const [serviceForm, setServiceForm] = useState({
-    selectService: null as TypeServiceType | null,
-    totalSessions: null as PackageSelectType | null,
+  const [serviceForm, setServiceForm] = useState<ServiceForm>(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY)
+      return stored ? JSON.parse(stored) : serviceFormData
+    } catch {
+      return serviceFormData
+    }
   })
   const [error, setError] = useState<ErrorTypeService | null>(null)
   const [submitted, setSubmitted] = useState(false)
+  const prevService = useRef("")
 
   const inputRef = useRef<HTMLInputElement | null>(null)
-  const isCustom = serviceForm.totalSessions === "custom"
+  const isCustom = serviceForm?.selectPackage === "custom"
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(serviceForm))
+    } catch {
+      console.error("Erro ao salvar no localStorage.")
+    }
+  }, [serviceForm])
 
   useEffect(() => {
     if (isCustom) {
@@ -22,6 +43,13 @@ function useFormTypeService() {
     field: K,
     value: (typeof serviceForm)[K]
   ) {
+    console.log(field, typeof field)
+    const changedOption =
+      field === "selectService" && value !== serviceForm.selectService
+    if (changedOption) {
+      console.log("Service modified")
+    }
+
     setServiceForm((prev) => {
       const newData = { ...prev, [field]: value }
 
@@ -29,9 +57,23 @@ function useFormTypeService() {
         newData.totalSessions = null
       }
 
+      if (field === "selectPackage") {
+        if (value !== "custom") {
+          newData.totalSessions = Number(value) // converte direto pra number
+        } else {
+          newData.totalSessions = null // aguarda digitar
+        }
+      }
+
+      if (field === "selectService" && value === "sessoes") {
+        newData.totalSessions = null
+        newData.selectPackage = null
+      }
+
       const newError = validateFormTypeService(newData)
 
       setError(newError)
+      // console.log("teste", serviceForm.selectPackage)
       return newData
     })
   }
@@ -44,8 +86,7 @@ function useFormTypeService() {
     }
 
     const isInvalidTotalSessions =
-      form.selectService === "pacote" &&
-      (!form.totalSessions || form.totalSessions === "custom")
+      form.selectService === "pacote" && !form.totalSessions
 
     if (isInvalidTotalSessions) {
       newError.package = "Escolha a quantidade de sessões"

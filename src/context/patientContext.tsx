@@ -36,11 +36,10 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
       !!patientGlobal.telephone.trim() &&
       !!patientGlobal.street.trim() &&
       !!patientGlobal.neighborhood.trim() &&
-      (patientGlobal.noNumber || patientGlobal.addressNumber !== null) &&
-      hasValidPhoto
+      (patientGlobal.noNumber || patientGlobal.addressNumber !== null)
     )
   }, [patientGlobal, hasValidPhoto])
-  console.log("isFormValid:", isFormValid)
+  // console.log("isFormValid:", isFormValid)
 
   return (
     <PatientContext.Provider

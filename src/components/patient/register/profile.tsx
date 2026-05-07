@@ -41,7 +41,7 @@ function Profile({ form }: ProfileProps) {
             onBlur={(e) => handleErrors("firstName", e.target.value)}
             data-error={!!errorPatient.firstName}
             className={`w-full md:w-full border-2  rounded-md px-2 py-3
-                       text-[#333] placeholder:text-text-gray-400
+                       text-[#333] placeholder:text-gray-400
                       ${!errorPatient.firstName ? "border-[#D0D7DE]/40 focus:outline-[#FFA726]" : "border-[red] focus:outline-[red]"}
                       ${patient.firstName ? "bg-white" : "bg-[#EAE9E9]"}
                       `}

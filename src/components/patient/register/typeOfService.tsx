@@ -114,24 +114,30 @@ function TypeOfService({ form }: TypeOfServiceProps) {
           <div className="flex gap-4 my-2">
             {totalNumberSession.map((item) => {
               const isPlus = item.value === "custom"
+              {
+                /* console.log("array", item) */
+              }
 
               return (
                 <div key={item.value}>
                   <button
                     type="button"
-                    onClick={() => handleChange("totalSessions", item.value)}
+                    onClick={() => {
+                      handleChange("selectPackage", item.value)
+                    }}
                     className={`rounded-lg 
-                ${serviceForm.totalSessions === item.value ? "bg-[#FBA731] text-white" : "  bg-[#D9D9D9] text-[#2D2D2D]"}
+                ${serviceForm.selectPackage === item.value ? "bg-[#FBA731] text-white" : "  bg-[#D9D9D9] text-[#2D2D2D]"}
                 relative w-13 h-12
                 flex items-center justify-center
                 cursor-pointer`}
                   >
-                    {isPlus && serviceForm.totalSessions === "custom" && (
+                    {isPlus && serviceForm.selectPackage === "custom" && (
                       <input
                         ref={inputRef}
                         type="number"
-                        onClick={() =>
-                          handleChange("totalSessions", item.value)
+                        value={serviceForm.totalSessions ?? ""}
+                        onChange={(e) =>
+                          handleChange("totalSessions", e.target.valueAsNumber)
                         }
                         className="absolute w-13 h-12 bg-[#D9D9D9] text-[#2D2D2D] outline-[#FFA726] rounded-lg text-center"
                       />

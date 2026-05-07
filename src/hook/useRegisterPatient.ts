@@ -5,6 +5,7 @@ import { useGlobalPatient } from "@/context/patientContext"
 import { useFormProfile } from "@/hook/useFormProfile"
 import { scrollToFirstError } from "@/utils/form/scrollToFirstError"
 import { useFormTypeService } from "./useFormTypeService"
+import { useSchedulingSessions } from "./useSchedulingSessions"
 
 function useRegisterPatient() {
   const [steps, setStep] = useState<StepType>(InitialStep)
@@ -12,6 +13,12 @@ function useRegisterPatient() {
   const { isFormValid, hasValidPhoto } = useGlobalPatient()
   const formProfile = useFormProfile()
   const formTypeService = useFormTypeService()
+
+  const formScheduling = useSchedulingSessions(
+    formTypeService.serviceForm.totalSessions ?? 0,
+    formTypeService.serviceForm.selectService
+  )
+
   const formRef = useRef<HTMLFormElement>(null)
   const [shouldScroll, setShouldScroll] = useState(false)
 
@@ -65,15 +72,15 @@ function useRegisterPatient() {
       if (!isValid) return
 
       setStep((prev) => {
-        console.log("step dentro do setStep:", step)
-        console.log("step === step1:", step === "step2")
+        // console.log("step dentro do setStep:", step)
+        // console.log("step === step1:", step === "step2")
         if (step === "step2") {
           const next = {
             ...prev,
             step2: { ...prev.step2, active: false, completed: true },
             step3: { ...prev.step3, active: true },
           }
-          console.log("novo estado:", next) // ← o step2.active está true aqui?
+          // console.log("novo estado:", next) // ← o step2.active está true aqui?
           return next
         }
         return prev
@@ -90,6 +97,36 @@ function useRegisterPatient() {
     }
   }, [shouldScroll, formProfile.errorPatient])
 
+  useEffect(() => {
+    setStep((prev) => ({
+      ...prev,
+      step3: {
+        ...prev.step3,
+        completed: formScheduling.isSchedulingFormValid,
+      },
+    }))
+  }, [formScheduling.isSchedulingFormValid])
+
+  function handleStepClick(stepKey: StepKey) {
+    const stepOrder: StepKey[] = ["step1", "step2", "step3"]
+    const clickedIndex = stepOrder.indexOf(stepKey)
+
+    if (clickedIndex > 0 && !steps[stepOrder[clickedIndex - 1]].completed)
+      return
+
+    setStep((prev) => {
+      const updated = { ...prev }
+
+      stepOrder.forEach((key, index) => {
+        updated[key] = {
+          ...prev[key],
+          active: index === clickedIndex,
+        }
+      })
+      return updated
+    })
+  }
+
   return {
     steps,
     step1,
@@ -98,8 +135,10 @@ function useRegisterPatient() {
     formRef,
     formProfile,
     formTypeService,
+    formScheduling,
     handlePrev,
     handleNext,
+    handleStepClick,
     isFormValid,
     isNextActive,
   }

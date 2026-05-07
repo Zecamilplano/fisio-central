@@ -1,4 +1,4 @@
-import { summaryCardType, StepType } from "@/types/registerPatientsTypes"
+import { summaryCardType, StepType } from "@/types/"
 import {
   serviceTypeOptionsDataType,
   totalNumberSessionType,
@@ -22,15 +22,15 @@ export const serviceTypeOptionsData: serviceTypeOptionsDataType[] = [
 
 export const InitialStep: StepType = {
   step1: {
-    active: true,
-    completed: false,
+    active: false,
+    completed: true,
   },
   step2: {
     active: false,
-    completed: false,
+    completed: true,
   },
   step3: {
-    active: false,
+    active: true,
     completed: false,
   },
 }
@@ -43,13 +43,13 @@ export const totalNumberSession: totalNumberSessionType[] = [
   { label: "+", value: "custom" },
 ] as const
 
-export const summaryCardData: summaryCardType[] = [
+export const summaryCardData: summaryCardType = [
   {
-    value: 0,
+    value: 1,
     label: "Agendada",
   },
   {
-    value: 6,
+    value: 5,
     label: "Restante",
   },
   {
@@ -58,4 +58,10 @@ export const summaryCardData: summaryCardType[] = [
   },
 ]
 
-export const daysOfTheWeek = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta"]
+export const daysOfWeek = [
+  "Segunda",
+  "Terça",
+  "Quarta",
+  "Quinta",
+  "Sexta",
+] as const
