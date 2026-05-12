@@ -1,6 +1,6 @@
 function Login() {
   return (
-    <section className=" w-full flex-1 pt-[20%] md:pt-0 flex justify-center md:items-center">
+    <section className=" w-full h-full flex justify-center items-center">
       <section className="bg-white flex justify-center items-center flex-col px-3 w-full max-w-[90%] h-110 md:w-120 md:max-h-screen overflow-y-auto rounded-md shadow-2xl">
         <header>
           <h1 className="py-6 text-3xl font-montserrat font-bold tracking-tight text-[#FFA726]">
