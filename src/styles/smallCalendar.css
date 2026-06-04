@@ -1,0 +1,77 @@
+.react-calendar {
+  width: 320px;
+  border: none;
+  border-radius: 24px;
+  padding: 18px;
+  background: #ffffff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+
+  font-family: "Open Sans", sans-serif;
+}
+
+/* Cabeçalho */
+.react-calendar__navigation {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.react-calendar__navigation button {
+  min-width: 36px;
+  background: none;
+  border-radius: 12px;
+  color: #15803d;
+  font-size: 16px;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+.react-calendar__navigation button:hover {
+  background: #dcfce7;
+}
+
+/* Dias da semana */
+.react-calendar__month-view__weekdays {
+  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 700;
+  color: #94a3b8;
+  margin-bottom: 8px;
+}
+
+/* Botões dos dias */
+.react-calendar__tile {
+  height: 42px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+/* Hover */
+.react-calendar__tile:hover {
+  background: #dcfce7;
+  color: #166534;
+}
+
+/* Dia atual */
+.react-calendar__tile--now {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* Dia selecionado */
+.react-calendar__tile--active {
+  background: #16a34a !important;
+  color: white !important;
+}
+
+/* Final de semana */
+.react-calendar__month-view__days__day--weekend {
+  color: #ef4444;
+}
+
+/* Dias vizinhos */
+.react-calendar__month-view__days__day--neighboringMonth {
+  color: #cbd5e1;
+}

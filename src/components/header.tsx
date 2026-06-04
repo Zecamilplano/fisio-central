@@ -4,8 +4,7 @@ function Header() {
   return (
     <header className=" bg-green-800 flex justify-center items-center ">
       <Logo />
-    </header >
-
+    </header>
   )
 }
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import "./globals.css"
 import { Montserrat, Open_Sans } from "next/font/google"
 import Header from "@/components/header"
+import { ToastContainer } from "react-toastify"
 
 export const metadata: Metadata = {
   title: {
@@ -33,7 +34,8 @@ export default function RootLayout({
         className={`${montserrat.variable} ${opensans.variable} antialiased h-screen flex flex-col`}
       >
         <Header />
-        <main className="flex-1 bg-green-700">{children}</main>
+        <main className=" bg-green-700 h-max">{children}</main>
+        <ToastContainer />
       </body>
     </html>
   )

@@ -30,7 +30,7 @@ function RegisterPatient() {
   // console.log("workflow", formScheduling.isSchedulingFormValid)
 
   return (
-    <section className=" flex-1 flex justify-center items-center">
+    <section className=" flex justify-center items-center">
       <section
         className="bg-white rounded-md px-2 py-2 m-3 w-full max-w-210 h-full flex flex-col items-center"
         aria-labelledby="titulo-cadastro"

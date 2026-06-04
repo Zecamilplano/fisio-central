@@ -1,0 +1,215 @@
+
+                        <article className="flex xl:items-center xl:justify-between">
+                          {/*Caixa de seleção, número da sessão e a data*/}
+                          <div className="flex">
+                            {/*Parte de cima*/}
+                            <div className="flex justify-between w-full flex-wrap">
+                              {/*Número e data*/}
+                              <div className="flex flex-col gap-3 md:flex-row md:items-center w-full pb-2">
+                                <div className="flex items-center justify-between gap-3">
+                                  {/*Checkbox*/}
+                                  <div className="flex items-center gap-2">
+                                    <label className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-md border border-[#D0D5DD] bg-white">
+                                      <input
+                                        type="checkbox"
+                                        className="peer hidden"
+                                      />
+
+                                      <Check
+                                        className="hidden peer-checked:flex"
+                                        color="red"
+                                        size={20}
+                                      />
+                                    </label>
+
+                                    {/*Número da sessão*/}
+                                    <span
+                                      className={`flex h-9 w-9 items-center justify-center font-medium text-lg rounded-full
+                                  ${item.finish ? "bg-emerald-100 text-emerald-700" : "bg-[#FEF3C7] text-[#D97706]"}
+                                `}
+                                    >
+                                      {item.number}
+                                    </span>
+                                  </div>
+
+                                  <div className="flex flex-col leading-tight">
+                                    {/*Data*/}
+                                    <time
+                                      dateTime={item.date}
+                                      className="text-sm font-medium text-slate-600"
+                                    >
+                                      {format(convertDate, "dd/MM/yyyy")}
+                                    </time>
+                                    {/*Dia por extenso*/}
+                                    <span className="rounded-full text-xs text-slate-400">
+                                      {weekDay}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/*status de realização e status de pagamento */}
+                              <div className="flex justify-between  gap-3 text-sm w-full">
+                                {/*Status de realização*/}
+                                <div
+                                  className={`
+                                  flex flex-col font-medium  
+                                `}
+                                >
+                                  <span className="text-xs px-3 py-2 text-slate-600 uppercase">
+                                    Realização
+                                  </span>
+
+                                  {(() => {
+                                    const status =
+                                      statusRealizacao[
+                                        item.finish ? "realizado" : "pendente"
+                                      ]
+
+                                    return (
+                                      <span
+                                        className={`rounded-full border px-3 py-1 text-sm 
+                                        ${status.className}
+                                      `}
+                                      >
+                                        {item.finish ? "Realizado" : "Pendente"}
+                                      </span>
+                                    )
+                                  })()}
+                                </div>
+
+                                {/*Status de pagamento*/}
+                                <div className="flex flex-col">
+                                  <span className="text-xs px-3 py-2 text-slate-600 uppercase">
+                                    Pagamento
+                                  </span>
+                                  {(() => {
+                                    const pay = statusPagamento[item.paid]
+
+                                    return (
+                                      <button
+                                        className={`rounded-full border  px-3 py-1 text-sm font-medium ${pay.className} `}
+                                      >
+                                        {pay.label}
+                                      </button>
+                                    )
+                                  })()}
+                                </div>
+                              </div>
+                            </div>
+                            {/*Parte de cima*/}
+
+                            {/*Botões de ações*/}
+                            {openSessionId === item.id && (
+                              <div
+                                className={`
+                                overflow-hidden transition-all duration-300 ease-in-out w-full
+                                ${openSessionId === item.id ? " opacity-100 translate-y-0 pt-3" : "max-h-0 opacity-0 -translate-y-2"}
+                              `}
+                              >
+                                {/*Divider*/}
+                                <div className="h-px w-full bg-linear-to-r from-transparent via-[#E4E7EC] to-transparent" />
+
+                                <div className="flex justify-between flex-wrap items-center w-full gap-3 mt-2">
+                                  {/*Realizado, pendente, pago, cancelado, data*/}
+                                  <div className="flex gap-2">
+                                    {/* Realizado, pendente */}
+                                    <div className="flex px-2 py-2 border border-solid border-[#EAECF0] bg-white rounded-md">
+                                      {Object.values(statusConfig).map(
+                                        (status, key) => {
+                                          const Icon = status.Icon
+
+                                          const isActive =
+                                            item.finish === status.value
+
+                                          return (
+                                            <button
+                                              key={key}
+                                              type="button"
+                                              className={`
+                                        flex items-center gap-2 rounded-full px-4 py-1 text-sm font-medium outline-none
+                                        ${isActive ? status.button.active : status.button.inactive}
+                                      `}
+                                            >
+                                              <Icon size={16} />
+                                              {status.label}
+                                            </button>
+                                          )
+                                        }
+                                      )}
+                                    </div>
+
+                                    {/*Pagamento*/}
+                                    <div className="flex px-2 py-2 border border-solid border-[#D9D9D9] rounded-md">
+                                      {Object.values(pagamentoConfig).map(
+                                        (pay, key) => {
+                                          const isActive =
+                                            item.paid === pay.value
+                                          {
+                                            /* console.log(item.paid, pay.value) */
+                                          }
+                                          {
+                                            /* console.log(pay.value) */
+                                          }
+
+                                          return (
+                                            <button
+                                              key={key}
+                                              type="button"
+                                              className={`
+                                        flex items-center gap-2 rounded-full px-4 py-1 text-sm font-medium outline-none
+                                        ${isActive ? pay.button.active : pay.button.inactive}
+
+                                      `}
+                                            >
+                                              {pay.label}
+                                            </button>
+                                          )
+                                        }
+                                      )}
+                                    </div>
+                                    {/*Pagamento*/}
+
+                                    {/* Data */}
+                                    <DatePicker
+                                      date={convertDate}
+                                      setDate={(value) => {
+                                        if (value instanceof Date) {
+                                          handleChange(
+                                            item.id,
+                                            "date",
+                                            format(value, "yyyy-MM-dd")
+                                          )
+                                        }
+                                      }}
+                                    />
+                                  </div>
+
+                                  {/* Excluir */}
+                                  <button className="flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-4 py-2 h-10.5 text-sm font-medium text-red-600 transition hover:bg-red-100">
+                                    <Trash2 className="h-4 w-4" />
+                                    Excluir
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                            {/*Botões de ações*/}
+                          </div>
+                          {/*seta de  mais opções*/}
+                          <button
+                            onClick={() => {
+                              setOpenSessionId((prev) =>
+                                prev === item.id ? null : item.id
+                              )
+                            }}
+                            className="cursor-pointer flex items-center"
+                          >
+                            <ChevronDown
+                              size={20}
+                              className={`transition-transform duration-300
+                                      ${openSessionId === item.id ? "rotate-180 text-[#FFA726]" : "rotate-0 text-slate-400 hover:text-[#FFA726]"}
+                                  `}
+                            />
+                          </button>
+                          {/*seta de  mais opções*/}
+                        </article>
