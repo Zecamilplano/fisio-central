@@ -1,6 +1,6 @@
 "use client"
 
-import Button from "@/components/buttonCustom"
+import Button from "@/components/ui/buttonCustom"
 import TypeOfService, {
   HeaderFormRegister,
   Profile,

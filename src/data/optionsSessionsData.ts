@@ -112,36 +112,41 @@ export const statusPagamento = {
 
 export const sessionActions = [
   {
-    id: "completed",
-    label: "Marcar como Realizada",
-    activeClass: "bg-green-100 text-green-700 border-green-200",
+    value: "realizado",
+    label: "Realizada",
+    active: "bg-green-100 text-green-700 border-green-200",
     inactive: "bg-white border-[#EAECF0] text-[#667085]",
   },
   {
-    id: "pending",
-    label: "Marcar como Pendente",
-    activeClass: "bg-yellow-100 text-yellow-700 border-yellow-200",
+    value: "pendente",
+    label: "Pendente",
+    active: "bg-yellow-100 text-yellow-700 border-yellow-200",
     inactive: "bg-white border-[#EAECF0] text-[#667085]",
   },
 ]
 
 export const paymentActions = [
   {
-    id: "paid",
-    label: "Marcar como Pago",
-    activeClass: "bg-green-100 text-green-700 border-green-200",
+    value: "pago",
+    label: "Pago",
+    active: "bg-green-100 text-green-700 border-green-200",
     inactive: "bg-white border-[#EAECF0] text-[#667085]",
   },
   {
-    id: "cancelled",
-    label: "Marcar como Cancelada",
-    activeClass: "bg-red-100 text-red-600 border-red-200",
+    value: "cancelado",
+    label: "Cancelada",
+    active: "bg-red-100 text-red-600 border-red-200",
     inactive: "bg-white border-[#EAECF0] text-[#667085]",
   },
   {
-    id: "unpaid",
-    label: "Marcar como Não Pago",
-    activeClass: "bg-pink-100 text-pink-600 border-pink-200",
+    value: "pendente",
+    label: "Pendente",
+    active: "bg-sky-100 text-sky-700 border border-sky-200",
     inactive: "bg-white border-[#EAECF0] text-[#667085]",
   },
-]
+] satisfies {
+  value: PaidKey
+  label: string
+  active: string
+  inactive: string
+}[]

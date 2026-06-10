@@ -64,4 +64,5 @@ export const daysOfWeek = [
   "Quarta",
   "Quinta",
   "Sexta",
+  "Sábado",
 ] as const

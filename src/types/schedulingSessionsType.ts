@@ -8,7 +8,7 @@ export type summaryCardType = {
 
 export type DayOfWeek = (typeof daysOfWeek)[number]
 
-export type Session = {
+export type Session_ = {
   sessionNumber: number
   fullDate: string
   weekDay: string
@@ -23,7 +23,7 @@ export type Package = {
   totalSessions: number | null
   weeklyAmount: number | null
   selectedDays: Record<string, boolean>
-  sessions: Session[]
+  sessions: Session_[]
   summary: SummaryItem[]
 }
 

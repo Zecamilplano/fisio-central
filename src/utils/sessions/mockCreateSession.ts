@@ -12,6 +12,7 @@ type WeekDay =
   | 6 // sábado
 
 type CreateSessionParams = {
+  packageId?: string
   startDate: Date
   total: number
   daysOfWeek: WeekDay[]
@@ -31,6 +32,7 @@ export function createSessions({
   total,
   daysOfWeek,
   typeService,
+  packageId,
 }: CreateSessionParams): Session[] {
   const sessions: Session[] = []
 
@@ -56,6 +58,7 @@ export function createSessions({
           locale: ptBR,
         }),
 
+        packageId: packageId || "",
         finish,
         paid: randomPaymentStatus(),
       })

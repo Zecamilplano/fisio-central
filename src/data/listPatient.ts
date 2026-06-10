@@ -1,5 +1,5 @@
 import { ListPatient } from "@/types"
-import { createSessions } from "@/utils/mockCreateSession"
+import { createSessions } from "@/utils/sessions/mockCreateSession"
 import { MapPinHouse, Phone, Send } from "lucide-react"
 
 export const listPatientData: ListPatient[] = [
@@ -8,8 +8,8 @@ export const listPatientData: ListPatient[] = [
     image: "/person.png",
     name: "Anna Souza",
     typeService: "Pacote",
+
     startDate: new Date(2026, 1, 12),
-    daysOfWeek: [2, 4],
 
     contactInfo: {
       tel: {
@@ -29,28 +29,26 @@ export const listPatientData: ListPatient[] = [
       },
     },
 
-    sessionPackageInfo: {
-      sessao: {
-        label: "Sessões feitas",
-        value: 4,
+    packages: [
+      {
+        id: "anna-package-1",
+
+        startDate: new Date(2026, 1, 12),
+
+        totalSessions: 10,
+        migratedSessions: 6,
+
+        valueSession: 60,
+        fixedWeekDays: ["Terça", "Quinta"],
+
+        current: true,
       },
-      restante: {
-        label: "Sessões restantes",
-        value: 2,
-      },
-      preco_sessao: {
-        label: "Preço da sessão",
-        value: 60,
-      },
-      total: {
-        label: "Total",
-        value: 6,
-      },
-    },
+    ],
 
     session: createSessions({
+      packageId: "anna-package-1",
       startDate: new Date(2026, 1, 12),
-      total: 6,
+      total: 10,
       daysOfWeek: [2, 4],
       typeService: "Pacote",
     }),
@@ -62,7 +60,6 @@ export const listPatientData: ListPatient[] = [
     name: "Carlos Oliveira",
     typeService: "Sessão avulsa",
     startDate: new Date(2026, 1, 10),
-    daysOfWeek: [2],
 
     contactInfo: {
       tel: {
@@ -83,18 +80,7 @@ export const listPatientData: ListPatient[] = [
     },
 
     separateSessionInfo: {
-      sessao_feita: {
-        label: "Sessões feitas",
-        value: 0,
-      },
-      sessao_agendada: {
-        label: "Sessões agendada",
-        value: 1,
-      },
-      preco_sessao: {
-        label: "Preço da sessão",
-        value: 60,
-      },
+      priceSession: 60,
     },
 
     session: createSessions({
@@ -111,7 +97,6 @@ export const listPatientData: ListPatient[] = [
     name: "Mariana Lima",
     typeService: "Pacote",
     startDate: new Date(2026, 1, 1),
-    daysOfWeek: [1, 3],
 
     contactInfo: {
       tel: {
@@ -131,26 +116,31 @@ export const listPatientData: ListPatient[] = [
       },
     },
 
-    sessionPackageInfo: {
-      sessao: {
-        label: "Sessões feitas",
-        value: 3,
+    packages: [
+      {
+        id: "mariana-package-1",
+        startDate: new Date(2025, 5, 1),
+        endDate: new Date(2025, 7, 20),
+        totalSessions: 20,
+        migratedSessions: 20,
+        valueSession: 45,
+        fixedWeekDays: ["Segunda", "Quarta"],
+        current: false,
       },
-      restante: {
-        label: "Sessões restantes",
-        value: 3,
+      {
+        id: "mariana-package-2",
+        startDate: new Date(2025, 8, 10),
+        endDate: new Date(2025, 11, 5),
+        totalSessions: 20,
+        migratedSessions: 10,
+        valueSession: 45,
+        fixedWeekDays: ["Segunda", "Quarta"],
+        current: true,
       },
-      total: {
-        label: "Total no pacote atual",
-        value: 6,
-      },
-      preco_sessao: {
-        label: "Preço da sessão",
-        value: 60,
-      },
-    },
+    ],
 
     session: createSessions({
+      packageId: "mariana-package-2",
       startDate: new Date(2026, 1, 1),
       total: 10,
       daysOfWeek: [1, 3],
@@ -164,7 +154,6 @@ export const listPatientData: ListPatient[] = [
     name: "João Pedro Alves",
     typeService: "Sessão avulsa",
     startDate: new Date(2026, 1, 11),
-    daysOfWeek: [3],
 
     contactInfo: {
       tel: {
@@ -185,18 +174,7 @@ export const listPatientData: ListPatient[] = [
     },
 
     separateSessionInfo: {
-      sessao_feita: {
-        label: "Sessão feita",
-        value: 0,
-      },
-      sessao_agendada: {
-        label: "Sessão agendada",
-        value: 1,
-      },
-      preco_sessao: {
-        label: "Preço da sessão",
-        value: 60,
-      },
+      priceSession: 60,
     },
 
     session: createSessions({
@@ -213,7 +191,6 @@ export const listPatientData: ListPatient[] = [
     name: "Fernanda Costa",
     typeService: "Pacote",
     startDate: new Date(2026, 1, 11),
-    daysOfWeek: [3, 5],
 
     contactInfo: {
       tel: {
@@ -233,26 +210,24 @@ export const listPatientData: ListPatient[] = [
       },
     },
 
-    sessionPackageInfo: {
-      sessao: {
-        label: "Sessões feitas",
-        value: 5,
+    packages: [
+      {
+        id: "fernanda-package-1",
+
+        startDate: new Date(2026, 1, 11),
+
+        totalSessions: 6,
+        migratedSessions: 6,
+
+        valueSession: 60,
+        fixedWeekDays: ["Quarta", "Sexta"],
+
+        current: true,
       },
-      restante: {
-        label: "Sessões restantes",
-        value: 1,
-      },
-      total: {
-        label: "Total",
-        value: 6,
-      },
-      preco_sessao: {
-        label: "Preço da sessão",
-        value: 60,
-      },
-    },
+    ],
 
     session: createSessions({
+      packageId: "fernanda-package-1",
       startDate: new Date(2026, 1, 11),
       total: 6,
       daysOfWeek: [3, 5],
@@ -266,7 +241,6 @@ export const listPatientData: ListPatient[] = [
     name: "Lucas Martins",
     typeService: "Sessão avulsa",
     startDate: new Date(2026, 1, 25),
-    daysOfWeek: [2],
 
     contactInfo: {
       tel: {
@@ -287,18 +261,7 @@ export const listPatientData: ListPatient[] = [
     },
 
     separateSessionInfo: {
-      sessao_feita: {
-        label: "Sessão feita",
-        value: 0,
-      },
-      sessao_agendada: {
-        label: "Sessão agendada",
-        value: 1,
-      },
-      preco_sessao: {
-        label: "Preço da sessão",
-        value: 60,
-      },
+      priceSession: 60,
     },
 
     session: createSessions({
@@ -315,7 +278,6 @@ export const listPatientData: ListPatient[] = [
     name: "Beatriz Rocha",
     typeService: "Pacote",
     startDate: new Date(2026, 2, 2),
-    daysOfWeek: [1, 4],
 
     contactInfo: {
       tel: {
@@ -335,28 +297,26 @@ export const listPatientData: ListPatient[] = [
       },
     },
 
-    sessionPackageInfo: {
-      sessao: {
-        label: "Sessões feitas",
-        value: 2,
+    packages: [
+      {
+        id: "beatriz-package-1",
+
+        startDate: new Date(2026, 2, 2),
+
+        totalSessions: 10,
+        migratedSessions: 4,
+
+        valueSession: 60,
+        fixedWeekDays: ["Segunda", "Quinta"],
+
+        current: true,
       },
-      restante: {
-        label: "Sessões restantes",
-        value: 4,
-      },
-      total: {
-        label: "Total",
-        value: 6,
-      },
-      preco_sessao: {
-        label: "Preço da sessão",
-        value: 60,
-      },
-    },
+    ],
 
     session: createSessions({
+      packageId: "beatriz-package-1",
       startDate: new Date(2026, 2, 2),
-      total: 6,
+      total: 4,
       daysOfWeek: [1, 4],
       typeService: "Pacote",
     }),
@@ -368,7 +328,6 @@ export const listPatientData: ListPatient[] = [
     name: "Gabriel Fernandes",
     typeService: "Sessão avulsa",
     startDate: new Date(2026, 2, 5),
-    daysOfWeek: [4],
 
     contactInfo: {
       tel: {
@@ -389,18 +348,7 @@ export const listPatientData: ListPatient[] = [
     },
 
     separateSessionInfo: {
-      sessao_feita: {
-        label: "Sessão feita",
-        value: 0,
-      },
-      sessao_agendada: {
-        label: "Sessão agendada",
-        value: 1,
-      },
-      preco_sessao: {
-        label: "Preço da sessão",
-        value: 60,
-      },
+      priceSession: 60,
     },
 
     session: createSessions({
@@ -417,7 +365,6 @@ export const listPatientData: ListPatient[] = [
     name: "Camila Ribeiro",
     typeService: "Pacote",
     startDate: new Date(2026, 2, 10),
-    daysOfWeek: [2, 5],
 
     contactInfo: {
       tel: {
@@ -437,28 +384,26 @@ export const listPatientData: ListPatient[] = [
       },
     },
 
-    sessionPackageInfo: {
-      sessao: {
-        label: "Sessões feitas",
-        value: 0,
+    packages: [
+      {
+        id: "camila-package-1",
+
+        startDate: new Date(2026, 2, 10),
+
+        totalSessions: 10,
+        migratedSessions: 8,
+
+        valueSession: 60,
+        fixedWeekDays: ["Terça", "Sexta"],
+
+        current: true,
       },
-      restante: {
-        label: "Sessões restantes",
-        value: 6,
-      },
-      total: {
-        label: "Total",
-        value: 6,
-      },
-      preco_sessao: {
-        label: "Preço da sessão",
-        value: 60,
-      },
-    },
+    ],
 
     session: createSessions({
+      packageId: "camila-package-1",
       startDate: new Date(2026, 2, 10),
-      total: 6,
+      total: 8,
       daysOfWeek: [2, 5],
       typeService: "Pacote",
     }),
@@ -470,7 +415,6 @@ export const listPatientData: ListPatient[] = [
     name: "Rafael Mendes",
     typeService: "Sessão avulsa",
     startDate: new Date(2026, 2, 15),
-    daysOfWeek: [1],
 
     contactInfo: {
       tel: {
@@ -491,18 +435,7 @@ export const listPatientData: ListPatient[] = [
     },
 
     separateSessionInfo: {
-      sessao_feita: {
-        label: "Sessão feita",
-        value: 0,
-      },
-      sessao_agendada: {
-        label: "Sessão agendada",
-        value: 1,
-      },
-      preco_sessao: {
-        label: "Preço da sessão",
-        value: 60,
-      },
+      priceSession: 60,
     },
 
     session: createSessions({

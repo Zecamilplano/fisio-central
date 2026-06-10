@@ -1,25 +1,15 @@
+import { daysOfWeek } from "@/data"
 import { LucideIcon } from "lucide-react"
 
 export type TypeService = "Pacote" | "Sessão avulsa"
+
 export type PaidStatus = "pago" | "pendente"
-export type ContactInfoKey = "tel" | "address" | "reference"
+
 export type PaidKey = "pendente" | "pago" | "cancelado"
-export type SessionPackageInfoKey =
-  | "sessao"
-  | "restante"
-  | "total"
-  | "preco_sessao"
-type SessionSeparateInfoKey =
-  | "sessao_feita"
-  | "sessao_agendada"
-  | "preco_sessao"
-type WeekDay =
-  | 1 // segunda
-  | 2 // terça
-  | 3 // quarta
-  | 4 // quinta
-  | 5 // sexta
-  | 6 // sábado
+
+export type ContactInfoKey = "tel" | "address" | "reference"
+
+export type DayOfWeek = (typeof daysOfWeek)[number]
 
 type ContactInfoData = {
   Icon: LucideIcon
@@ -29,34 +19,63 @@ type ContactInfoData = {
 
 export type ContactInfo = Record<ContactInfoKey, ContactInfoData>
 
-type InfoData = {
-  label: string
-  value: number
+type TreatmentPackage = {
+  id: string
+  startDate: Date
+  endDate?: Date
+
+  totalSessions: number
+  migratedSessions: number
+
+  valueSession: number
+  fixedWeekDays: DayOfWeek[]
+  current: boolean
 }
-
-export type SessionPackageInfo = Record<SessionPackageInfoKey, InfoData>
-
-type SessionSeparateInfo = Record<SessionSeparateInfoKey, InfoData>
 
 export type Session = {
   id: string
   number: number
+  packageId: string
   date: string
+  originalDate?: Date
   finish: boolean
   paid: PaidKey
 }
 
-export type ListPatient = {
+export type SeparateSessionInfo = {
+  priceSession: number
+}
+
+type PackagePatient = {
   id: number
   name: string
   image: string | null
-  typeService: TypeService
+
+  typeService: "Pacote"
 
   startDate: Date
-  daysOfWeek: WeekDay[]
-
   contactInfo: ContactInfo
-  sessionPackageInfo?: SessionPackageInfo
-  separateSessionInfo?: SessionSeparateInfo
+
+  packages: TreatmentPackage[]
+
   session: Session[]
 }
+
+type SeparatePatient = {
+  id: number
+  name: string
+  image: string | null
+
+  typeService: "Sessão avulsa"
+
+  startDate: Date
+  contactInfo: ContactInfo
+
+  separateSessionInfo: {
+    priceSession: number
+  }
+
+  session: Session[]
+}
+
+export type ListPatient = PackagePatient | SeparatePatient

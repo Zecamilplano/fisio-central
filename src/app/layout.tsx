@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import "./globals.css"
 import { Montserrat, Open_Sans } from "next/font/google"
-import Header from "@/components/header"
+import Header from "@/components/ui/header"
 import { ToastContainer } from "react-toastify"
 
 export const metadata: Metadata = {
