@@ -194,14 +194,16 @@ export function usePatientSessions({
     }, 400)
   }
 
-  function handleSelectSession(id: string) {
-    setSelectedSessions((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    )
-  }
-
   function clearSelection() {
     setSelectedSessions([])
+  }
+
+  function handleSelectSession(sessionId: string) {
+    setSelectedSessions((prev) =>
+      prev.includes(sessionId)
+        ? prev.filter((item) => item !== sessionId)
+        : [...prev, sessionId]
+    )
   }
 
   function changeFinishStatus(value: boolean) {

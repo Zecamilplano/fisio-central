@@ -1,4 +1,4 @@
-import type { ListPatient, PaidKey } from "@/types"
+import type { ListPatient } from "@/types"
 import Image from "next/image"
 import { PencilLine } from "lucide-react"
 import { PatientContactGrid } from "./patientContactGrid"
@@ -9,44 +9,12 @@ import { SessionAgenda } from "../session/sessionAgenda"
 
 type PatientDetailsProps = {
   patient: ListPatient
-  selectedSessions: string[]
-  allFinished: boolean
-  allPending: boolean
-  allPaid: boolean
-  allCancelled: boolean
-  allUnpaid: boolean
-
-  deleteModal: {
-    isOpen: boolean
-    sessionId: string | null
-    sessionNumber: number | null
-  }
-  createReplacementSession: boolean
-  setCreateReplacementSession: (value: boolean) => void
-  closeDeleteModal: () => void
-  confirmDelete: () => void
-
-  changeFinishStatus: (value: boolean) => void
-  changePaymentStatus: (value: PaidKey) => void
-  clearSelection: () => void
+  setListPatient: React.Dispatch<React.SetStateAction<ListPatient[]>>
 }
 
 export function PatientDetails({
   patient,
-  selectedSessions,
-  allFinished,
-  allPending,
-  allPaid,
-  allCancelled,
-  allUnpaid,
-  deleteModal,
-  createReplacementSession,
-  setCreateReplacementSession,
-  closeDeleteModal,
-  confirmDelete,
-  changeFinishStatus,
-  changePaymentStatus,
-  clearSelection,
+  setListPatient,
 }: PatientDetailsProps) {
   const packageProgress = getPackageProgress(patient)
   return (
@@ -92,23 +60,7 @@ export function PatientDetails({
         )}
 
         {/* SessionAgenda */}
-        <SessionAgenda
-          patient={patient}
-          selectedSessions={selectedSessions}
-          allFinished={allFinished}
-          allPending={allPending}
-          allPaid={allPaid}
-          allCancelled={allCancelled}
-          allUnpaid={allUnpaid}
-          deleteModal={deleteModal}
-          createReplacementSession={createReplacementSession}
-          setCreateReplacementSession={setCreateReplacementSession}
-          closeDeleteModal={closeDeleteModal}
-          confirmDelete={confirmDelete}
-          changeFinishStatus={changeFinishStatus}
-          changePaymentStatus={changePaymentStatus}
-          clearSelection={clearSelection}
-        />
+        <SessionAgenda patient={patient} setListPatient={setListPatient} />
       </div>
     </section>
   )

@@ -1,30 +1,40 @@
-"use client"
-
 import { DatePicker } from "@/components/ui/dataPicker"
-import { pagamentoConfig, statusConfig, statusPagamento, statusRealizacao } from "@/data/optionsSessionsData"
+import {
+  pagamentoConfig,
+  statusConfig,
+  statusPagamento,
+  statusRealizacao,
+} from "@/data/optionsSessionsData"
 import type { Session } from "@/types"
-import { useSessionCardContext } from "@/context/sessionCardContext"
 import { format, parseISO } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { Check, ChevronDown, Trash2 } from "lucide-react"
 
 type SessionCardProps = {
   session: Session
+  isSelected: boolean
+  isOpen: boolean
+  isDeleting: boolean
+  onSelect: () => void
+  onToggleOpen: () => void
+  onOpenDeleteModal: (sessionId: string, sessionNumber: number) => void
+  onChangeSession: (
+    sessionId: string,
+    field: "finish" | "paid" | "date",
+    value: boolean | string
+  ) => void
 }
 
-export function SessionCard({ session }: SessionCardProps) {
-  const {
-    openSessionId,
-    deletingSessionId,
-    selectedSessions,
-    setOpenSessionId,
-    handleSelectSession,
-    openDeleteModal,
-    handleChange,
-  } = useSessionCardContext()
-
-  const isOpen = openSessionId === session.id
-  const isSelected = selectedSessions.includes(session.id)
+export function SessionCard({
+  session,
+  isSelected,
+  isOpen,
+  isDeleting,
+  onSelect,
+  onToggleOpen,
+  onOpenDeleteModal,
+  onChangeSession,
+}: SessionCardProps) {
   const convertDate = parseISO(session.date)
 
   const weekDay = format(convertDate, "EEEE", { locale: ptBR })
@@ -36,7 +46,7 @@ export function SessionCard({ session }: SessionCardProps) {
       className={`
         w-full rounded-2xl border border-[#EAECF0] bg-[#FCFCFD] px-4 py-3
         transition-all duration-300 ease-in-out hover:border-[#D0D5DD] hover:shadow-sm
-        ${deletingSessionId === session.id ? "translate-x-40 scale-95 opacity-0" : "translate-x-0 scale-100 opacity-100"}
+        ${isDeleting ? "translate-x-40 scale-95 opacity-0" : "translate-x-0 scale-100 opacity-100"}
         ${isOpen ? "col-span-2" : ""}
       `}
     >
@@ -50,11 +60,15 @@ export function SessionCard({ session }: SessionCardProps) {
                     <input
                       type="checkbox"
                       checked={isSelected}
-                      onChange={() => handleSelectSession(session.id)}
+                      onChange={onSelect}
                       className="peer hidden"
                     />
 
-                    <Check className="hidden peer-checked:flex" color="red" size={20} />
+                    <Check
+                      className="hidden peer-checked:flex"
+                      color="red"
+                      size={20}
+                    />
                   </label>
 
                   <span
@@ -69,7 +83,10 @@ export function SessionCard({ session }: SessionCardProps) {
                 </div>
 
                 <div className="flex flex-col leading-tight">
-                  <time dateTime={session.date} className="text-sm font-medium text-slate-600">
+                  <time
+                    dateTime={session.date}
+                    className="text-sm font-medium text-slate-600"
+                  >
                     {format(convertDate, "dd/MM/yyyy")}
                   </time>
 
@@ -87,12 +104,13 @@ export function SessionCard({ session }: SessionCardProps) {
                 </span>
 
                 {(() => {
-                  const status = statusRealizacao[
-                    session.finish ? "realizado" : "pendente"
-                  ]
+                  const status =
+                    statusRealizacao[session.finish ? "realizado" : "pendente"]
 
                   return (
-                    <span className={`rounded-full border px-3 py-1 text-sm ${status.className}`}>
+                    <span
+                      className={`rounded-full border px-3 py-1 text-sm ${status.className}`}
+                    >
                       {session.finish ? "Realizado" : "Pendente"}
                     </span>
                   )
@@ -135,7 +153,7 @@ export function SessionCard({ session }: SessionCardProps) {
                           key={status.label}
                           type="button"
                           onClick={() =>
-                            handleChange(session.id, "finish", status.value)
+                            onChangeSession(session.id, "finish", status.value)
                           }
                           className={`flex flex-1 items-center gap-2 rounded-full px-4 py-1 text-sm font-medium outline-none md:w-auto md:flex-none ${
                             isActive
@@ -159,7 +177,7 @@ export function SessionCard({ session }: SessionCardProps) {
                           key={pay.label}
                           type="button"
                           onClick={() =>
-                            handleChange(session.id, "paid", pay.value)
+                            onChangeSession(session.id, "paid", pay.value)
                           }
                           className={`flex items-center gap-2 rounded-full px-4 py-1 text-sm font-medium outline-none ${
                             isActive ? pay.button.active : pay.button.inactive
@@ -175,7 +193,7 @@ export function SessionCard({ session }: SessionCardProps) {
                     date={convertDate}
                     setDate={(value) => {
                       if (value instanceof Date) {
-                        handleChange(
+                        onChangeSession(
                           session.id,
                           "date",
                           format(value, "yyyy-MM-dd")
@@ -186,7 +204,7 @@ export function SessionCard({ session }: SessionCardProps) {
                 </div>
 
                 <button
-                  onClick={() => openDeleteModal(session.id, session.number)}
+                  onClick={() => onOpenDeleteModal(session.id, session.number)}
                   className="flex h-10.5 w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 md:w-auto"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -198,11 +216,7 @@ export function SessionCard({ session }: SessionCardProps) {
         </div>
 
         <button
-          onClick={() => {
-            setOpenSessionId((prev) =>
-              prev === session.id ? null : session.id
-            )
-          }}
+          onClick={onToggleOpen}
           className="ml-4 flex cursor-pointer items-center justify-center self-center outline-none"
         >
           <ChevronDown

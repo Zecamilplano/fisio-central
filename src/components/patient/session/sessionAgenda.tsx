@@ -1,55 +1,74 @@
 import { CalendarDays } from "lucide-react"
-import type { ListPatient, PaidKey } from "@/types"
+import type { ListPatient } from "@/types"
 import { SelectedSessionsActions } from "./selectedSessionsActions"
 import { DeleteSessionModal } from "./deleteSessionModal"
-import { SessionCardProvider } from "@/context/sessionCardContext"
 import { SessionCard } from "./sessionCard"
+import { useSessionAgenda } from "@/hook/useSessionAgenda"
+import { AddSessionModal } from "./addSessionModal"
 
 type SessionAgendaProps = {
   patient: ListPatient
-  selectedSessions: string[]
-
-  allFinished: boolean
-  allPending: boolean
-  allPaid: boolean
-  allCancelled: boolean
-  allUnpaid: boolean
-
-  deleteModal: {
-    isOpen: boolean
-    sessionId: string | null
-    sessionNumber: number | null
-  }
-  createReplacementSession: boolean
-  setCreateReplacementSession: (value: boolean) => void
-  closeDeleteModal: () => void
-  confirmDelete: () => void
-
-  changeFinishStatus: (value: boolean) => void
-  changePaymentStatus: (value: PaidKey) => void
-  clearSelection: () => void
+  setListPatient: React.Dispatch<React.SetStateAction<ListPatient[]>>
 }
 
-// type SessionAgendaProps = {
-//   patient: ListPatient }
+export function SessionAgenda({ patient, setListPatient }: SessionAgendaProps) {
+  const {
+    sessionState,
+    selectionState,
+    deleteState,
+    sessionActions,
+    selectionActions,
+    deleteActions,
+  } = useSessionAgenda({ patient, setListPatient })
 
-export function SessionAgenda({
-  patient,
-  selectedSessions,
-  allFinished,
-  allPending,
-  allPaid,
-  allCancelled,
-  allUnpaid,
-  deleteModal,
-  createReplacementSession,
-  setCreateReplacementSession,
-  closeDeleteModal,
-  confirmDelete,
-  changeFinishStatus,
-  changePaymentStatus,
-  clearSelection,
-}: SessionAgendaProps) {
+  const {
+    openSessionId,
+    currentPackage,
+    deletingSessionId,
+    isAddSessionModalOpen,
+    packageIsComplete,
+  } = sessionState
+
+  const {
+    selectedSessions,
+    allSessionsSelected,
+    isSingleSession,
+    allFinished,
+    allPending,
+    allPaid,
+    allUnpaid,
+    allCancelled,
+  } = selectionState
+
+  const { deleteModal, createReplacementSession, isDeletingAllSessions } =
+    deleteState
+
+  const {
+    setOpenSessionId,
+    openDeleteModal,
+    handleChange,
+    openAddSessionModal,
+    closeAddSessionModal,
+    addSessionToCurrentPackage,
+    addSeparateSession,
+    createNextPackage,
+  } = sessionActions
+
+  const {
+    clearSelection,
+    handleSelectSession,
+    handleSelectAllSessions,
+    changeFinishStatus,
+    changePaymentStatus,
+  } = selectionActions
+
+  const {
+    openSelectedDeleteModal,
+    setCreateReplacementSession,
+    closeDeleteModal,
+    confirmDelete,
+  } = deleteActions
+
   return (
     <section className="rounded-md bg-white px-2 py-3">
       <header className="flex flex-col justify-between gap-3 border-b border-[#ECEFF3] pb-3 md:flex-row md:items-center">
@@ -61,31 +80,62 @@ export function SessionAgenda({
           </h4>
         </div>
 
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-sm font-medium text-[#667085] md:text-base">
-            Início: {patient.startDate.toLocaleDateString("pt-BR")}
-          </p>
-
-          <button className="flex items-center gap-2 rounded-lg bg-[#FDB022] px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-[#F79009]">
-            + Adicionar sessão
-          </button>
-        </div>
+        <button
+          onClick={openAddSessionModal}
+          className="flex items-center gap-2 rounded-lg bg-[#FDB022] px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-[#F79009]"
+        >
+          + Adicionar sessão
+        </button>
+        <AddSessionModal
+          isOpen={isAddSessionModalOpen}
+          patientType={patient.typeService}
+          packageIsComplete={packageIsComplete}
+          onClose={closeAddSessionModal}
+          onContinueCurrentPackage={addSessionToCurrentPackage}
+          onStartNextPackage={() => {}}
+          currentPackage={currentPackage}
+          onCreateSeparateSession={addSeparateSession}
+          onCreateNextPackage={createNextPackage}
+        />
       </header>
 
+      {patient.typeService === "Pacote" && (
+        <div className="flex items-center justify-between py-3">
+          <label className="flex items-center gap-2 text-sm font-medium text-slate-600 select-none">
+            <input
+              type="checkbox"
+              checked={allSessionsSelected}
+              onChange={handleSelectAllSessions}
+              className="h-4 w-4 accent-[#FDB022]"
+            />
+            Selecionar todas
+          </label>
+
+          <span className="text-sm font-medium text-slate-500 text-nowrap">
+            Início: {patient.startDate.toLocaleDateString("pt-BR")}
+          </span>
+        </div>
+      )}
+
       <SelectedSessionsActions
-        selectedSessions={selectedSessions}
+        selectedCount={selectedSessions.length}
         allFinished={allFinished}
         allPending={allPending}
         allPaid={allPaid}
         allCancelled={allCancelled}
         allUnpaid={allUnpaid}
-        changeFinishStatus={changeFinishStatus}
-        changePaymentStatus={changePaymentStatus}
-        clearSelection={clearSelection}
+        onMarkFinished={() => changeFinishStatus(true)}
+        onMarkPending={() => changeFinishStatus(false)}
+        onMarkPaid={() => changePaymentStatus("pago")}
+        onMarkUnpaid={() => changePaymentStatus("pendente")}
+        onMarkCancelled={() => changePaymentStatus("cancelado")}
+        onClearSelection={clearSelection}
+        onDeleteSelected={openSelectedDeleteModal}
       />
 
       <DeleteSessionModal
         isOpen={deleteModal.isOpen}
+        isDeletingAllSessions={isDeletingAllSessions}
         sessionNumber={deleteModal.sessionNumber}
         createReplacementSession={createReplacementSession}
         setCreateReplacementSession={setCreateReplacementSession}
@@ -93,9 +143,27 @@ export function SessionAgenda({
         onConfirm={confirmDelete}
       />
 
-      <ol className="grid grid-cols-1 gap-4 pt-4 md:grid-cols-2">
+      <ol
+        className={`grid gap-3 ${
+          isSingleSession ? "grid-cols-1" : "grid-cols-2"
+        }`}
+      >
         {patient.session.map((session) => (
-          <SessionCard key={session.id} session={session} />
+          <SessionCard
+            key={session.id}
+            session={session}
+            isSelected={selectedSessions.includes(session.id)}
+            isOpen={openSessionId === session.id}
+            isDeleting={deletingSessionId === session.id}
+            onSelect={() => handleSelectSession(session.id)}
+            onToggleOpen={() =>
+              setOpenSessionId((prev) =>
+                prev === session.id ? null : session.id
+              )
+            }
+            onOpenDeleteModal={openDeleteModal}
+            onChangeSession={handleChange}
+          />
         ))}
       </ol>
     </section>

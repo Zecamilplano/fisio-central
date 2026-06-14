@@ -3,11 +3,8 @@ import { PatientDetails } from "@/components/patient/list/patientDetails"
 import "../../../styles/modal.css"
 import { listPatientData } from "@/data"
 import type { ListPatient, PaidKey } from "@/types/"
-import { format, parseISO } from "date-fns"
-import { useEffect, useState } from "react"
-import { toast } from "react-toastify"
+import { useState } from "react"
 import { SessionCardProvider } from "@/context/sessionCardContext"
-import { generateReplacementSession } from "@/utils/sessions/generateReplacementSession"
 import { PatientSidebar } from "@/components/patient/list/patientSidebar"
 import { SubHeaderPatientList } from "@/components/patient/list/subHeaderPatient"
 import { PatientEmptyState } from "@/components/patient/list/patientEmptyState"
@@ -25,22 +22,9 @@ function ListPatient() {
     setOpenSessionId,
     selectedSessions,
     deletingSessionId,
-    deleteModal,
-    createReplacementSession,
-    setCreateReplacementSession,
-    allFinished,
-    allPending,
-    allPaid,
-    allCancelled,
-    allUnpaid,
-    handleChange,
     openDeleteModal,
-    closeDeleteModal,
-    confirmDelete,
+    handleChange,
     handleSelectSession,
-    changeFinishStatus,
-    changePaymentStatus,
-    clearSelection,
   } = usePatientSessions({
     listPatient,
     setListPatient,
@@ -65,35 +49,10 @@ function ListPatient() {
         {selectedPatient !== null && (
           <>
             {/*Detalhes do paciente*/}
-            <SessionCardProvider
-              value={{
-                openSessionId,
-                deletingSessionId,
-                selectedSessions,
-                setOpenSessionId,
-                handleSelectSession,
-                openDeleteModal,
-                handleChange,
-              }}
-            >
-              <PatientDetails
-                patient={selectedPatient}
-                allFinished={allFinished}
-                selectedSessions={selectedSessions}
-                allPending={allPending}
-                allPaid={allPaid}
-                allCancelled={allCancelled}
-                allUnpaid={allUnpaid}
-                deleteModal={deleteModal}
-                createReplacementSession={createReplacementSession}
-                setCreateReplacementSession={setCreateReplacementSession}
-                closeDeleteModal={closeDeleteModal}
-                confirmDelete={confirmDelete}
-                changeFinishStatus={changeFinishStatus}
-                changePaymentStatus={changePaymentStatus}
-                clearSelection={clearSelection}
-              />
-            </SessionCardProvider>
+            <PatientDetails
+              patient={selectedPatient}
+              setListPatient={setListPatient}
+            />
           </>
         )}
       </div>

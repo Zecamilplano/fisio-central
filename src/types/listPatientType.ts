@@ -19,7 +19,7 @@ type ContactInfoData = {
 
 export type ContactInfo = Record<ContactInfoKey, ContactInfoData>
 
-type TreatmentPackage = {
+export type TreatmentPackage = {
   id: string
   startDate: Date
   endDate?: Date
@@ -35,7 +35,7 @@ type TreatmentPackage = {
 export type Session = {
   id: string
   number: number
-  packageId: string
+  packageId?: string
   date: string
   originalDate?: Date
   finish: boolean

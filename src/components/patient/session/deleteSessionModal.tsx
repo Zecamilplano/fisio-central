@@ -4,6 +4,8 @@ type DeleteSessionModalProps = {
   isOpen: boolean
   sessionNumber: number | null
   createReplacementSession: boolean
+  isDeletingAllSessions?: boolean
+  selectedCount?: number
   setCreateReplacementSession: (value: boolean) => void
   onClose: () => void
   onConfirm: () => void
@@ -13,47 +15,96 @@ export function DeleteSessionModal({
   isOpen,
   sessionNumber,
   createReplacementSession,
+  isDeletingAllSessions = false,
+  selectedCount = 1,
   setCreateReplacementSession,
   onClose,
   onConfirm,
 }: DeleteSessionModalProps) {
   if (!isOpen) return null
 
+  const isMultipleSelection = selectedCount > 1 && !isDeletingAllSessions
+
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm animate-fade-in"
+      className="animate-fade-in fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-white rounded-2xl shadow-lg p-6 w-full max-w-sm mx-4 animate-scale-in"
+        className="animate-scale-in mx-4 w-full max-w-md rounded-2xl bg-white p-6 shadow-lg"
       >
-        <div className="flex items-start gap-3 mb-4">
-          <div className="flex items-center justify-center w-12 h-12 rounded-full bg-emerald-100">
-            <Trash2 className="w-6 h-6 text-emerald-600" />
+        <div className="mb-4 flex items-start gap-3">
+          <div
+            className={`flex h-12 w-12 items-center justify-center rounded-full ${
+              isDeletingAllSessions ? "bg-amber-100" : "bg-red-100"
+            }`}
+          >
+            <Trash2
+              className={`h-6 w-6 ${
+                isDeletingAllSessions ? "text-amber-600" : "text-red-600"
+              }`}
+            />
           </div>
 
           <div className="flex-1">
             <h2 className="text-lg font-semibold text-slate-900">
-              Excluir sessão?
+              {isDeletingAllSessions
+                ? "Excluir todas as sessões?"
+                : isMultipleSelection
+                  ? `Excluir ${selectedCount} sessões?`
+                  : "Excluir sessão?"}
             </h2>
 
-            <p className="text-sm text-slate-500 mt-1">
-              Tem certeza que deseja excluir a sessão{" "}
-              <span className="font-medium">#{sessionNumber}</span>?
+            <p className="mt-1 text-sm text-slate-500">
+              {isDeletingAllSessions ? (
+                <>Todas as sessões deste paciente serão removidas.</>
+              ) : isMultipleSelection ? (
+                <>
+                  Tem certeza que deseja excluir as{" "}
+                  <span className="font-medium">
+                    {selectedCount} sessões selecionadas
+                  </span>
+                  ?
+                </>
+              ) : (
+                <>
+                  Tem certeza que deseja excluir a sessão{" "}
+                  <span className="font-medium">#{sessionNumber}</span>?
+                </>
+              )}
             </p>
           </div>
         </div>
 
-        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 mb-6">
-          <p className="text-sm text-emerald-700">
-            ⚠️ Esta ação não pode ser desfeita. A sessão será removida
-            permanentemente.
+        <div
+          className={`mb-6 rounded-lg border p-3 ${
+            isDeletingAllSessions
+              ? "border-amber-200 bg-amber-50"
+              : "border-red-200 bg-red-50"
+          }`}
+        >
+          <p
+            className={`text-sm ${
+              isDeletingAllSessions ? "text-amber-700" : "text-red-700"
+            }`}
+          >
+            {isDeletingAllSessions ? (
+              <>
+                ⚠️ Você está prestes a excluir todas as sessões deste paciente.
+                Esta ação não poderá ser desfeita.
+              </>
+            ) : (
+              <>
+                ⚠️ Esta ação não poderá ser desfeita. As sessões selecionadas
+                serão removidas permanentemente.
+              </>
+            )}
           </p>
         </div>
 
         <fieldset className="mb-6">
-          <legend className="sr-only">Opções ao excluir a sessão</legend>
+          <legend className="sr-only">Opções ao excluir sessões</legend>
 
           <label
             htmlFor="replacement-session"
@@ -69,12 +120,12 @@ export function DeleteSessionModal({
 
             <div>
               <span className="block text-sm font-medium text-slate-800">
-                Adicionar nova sessão ao final da agenda
+                Adicionar sessão(s) ao final da agenda
               </span>
 
               <p className="mt-1 text-xs text-slate-500">
-                Uma nova sessão será criada automaticamente na próxima data
-                disponível, respeitando os dias de atendimento configurados para
+                Será criada automaticamente uma nova sessão para cada sessão
+                removida, respeitando os dias de atendimento configurados para
                 este paciente.
               </p>
             </div>
@@ -84,16 +135,20 @@ export function DeleteSessionModal({
         <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2 rounded-full font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all outline-none"
+            className="flex-1 rounded-full bg-slate-100 px-4 py-2 font-medium text-slate-700 outline-none transition-all hover:bg-slate-200"
           >
             Cancelar
           </button>
 
           <button
             onClick={onConfirm}
-            className="flex-1 px-4 py-2.5 rounded-full font-medium text-emerald-700 bg-emerald-100 hover:bg-emerald-200 transition-all outline-none flex items-center justify-center gap-2"
+            className={`flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 font-medium outline-none transition-all ${
+              isDeletingAllSessions
+                ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
+                : "bg-red-100 text-red-700 hover:bg-red-200"
+            }`}
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="h-4 w-4" />
             Excluir
           </button>
         </div>
