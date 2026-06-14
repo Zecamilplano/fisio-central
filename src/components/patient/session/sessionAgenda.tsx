@@ -27,6 +27,7 @@ export function SessionAgenda({ patient, setListPatient }: SessionAgendaProps) {
     deletingSessionId,
     isAddSessionModalOpen,
     packageIsComplete,
+    suggestedPackageStartDate,
   } = sessionState
 
   const {
@@ -87,6 +88,7 @@ export function SessionAgenda({ patient, setListPatient }: SessionAgendaProps) {
           + Adicionar sessão
         </button>
         <AddSessionModal
+          suggestedPackageStartDate={suggestedPackageStartDate}
           isOpen={isAddSessionModalOpen}
           patientType={patient.typeService}
           packageIsComplete={packageIsComplete}
