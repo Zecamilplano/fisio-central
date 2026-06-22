@@ -39,6 +39,7 @@ export const listPatientData: ListPatient[] = [
         migratedSessions: 6,
 
         valueSession: 60,
+        defaultTime: "16:00",
         fixedWeekDays: ["Terça", "Quinta"],
 
         current: true,
@@ -125,6 +126,7 @@ export const listPatientData: ListPatient[] = [
         migratedSessions: 20,
         valueSession: 45,
         fixedWeekDays: ["Segunda", "Quarta"],
+        defaultTime: "16:00",
         current: false,
       },
       {
@@ -135,17 +137,29 @@ export const listPatientData: ListPatient[] = [
         migratedSessions: 10,
         valueSession: 45,
         fixedWeekDays: ["Segunda", "Quarta"],
+        defaultTime: "16:00",
         current: true,
       },
     ],
 
-    session: createSessions({
-      packageId: "mariana-package-2",
-      startDate: new Date(2026, 1, 1),
-      total: 10,
-      daysOfWeek: [1, 3],
-      typeService: "Pacote",
-    }),
+    session: [
+      ...createSessions({
+        packageId: "mariana-package-1",
+        startDate: new Date(2025, 5, 1),
+        total: 20,
+        daysOfWeek: [1, 3],
+        typeService: "Pacote",
+        forceFinished: true,
+      }),
+
+      ...createSessions({
+        packageId: "mariana-package-2",
+        startDate: new Date(2025, 8, 10),
+        total: 10,
+        daysOfWeek: [1, 3],
+        typeService: "Pacote",
+      }),
+    ],
   },
 
   {
@@ -221,6 +235,7 @@ export const listPatientData: ListPatient[] = [
 
         valueSession: 60,
         fixedWeekDays: ["Quarta", "Sexta"],
+        defaultTime: "16:00",
 
         current: true,
       },
@@ -308,6 +323,7 @@ export const listPatientData: ListPatient[] = [
 
         valueSession: 60,
         fixedWeekDays: ["Segunda", "Quinta"],
+        defaultTime: "16:00",
 
         current: true,
       },
@@ -395,6 +411,7 @@ export const listPatientData: ListPatient[] = [
 
         valueSession: 60,
         fixedWeekDays: ["Terça", "Sexta"],
+        defaultTime: "16:00",
 
         current: true,
       },

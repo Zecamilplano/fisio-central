@@ -17,6 +17,7 @@ type CreateSessionParams = {
   total: number
   daysOfWeek: WeekDay[]
   typeService: TypeService
+  forceFinished?: boolean
 }
 
 function randomPaymentStatus(): PaidKey {
@@ -33,6 +34,7 @@ export function createSessions({
   daysOfWeek,
   typeService,
   packageId,
+  forceFinished = false,
 }: CreateSessionParams): Session[] {
   const sessions: Session[] = []
 
@@ -48,7 +50,7 @@ export function createSessions({
     const isValidDay = daysOfWeek.includes(currentWeekDay as WeekDay)
 
     if (isValidDay) {
-      const finish = Math.random() > 0.5
+      const finish = forceFinished ? true : Math.random() > 0.5
 
       sessions.push({
         id: crypto.randomUUID(),
@@ -60,7 +62,7 @@ export function createSessions({
 
         packageId: packageId || "",
         finish,
-        paid: randomPaymentStatus(),
+        paid: forceFinished ? "pago" : randomPaymentStatus(),
       })
     }
     currentDate = addDays(currentDate, 1)

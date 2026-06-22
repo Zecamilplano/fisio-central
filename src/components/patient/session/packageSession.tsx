@@ -3,15 +3,20 @@ import type { ListPatient } from "@/types"
 import { SelectedSessionsActions } from "./selectedSessionsActions"
 import { DeleteSessionModal } from "./deleteSessionModal"
 import { SessionCard } from "./sessionCard"
-import { useSessionAgenda } from "@/hook/useSessionAgenda"
 import { AddSessionModal } from "./addSessionModal"
+import { usePackageSession } from "@/hook/usePackageSession"
 
 type SessionAgendaProps = {
   patient: ListPatient
   setListPatient: React.Dispatch<React.SetStateAction<ListPatient[]>>
+  currentPackageIndex: number
 }
 
-export function SessionAgenda({ patient, setListPatient }: SessionAgendaProps) {
+export function PackageSession({
+  patient,
+  setListPatient,
+  currentPackageIndex,
+}: SessionAgendaProps) {
   const {
     sessionState,
     selectionState,
@@ -19,7 +24,7 @@ export function SessionAgenda({ patient, setListPatient }: SessionAgendaProps) {
     sessionActions,
     selectionActions,
     deleteActions,
-  } = useSessionAgenda({ patient, setListPatient })
+  } = usePackageSession({ patient, setListPatient, currentPackageIndex })
 
   const {
     openSessionId,
@@ -69,6 +74,13 @@ export function SessionAgenda({ patient, setListPatient }: SessionAgendaProps) {
     closeDeleteModal,
     confirmDelete,
   } = deleteActions
+
+  const visibleSession =
+    patient.typeService === "Pacote" && currentPackage
+      ? patient.session.filter(
+          (session) => session.packageId === currentPackage.id
+        )
+      : patient.session
 
   return (
     <section className="rounded-md bg-white px-2 py-3">
@@ -150,10 +162,11 @@ export function SessionAgenda({ patient, setListPatient }: SessionAgendaProps) {
           isSingleSession ? "grid-cols-1" : "grid-cols-2"
         }`}
       >
-        {patient.session.map((session) => (
+        {visibleSession.map((session) => (
           <SessionCard
             key={session.id}
             session={session}
+            defaultTime={currentPackage?.defaultTime ?? "08:00"}
             isSelected={selectedSessions.includes(session.id)}
             isOpen={openSessionId === session.id}
             isDeleting={deletingSessionId === session.id}

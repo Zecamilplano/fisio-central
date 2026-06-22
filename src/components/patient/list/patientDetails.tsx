@@ -5,7 +5,9 @@ import { PatientContactGrid } from "./patientContactGrid"
 import { CurrentPackageCard } from "../package/currentPackageCard"
 import { getPackageProgress } from "@/utils/package/getPackageProgress"
 import { SeparateSessionInfoCard } from "./separateSessionInfoCard"
-import { SessionAgenda } from "../session/sessionAgenda"
+import { PackageSession } from "../session/packageSession"
+import { getNextSession } from "@/utils/sessions/getNextSessionDate"
+import { useEffect, useState } from "react"
 
 type PatientDetailsProps = {
   patient: ListPatient
@@ -16,7 +18,21 @@ export function PatientDetails({
   patient,
   setListPatient,
 }: PatientDetailsProps) {
-  const packageProgress = getPackageProgress(patient)
+  const [currentPackageIndex, setCurrentPackageIndex] = useState(0)
+
+  useEffect(() => {
+    if (patient.typeService !== "Pacote") {
+      setCurrentPackageIndex(0)
+      return
+    }
+
+    const currentIndex = patient.packages.findIndex((item) => item.current)
+
+    setCurrentPackageIndex(
+      currentIndex >= 0 ? currentIndex : patient.packages.length - 1
+    )
+  }, [patient])
+
   return (
     <section className="font-open-sans flex w-full flex-col gap-6 overflow-y-hidden rounded-md bg-[#F4F6F5] md:rounded-l-none md:rounded-r-md lg:overflow-y-auto">
       <div className="h-full overflow-y-auto px-3 py-4">
@@ -50,17 +66,26 @@ export function PatientDetails({
         <PatientContactGrid contactInfo={patient.contactInfo} />
 
         {/* CurrentPackageCard */}
-        {patient.typeService === "Pacote" && packageProgress && (
-          <CurrentPackageCard packageProgress={packageProgress} />
+        {patient.typeService === "Pacote" && (
+          <CurrentPackageCard
+            patient={patient}
+            currentPackageIndex={currentPackageIndex}
+            setCurrentPackageIndex={setCurrentPackageIndex}
+          />
         )}
 
-        {/* SeparateSessionCard */}
+        {/*sessões */}
+        {/* sessões avulsa */}
         {patient.typeService === "Sessão avulsa" && (
           <SeparateSessionInfoCard patient={patient} />
         )}
 
-        {/* SessionAgenda */}
-        <SessionAgenda patient={patient} setListPatient={setListPatient} />
+        {/* Sessões em pacote */}
+        <PackageSession
+          patient={patient}
+          setListPatient={setListPatient}
+          currentPackageIndex={currentPackageIndex}
+        />
       </div>
     </section>
   )

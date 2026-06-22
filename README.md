@@ -62,10 +62,7 @@ A aplicação estará disponível em:
 http://localhost:3000
 ```
 
-```bash
-npm start
-```
-
+````
 ## Estrutura do Projeto
 
 ```text
@@ -77,7 +74,7 @@ src/
 ├── types/
 ├── utils/
 └── styles/
-```
+````
 
 ## Autor
 

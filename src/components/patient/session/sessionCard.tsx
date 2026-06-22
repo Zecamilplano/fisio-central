@@ -6,12 +6,14 @@ import {
   statusRealizacao,
 } from "@/data/optionsSessionsData"
 import type { Session } from "@/types"
+import { createTimeOptions } from "@/utils/sessions/createTimeOptions"
 import { format, parseISO } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { Check, ChevronDown, Trash2 } from "lucide-react"
 
 type SessionCardProps = {
   session: Session
+  defaultTime: string
   isSelected: boolean
   isOpen: boolean
   isDeleting: boolean
@@ -20,13 +22,14 @@ type SessionCardProps = {
   onOpenDeleteModal: (sessionId: string, sessionNumber: number) => void
   onChangeSession: (
     sessionId: string,
-    field: "finish" | "paid" | "date",
+    field: "finish" | "paid" | "date" | "time",
     value: boolean | string
   ) => void
 }
 
 export function SessionCard({
   session,
+  defaultTime,
   isSelected,
   isOpen,
   isDeleting,
@@ -40,6 +43,10 @@ export function SessionCard({
   const weekDay = format(convertDate, "EEEE", { locale: ptBR })
     .replace("-feira", "")
     .replace(/^./, (letter) => letter.toUpperCase())
+
+  const timeOptions = createTimeOptions()
+
+  const hasCustomTime = session.time && session.time !== defaultTime
 
   return (
     <li
@@ -90,9 +97,14 @@ export function SessionCard({
                     {format(convertDate, "dd/MM/yyyy")}
                   </time>
 
-                  <span className="rounded-full text-xs text-slate-400">
+                  <p className="rounded-full text-xs text-slate-400">
                     {weekDay}
-                  </span>
+                    {hasCustomTime && (
+                      <span className="ml-1 font-medium text-[#F79009]">
+                        • {session.time}
+                      </span>
+                    )}
+                  </p>
                 </div>
               </div>
             </div>
@@ -141,71 +153,112 @@ export function SessionCard({
             <div className="w-full overflow-hidden pt-3 transition-all duration-300 ease-in-out">
               <div className="h-px w-full bg-linear-to-r from-transparent via-[#E4E7EC] to-transparent" />
 
-              <div className="mt-2 flex w-full items-center justify-between gap-3 lg:flex-row">
-                <div className="flex w-auto flex-col gap-2 md:flex-row md:flex-wrap">
-                  <div className="flex w-full flex-wrap gap-1 rounded-md border border-solid border-[#EAECF0] bg-white px-2 py-2 md:w-auto">
-                    {Object.values(statusConfig).map((status) => {
-                      const Icon = status.Icon
-                      const isActive = session.finish === status.value
+              <div className="mt-3 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                <div className="grid flex-1 items-stretch grid-cols-1 gap-3 lg:grid-cols-3">
+                  {/* Realização */}
+                  <section className="rounded-md border border-[#EAECF0] bg-white p-3">
+                    <h4 className="mb-2 text-xs font-semibold tracking-wide text-[#667085] uppercase">
+                      Realização
+                    </h4>
 
-                      return (
-                        <button
-                          key={status.label}
-                          type="button"
-                          onClick={() =>
-                            onChangeSession(session.id, "finish", status.value)
-                          }
-                          className={`flex flex-1 items-center gap-2 rounded-full px-4 py-1 text-sm font-medium outline-none md:w-auto md:flex-none ${
-                            isActive
-                              ? status.button.active
-                              : status.button.inactive
-                          }`}
-                        >
-                          <Icon size={16} />
-                          {status.label}
-                        </button>
-                      )
-                    })}
-                  </div>
+                    <div className="flex flex-wrap gap-1">
+                      {Object.values(statusConfig).map((status) => {
+                        const Icon = status.Icon
+                        const isActive = session.finish === status.value
 
-                  <div className="flex w-full flex-wrap rounded-md border border-solid border-[#D9D9D9] px-2 py-2 sm:w-auto">
-                    {Object.values(pagamentoConfig).map((pay) => {
-                      const isActive = session.paid === pay.value
-
-                      return (
-                        <button
-                          key={pay.label}
-                          type="button"
-                          onClick={() =>
-                            onChangeSession(session.id, "paid", pay.value)
-                          }
-                          className={`flex items-center gap-2 rounded-full px-4 py-1 text-sm font-medium outline-none ${
-                            isActive ? pay.button.active : pay.button.inactive
-                          }`}
-                        >
-                          {pay.label}
-                        </button>
-                      )
-                    })}
-                  </div>
-
-                  <DatePicker
-                    date={convertDate}
-                    setDate={(value) => {
-                      if (value instanceof Date) {
-                        onChangeSession(
-                          session.id,
-                          "date",
-                          format(value, "yyyy-MM-dd")
+                        return (
+                          <button
+                            key={status.label}
+                            type="button"
+                            onClick={() =>
+                              onChangeSession(
+                                session.id,
+                                "finish",
+                                status.value
+                              )
+                            }
+                            className={`flex items-center gap-2 rounded-full px-4 py-1 text-sm font-medium ${
+                              isActive
+                                ? status.button.active
+                                : status.button.inactive
+                            }`}
+                          >
+                            <Icon size={16} />
+                            {status.label}
+                          </button>
                         )
-                      }
-                    }}
-                  />
+                      })}
+                    </div>
+                  </section>
+
+                  {/* Pagamento */}
+                  <section className="rounded-md border border-[#EAECF0] bg-white p-3">
+                    <h4 className="mb-2 text-xs font-semibold tracking-wide text-[#667085] uppercase">
+                      Pagamento
+                    </h4>
+
+                    <div className="flex flex-col gap-1">
+                      {Object.values(pagamentoConfig).map((pay) => {
+                        const isActive = session.paid === pay.value
+
+                        return (
+                          <button
+                            key={pay.label}
+                            type="button"
+                            onClick={() =>
+                              onChangeSession(session.id, "paid", pay.value)
+                            }
+                            className={`flex w-28 items-center gap-2 rounded-full px-4 py-1 text-sm font-medium ${
+                              isActive ? pay.button.active : pay.button.inactive
+                            }`}
+                          >
+                            {pay.label}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </section>
+
+                  {/* Horário */}
+                  <section className="flex flex-col h-full rounded-md border border-[#EAECF0] bg-white p-3">
+                    <h4 className="mb-2 text-xs font-semibold tracking-wide text-[#667085] uppercase">
+                      Horário
+                    </h4>
+
+                    <div className="flex flex-col gap-2">
+                      <DatePicker
+                        date={convertDate}
+                        setDate={(value) => {
+                          if (value instanceof Date) {
+                            onChangeSession(
+                              session.id,
+                              "date",
+                              format(value, "yyyy-MM-dd")
+                            )
+                          }
+                        }}
+                      />
+
+                      <select
+                        value={session.time ?? defaultTime}
+                        onChange={(e) =>
+                          onChangeSession(session.id, "time", e.target.value)
+                        }
+                        className="w-34 rounded-lg border border-[#D0D5DD] bg-white px-3 py-2 text-sm text-[#344054] outline-none"
+                      >
+                        {timeOptions.map((time) => (
+                          <option key={time} value={time}>
+                            {time}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </section>
                 </div>
 
                 <button
                   onClick={() => onOpenDeleteModal(session.id, session.number)}
-                  className="flex h-10.5 w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 md:w-auto"
+                  className="flex h-10.5 items-center justify-center gap-2 rounded-full border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-600"
                 >
                   <Trash2 className="h-4 w-4" />
                   Excluir

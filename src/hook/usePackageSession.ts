@@ -3,9 +3,10 @@ import { addDays, format, getDay, parseISO } from "date-fns"
 import { useEffect, useState } from "react"
 import { toast } from "react-toastify"
 
-type UseSessionAgendaProps = {
+type UsePackageSession = {
   patient: ListPatient
   setListPatient: React.Dispatch<React.SetStateAction<ListPatient[]>>
+  currentPackageIndex: number
 }
 
 type DeleteModal = {
@@ -14,7 +15,7 @@ type DeleteModal = {
   sessionNumber: number | null
 }
 
-type SessionChangeField = "finish" | "paid" | "date"
+type SessionChangeField = "finish" | "paid" | "date" | "time"
 
 const weekDayMap = {
   Domingo: 0,
@@ -26,7 +27,11 @@ const weekDayMap = {
   Sábado: 6,
 } as const
 
-function useSessionAgenda({ patient, setListPatient }: UseSessionAgendaProps) {
+function usePackageSession({
+  patient,
+  setListPatient,
+  currentPackageIndex,
+}: UsePackageSession) {
   const [selectedSessions, setSelectedSessions] = useState<string[]>([])
   const [deletingSessionId, setDeletingSessionId] = useState<string | null>(
     null
@@ -81,7 +86,7 @@ function useSessionAgenda({ patient, setListPatient }: UseSessionAgendaProps) {
 
   const currentPackage =
     patient.typeService === "Pacote"
-      ? patient.packages.find((item) => item.current)
+      ? patient.packages[currentPackageIndex]
       : null
 
   const currentPackageSessions =
@@ -91,9 +96,13 @@ function useSessionAgenda({ patient, setListPatient }: UseSessionAgendaProps) {
         )
       : []
 
+  const completedCurrentPackageSessions = currentPackageSessions.filter(
+    (session) => session.finish
+  ).length
+
   const packageIsComplete =
     patient.typeService === "Pacote" && currentPackage
-      ? currentPackageSessions.length >= currentPackage.totalSessions
+      ? completedCurrentPackageSessions >= currentPackage.totalSessions
       : false
 
   const suggestedPackageStartDate =
@@ -461,18 +470,29 @@ function useSessionAgenda({ patient, setListPatient }: UseSessionAgendaProps) {
           ? currentDate
           : getNextPackageDate(currentDate, data.fixedWeekDays)
 
-      sessions.push(
-        createBaseSession(
-          [...data.currentSessions, ...sessions],
-          sessionDate,
-          data.packageId
-        )
-      )
+      sessions.push({
+        id: crypto.randomUUID(),
+        packageId: data.packageId,
+        number: index + 1,
+        date: sessionDate.toISOString(),
+        finish: false,
+        paid: "pendente",
+      })
 
       currentDate = sessionDate
     }
 
     return sessions
+  }
+
+  function getLastPackageSessionDate(packageId: string) {
+    const packageSessions = patient.session.filter(
+      (session) => session.packageId === packageId
+    )
+
+    const lastSession = packageSessions.at(-1)
+
+    return lastSession ? parseISO(lastSession.date) : new Date()
   }
 
   function createNextPackage(data: {
@@ -493,6 +513,7 @@ function useSessionAgenda({ patient, setListPatient }: UseSessionAgendaProps) {
       migratedSessions: 0,
       valueSession: data.valueSession,
       fixedWeekDays: data.fixedWeekDays,
+      defaultTime: "16:00",
       current: true,
     }
 
@@ -517,10 +538,11 @@ function useSessionAgenda({ patient, setListPatient }: UseSessionAgendaProps) {
                 ? {
                     ...packageItem,
                     current: false,
-                    endDate: new Date(),
+                    endDate: getLastPackageSessionDate(packageItem.id),
                   }
                 : packageItem
             ),
+
             newPackage,
           ],
           session: [...item.session, ...newPackageSessions],
@@ -536,7 +558,7 @@ function useSessionAgenda({ patient, setListPatient }: UseSessionAgendaProps) {
     clearSelection()
     closeDeleteModal()
     setDeletingSessionId(null)
-  }, [patient.id])
+  }, [patient.id, currentPackageIndex])
 
   return {
     sessionState: {
@@ -593,4 +615,4 @@ function useSessionAgenda({ patient, setListPatient }: UseSessionAgendaProps) {
   }
 }
 
-export { useSessionAgenda }
+export { usePackageSession }

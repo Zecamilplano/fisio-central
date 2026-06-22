@@ -29,6 +29,7 @@ export type TreatmentPackage = {
 
   valueSession: number
   fixedWeekDays: DayOfWeek[]
+  defaultTime: string
   current: boolean
 }
 
@@ -38,6 +39,7 @@ export type Session = {
   packageId?: string
   date: string
   originalDate?: Date
+  time?: string
   finish: boolean
   paid: PaidKey
 }

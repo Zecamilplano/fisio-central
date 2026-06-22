@@ -46,6 +46,17 @@ export function AddSessionModal({
 
   const [packageStartDate, setPackageStartDate] = useState(new Date())
 
+  function handleClose() {
+    setMode("options")
+    setSelectedDate(new Date())
+    onClose()
+  }
+
+  function handleConfirmSeparateSession() {
+    onCreateSeparateSession(selectedDate)
+    handleClose()
+  }
+
   useEffect(() => {
     if (!isOpen) return
 
@@ -67,18 +78,9 @@ export function AddSessionModal({
     }
   }, [isOpen, currentPackage, patientType, suggestedPackageStartDate])
 
-  function handleClose() {
-    setMode("options")
-    setSelectedDate(new Date())
-    onClose()
-  }
-
-  function handleConfirmSeparateSession() {
-    onCreateSeparateSession(selectedDate)
-    handleClose()
-  }
-
   if (!isOpen) return null
+
+  console.log("packageIsComplete", packageIsComplete)
 
   return (
     <div
@@ -152,6 +154,10 @@ export function AddSessionModal({
                 <input
                   type="number"
                   min={1}
+                  value={packageTotalSessions}
+                  onChange={(e) =>
+                    setPackageTotalSessions(Number(e.target.value))
+                  }
                   className="w-full rounded-lg border border-[#D0D5DD] px-3 py-2"
                 />
               </div>
@@ -165,6 +171,10 @@ export function AddSessionModal({
                   type="number"
                   min={0}
                   step="0.01"
+                  value={packageValueSession}
+                  onChange={(event) =>
+                    setPackageValueSession(Number(event.target.value))
+                  }
                   className="w-full rounded-lg border border-[#D0D5DD] px-3 py-2"
                 />
               </div>
