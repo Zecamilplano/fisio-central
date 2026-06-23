@@ -7,11 +7,14 @@ export type summaryCardType = {
 }[]
 
 export type DayOfWeek = (typeof daysOfWeek)[number]
+export type PaymentType = "metade" | "integral" | "depois"
 
 export type Session_ = {
   sessionNumber: number
   fullDate: string
   weekDay: string
+  time: string
+  paid: "pago" | "pendente"
 }
 
 export type SummaryItem = {
@@ -20,6 +23,10 @@ export type SummaryItem = {
 }
 
 export type Package = {
+  startDate: Date | null
+  defaultTime: string
+  paymentType: PaymentType
+
   totalSessions: number | null
   weeklyAmount: number | null
   selectedDays: Record<string, boolean>
@@ -30,6 +37,8 @@ export type Package = {
 export type SingleSession = {
   fullDate: Date
   weekDay: string
+  time: string
+  paid: "pago" | "pendente"
 }
 
 export type SchedulingForm = {
@@ -39,6 +48,10 @@ export type SchedulingForm = {
 }
 
 export type SchedulingErrorForm = {
+  startDate: string[]
+  defaultTime: string[]
+  paymentType: string[]
+
   weeklyAmount: string[]
   selectedDays: string[]
   sessions: string[]

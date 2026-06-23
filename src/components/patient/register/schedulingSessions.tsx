@@ -1,12 +1,35 @@
 import { daysOfWeek } from "@/data/registerPatientData"
-import { Trash } from "lucide-react"
+import { CalendarDays, Clock3, Trash } from "lucide-react"
 import { useSchedulingSessions } from "@/hook/useSchedulingSessions"
 import Calendar from "react-calendar"
 import { isSameDay, startOfDay } from "date-fns"
+import { PaymentType } from "@/types"
 
 type SchedulingSessionsProps = {
   form: ReturnType<typeof useSchedulingSessions>
 }
+
+const paymentInitialOptions: {
+  value: PaymentType
+  label: string
+  description: string
+}[] = [
+  {
+    value: "metade",
+    label: "50% agora",
+    description: "Metade das sessões como pagas",
+  },
+  {
+    value: "integral",
+    label: "Integral",
+    description: "Todas as sessões como pagas",
+  },
+  {
+    value: "depois",
+    label: "Depois",
+    description: "Todas como pendentes",
+  },
+]
 
 function SchedulingSessions({ form }: SchedulingSessionsProps) {
   const {
@@ -82,6 +105,60 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
               }}
               className=" w-52 flex self-center text-[#333] placeholder:text-text-gray-400 border-2 border-solid border-[#D0D7DE]/80 focus:outline-[#FFA726] rounded-md py-2 pl-2 "
             />
+          </section>
+
+          {/*Data inicial e horário*/}
+          <section className="flex justify-center items-center gap-4">
+            <div className="flex justify-center flex-col gap-2">
+              <label className="flex items-center gap-2 text-lg text-[#FFA726] text-center font-semibold">
+                <CalendarDays size={16} />
+                Data inicial
+              </label>
+
+              <input
+                type="date"
+                value={
+                  schedulingForm.package.startDate
+                    ? new Date(schedulingForm.package.startDate)
+                        .toISOString()
+                        .split("T")[0]
+                    : ""
+                }
+                onChange={(e) =>
+                  setSchedulingForm((prev) => ({
+                    ...prev,
+                    package: {
+                      ...prev.package,
+                      startDate: e.target.value
+                        ? new Date(e.target.value)
+                        : null,
+                    },
+                  }))
+                }
+                className="w-38 text-[#333] border-2 border-[#D0D7DE]/80 focus:outline-[#FFA726] rounded-md py-2 px-3"
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className="flex items-center gap-2 text-lg text-[#FFA726] text-center font-semibold">
+                <Clock3 size={16} /> Horário
+              </label>
+
+              <input
+                type="time"
+                value={schedulingForm.package.defaultTime}
+                onChange={(e) =>
+                  setSchedulingForm((prev) => ({
+                    ...prev,
+                    package: {
+                      ...prev.package,
+                      defaultTime: e.target.value,
+                    },
+                  }))
+                }
+                className="text-[#333] border-2 border-[#D0D7DE]/80 focus:outline-[#FFA726] rounded-md py-2 px-3"
+              />
+            </div>
           </section>
 
           {/*Quantas vezes na semana*/}
@@ -165,6 +242,82 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
               </p>
             ))}
           </fieldset>
+          {/*Dias das seções na semana*/}
+
+          {/* Pagamento inicial */}
+          <fieldset className="font-open-sans flex flex-col items-center gap-3">
+            <legend className="text-lg text-[#FFA726] text-center font-semibold">
+              Pagamento inicial
+            </legend>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
+              {paymentInitialOptions.map((payment) => (
+                <button
+                  key={payment.value}
+                  type="button"
+                  onClick={() =>
+                    setSchedulingForm((prev) => ({
+                      ...prev,
+                      package: {
+                        ...prev.package,
+                        paymentType: payment.value,
+                      },
+                    }))
+                  }
+                  className={`
+                      rounded-lg py-3 px-4 text-center border-2 transition
+                      ${
+                        schedulingForm.package.paymentType === payment.value
+                          ? "bg-[#FFA726] text-white border-[#FFA726]"
+                          : "bg-[#D9D9D9] text-[#2D2D2D] border-transparent"
+                      }
+                `}
+                >
+                  <strong className="block text-base">{payment.label}</strong>
+                  <span className="block text-xs mt-1">
+                    {payment.description}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </fieldset>
+          {/* Pagamento inicial */}
+
+          {/*Resumo das sessões*/}
+          {sessions.length > 0 && (
+            <section className="rounded-xl border border-[#FFA726]/20 bg-[#FFF8EE] p-4">
+              <h2 className="mb-3 text-center font-semibold text-[#FFA726]">
+                Resumo da agenda
+              </h2>
+
+              <div className="flex flex-col gap-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-[#8C7B6B]">Próxima sessão</span>
+                  <strong className="text-[#2D2D2D]">
+                    {sessions[0].fullDate} às {sessions[0].time}
+                  </strong>
+                </div>
+
+                <div className="flex justify-between">
+                  <span className="text-[#8C7B6B]">Pagamento inicial</span>
+                  <strong className="text-[#2D2D2D]">
+                    {schedulingForm.package.paymentType === "metade"
+                      ? "50% agora"
+                      : schedulingForm.package.paymentType === "integral"
+                        ? "Integral"
+                        : "Depois"}
+                  </strong>
+                </div>
+
+                <div className="flex justify-between">
+                  <span className="text-[#8C7B6B]">Serão geradas</span>
+                  <strong className="text-[#2D2D2D]">
+                    {sessions.length} sessões
+                  </strong>
+                </div>
+              </div>
+            </section>
+          )}
 
           {/*Sessões*/}
           {schedulingFormErrors.sessions.map((error, index) => (
@@ -214,7 +367,7 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
             onClick={handleAddSessions}
             className="hover:text-[#F59E0B] active:text-[#D97706] hover:bg-[#FFF3E0] active:bg-[#FFE0B2]  text-center text-[#FFA726] text-xl align-middle border-2 border-solid border-[#FFA726]/30 py-3 rounded-md cursor-pointer"
           >
-            + Adicionar sessão
+            Gerar sessões
           </button>
         </>
       )}

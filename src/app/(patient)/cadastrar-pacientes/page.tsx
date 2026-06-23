@@ -27,7 +27,6 @@ function RegisterPatient() {
   } = useRegisterPatient()
 
   const { selectService, totalSessions } = formTypeService.serviceForm
-  // console.log("workflow", formScheduling.isSchedulingFormValid)
 
   return (
     <section className=" flex justify-center items-center">

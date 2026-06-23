@@ -5,11 +5,7 @@ import {
   SchedulingForm,
   TypeServiceType,
 } from "@/types"
-import {
-  schedulingFormData,
-  initialErrors,
-  TOTAL_SESSIONS,
-} from "@/data/schedulingData"
+import { initialErrors } from "@/data/schedulingData"
 import { buildSessions, getLastDate } from "@/utils/form"
 
 const STORAGE_KEY = "schedulingForm"
@@ -19,8 +15,12 @@ function buildInitialSchedulingForm(
   serviceType: TypeServiceType | null = null
 ): SchedulingForm {
   return {
-    serviceType: serviceType,
+    serviceType,
     package: {
+      startDate: null,
+      defaultTime: "16:00",
+      paymentType: "metade",
+
       totalSessions: null,
       weeklyAmount: null,
       selectedDays: {},
@@ -39,42 +39,64 @@ export function useSchedulingSessions(
   totalSessions: number,
   serviceType: TypeServiceType | null = null
 ) {
-  const [schedulingForm, setSchedulingForm] = useState<SchedulingForm>(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY)
-      if (stored) {
-        const parsed = JSON.parse(stored)
-        return {
-          ...parsed,
-          serviceType: serviceType,
-          package: {
-            ...parsed.package,
-            summary: [
-              { label: "Agendadas", value: parsed.package.sessions.length },
-              {
-                label: "Restante",
-                value: totalSessions - parsed.package.sessions.length,
-              },
-              { label: "Total", value: totalSessions },
-            ],
-          },
-        }
-      }
-      return buildInitialSchedulingForm(totalSessions)
-    } catch {
-      return buildInitialSchedulingForm(totalSessions)
-    }
-  })
+  const [schedulingForm, setSchedulingForm] = useState<SchedulingForm>(() =>
+    buildInitialSchedulingForm(totalSessions, serviceType)
+  )
 
   const [schedulingFormErrors, setSchedulingFormErrors] =
     useState<SchedulingErrorForm>(initialErrors)
 
-  const { weeklyAmount, selectedDays, sessions, summary } =
-    schedulingForm.package
+  const {
+    startDate,
+    defaultTime,
+    paymentType,
+    weeklyAmount,
+    selectedDays,
+    sessions,
+    summary,
+  } = schedulingForm.package
   const activeDays = Object.keys(selectedDays).filter((d) => selectedDays[d])
   const scheduledCount = sessions.length
   const maxDaysReached =
     weeklyAmount !== null && activeDays.length >= weeklyAmount
+
+  useEffect(() => {
+    const initial = buildInitialSchedulingForm(totalSessions, serviceType)
+
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY)
+
+      if (!stored) {
+        setSchedulingForm(initial)
+        return
+      }
+
+      const parsed = JSON.parse(stored)
+
+      setSchedulingForm({
+        ...initial,
+        ...parsed,
+        serviceType,
+        package: {
+          ...initial.package,
+          ...parsed.package,
+          summary: [
+            {
+              label: "Agendadas",
+              value: parsed.package?.sessions?.length ?? 0,
+            },
+            {
+              label: "Restante",
+              value: totalSessions - (parsed.package?.sessions?.length ?? 0),
+            },
+            { label: "Total", value: totalSessions },
+          ],
+        },
+      })
+    } catch {
+      setSchedulingForm(initial)
+    }
+  }, [serviceType, totalSessions])
 
   useEffect(() => {
     try {
@@ -90,11 +112,14 @@ export function useSchedulingSessions(
     }
 
     if (form.serviceType === "pacote") {
-      const { weeklyAmount, selectedDays, sessions } = form.package
+      const { startDate, defaultTime, weeklyAmount, selectedDays, sessions } =
+        form.package
       const activeDays = Object.keys(selectedDays).filter(
         (d) => selectedDays[d]
       )
       return (
+        startDate !== null &&
+        defaultTime.trim() !== "" &&
         weeklyAmount !== null &&
         activeDays.length > 0 &&
         sessions.length === totalSessions
@@ -150,10 +175,22 @@ export function useSchedulingSessions(
 
   function handleAddSessions() {
     const newErrors: SchedulingErrorForm = {
+      startDate: [],
+      defaultTime: [],
+      paymentType: [],
+
       weeklyAmount: [],
       selectedDays: [],
       sessions: [],
       weekDay: [],
+    }
+
+    if (!startDate) {
+      newErrors.startDate.push("Selecione a data inicial do pacote.")
+    }
+
+    if (!defaultTime.trim()) {
+      newErrors.defaultTime.push("Informe o horário das sessões.")
     }
 
     if (!weeklyAmount) {
@@ -183,8 +220,10 @@ export function useSchedulingSessions(
     const newSessions = buildSessions(
       activeDays,
       scheduledCount,
-      lastDate,
-      totalSessions
+      lastDate ?? startDate,
+      totalSessions,
+      defaultTime,
+      paymentType
     )
 
     updatePackage({ sessions: [...sessions, ...newSessions] })
@@ -204,6 +243,8 @@ export function useSchedulingSessions(
       singleSession: {
         fullDate: date,
         weekDay: date.toLocaleDateString("pt-BR", { weekday: "long" }),
+        time: "16:00",
+        paid: "pendente",
       },
     }))
 
