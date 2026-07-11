@@ -174,16 +174,131 @@ function usePackageSession({
       prev.map((item) => {
         if (item.id !== patient.id) return item
 
+        if (field === "date") {
+          const changedSession = item.session.find(
+            (session) => session.id === sessionId
+          )
+
+          if (!changedSession?.packageId) {
+            return {
+              ...item,
+              session: item.session.map((session) =>
+                session.id === sessionId
+                  ? { ...session, date: String(value) }
+                  : session
+              ),
+            }
+          }
+
+          const packageSessions = item.session
+            .filter((session) => session.packageId === changedSession.packageId)
+            .sort((a, b) => a.number - b.number)
+
+          const otherSessions = item.session.filter(
+            (session) => session.packageId !== changedSession.packageId
+          )
+
+          const changedIndex = packageSessions.findIndex(
+            (session) => session.id === sessionId
+          )
+
+          const oldDates = packageSessions.map((session) => session.date)
+
+          const updatedPackageSessions = packageSessions.map(
+            (session, index) => {
+              if (index < changedIndex) return session
+
+              if (index === changedIndex) {
+                return {
+                  ...session,
+                  date: String(value),
+                }
+              }
+
+              return {
+                ...session,
+                date: oldDates[index - 1],
+              }
+            }
+          )
+
+          return {
+            ...item,
+            session: [...otherSessions, ...updatedPackageSessions],
+          }
+        }
+
+        const changedSession = item.session.find(
+          (session) => session.id === sessionId
+        )
+
+        if (!changedSession?.packageId) {
+          return {
+            ...item,
+            session: item.session.map((session) =>
+              session.id === sessionId
+                ? { ...session, date: String(value) }
+                : session
+            ),
+          }
+        }
+
+        if (item.typeService !== "Pacote") return item
+
+        const currentPackage = item.packages.find(
+          (packageItem) => packageItem.id === changedSession.packageId
+        )
+
+        if (!currentPackage) return item
+
+        const packageSessions = item.session
+          .filter((session) => session.packageId === changedSession.packageId)
+          .sort((a, b) => a.number - b.number)
+
+        const changedIndex = packageSessions.findIndex(
+          (session) => session.id === sessionId
+        )
+
+        if (changedIndex === -1) return item
+
+        const updatedPackageSessions: Session[] = []
+
+        for (let index = 0; index < packageSessions.length; index++) {
+          const session = packageSessions[index]
+
+          if (index < changedIndex) {
+            updatedPackageSessions.push(session)
+            continue
+          }
+
+          if (index === changedIndex) {
+            updatedPackageSessions.push({
+              ...session,
+              date: String(value),
+            })
+            continue
+          }
+
+          const previousSession = updatedPackageSessions[index - 1]
+
+          const nextDate = getNextPackageDate(
+            parseISO(previousSession.date),
+            currentPackage.fixedWeekDays
+          )
+
+          updatedPackageSessions.push({
+            ...session,
+            date: format(nextDate, "yyyy-MM-dd"),
+          })
+        }
+
+        const otherSessions = item.session.filter(
+          (session) => session.packageId !== changedSession.packageId
+        )
+
         return {
           ...item,
-          session: item.session.map((session) => {
-            if (session.id !== sessionId) return session
-
-            return {
-              ...session,
-              [field]: value,
-            }
-          }),
+          session: [...otherSessions, ...updatedPackageSessions],
         }
       })
     )

@@ -1,5 +1,5 @@
 import { generateReplacementSession } from "@/utils/sessions/generateReplacementSession"
-import type { ListPatient, PaidKey } from "@/types"
+import type { ListPatient, PaidKey, Session } from "@/types"
 import { format, parseISO } from "date-fns"
 import { useEffect, useState } from "react"
 import { toast } from "react-toastify"
@@ -65,6 +65,15 @@ export function usePatientSessions({
     selectedSessionItems.length > 0 &&
     selectedSessionItems.every((session) => session.paid === "pendente")
 
+  function reorderPackageSessions(sessions: Session[]) {
+    return [...sessions]
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .map((session, index) => ({
+        ...session,
+        number: index + 1,
+      }))
+  }
+
   function handleChange<K extends keyof ListPatient["session"][number]>(
     sessionId: string,
     field: K | "delete",
@@ -72,35 +81,60 @@ export function usePatientSessions({
   ) {
     setListPatient((prev) =>
       prev.map((patient) => {
-        if (patient.id !== selectedPatient?.id) {
-          return patient
-        }
+        if (patient.id !== selectedPatientId) return patient
 
-        let updatedSessions: typeof patient.session
+        if (field === "date") {
+          const sessionChanged = patient.session.find(
+            (session) => session.id === sessionId
+          )
 
-        if (field === "delete") {
-          updatedSessions = patient.session
-            .filter((session) => session.id !== sessionId)
+          const updatedSessions = patient.session.map((session) =>
+            session.id === sessionId
+              ? { ...session, date: String(value) }
+              : session
+          )
+
+          if (!sessionChanged?.packageId) {
+            return { ...patient, session: updatedSessions }
+          }
+
+          const reorderedSessions = updatedSessions
+            .filter((session) => session.packageId === sessionChanged.packageId)
+            .sort(
+              (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+            )
             .map((session, index) => ({
               ...session,
               number: index + 1,
             }))
-        } else {
-          updatedSessions = patient.session.map((session) => {
-            if (session.id !== sessionId) {
-              return session
-            }
 
-            return {
-              ...session,
-              [field]: value,
-            }
-          })
+          const otherSessions = updatedSessions.filter(
+            (session) => session.packageId !== sessionChanged.packageId
+          )
+
+          return {
+            ...patient,
+            session: [...otherSessions, ...reorderedSessions],
+          }
+        }
+
+        if (field === "delete") {
+          return {
+            ...patient,
+            session: patient.session
+              .filter((session) => session.id !== sessionId)
+              .map((session, index) => ({
+                ...session,
+                number: index + 1,
+              })),
+          }
         }
 
         return {
           ...patient,
-          session: updatedSessions,
+          session: patient.session.map((session) =>
+            session.id === sessionId ? { ...session, [field]: value } : session
+          ),
         }
       })
     )

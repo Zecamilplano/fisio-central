@@ -8,7 +8,7 @@ import { CalendarDays } from "lucide-react"
 
 type Props = {
   date: Date
-  setDate: React.Dispatch<React.SetStateAction<Date>>
+  setDate: (date: Date) => void
 }
 
 export function DatePicker({ date, setDate }: Props) {
@@ -81,8 +81,10 @@ export function DatePicker({ date, setDate }: Props) {
               <Calendar
                 locale="pt-BR"
                 onChange={(value) => {
-                  setDate(value as Date)
-                  setOpen(false)
+                  if (value instanceof Date) {
+                    setDate(value)
+                    setOpen(false)
+                  }
                 }}
                 value={date}
               />

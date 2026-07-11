@@ -1,8 +1,9 @@
-import type { ListPatient, Session, TreatmentPackage } from "@/types"
+import type { ListPatient } from "@/types"
 import { format, parseISO } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { ChevronLeft, ChevronRight, History } from "lucide-react"
 import { useEffect, useState } from "react"
+import { PackageHistoryModal } from "./historyPackage"
 
 type CurrentPackageCardProps = {
   patient: Extract<ListPatient, { typeService: "Pacote" }>
@@ -15,11 +16,7 @@ export function CurrentPackageCard({
   currentPackageIndex,
   setCurrentPackageIndex,
 }: CurrentPackageCardProps) {
-  // const [currentPackageIndex, setCurrentPackageIndex] = useState(() => {
-  //   const currentIndex = patient.packages.findIndex((item) => item.current)
-  //
-  //   return currentIndex >= 0 ? currentIndex : patient.packages.length - 1
-  // })
+  const [openHistoryModal, setOpenHistoryModal] = useState(false)
 
   const currentPackage = patient.packages[currentPackageIndex]
 
@@ -44,11 +41,6 @@ export function CurrentPackageCard({
   }
 
   const nextSession = packageSessions.find((session) => !session.finish) ?? null
-
-  const packageEndDate =
-    packageSessions.length > 0
-      ? parseISO(packageSessions[packageSessions.length - 1].date)
-      : currentPackage.endDate
 
   const isFirstPackage = currentPackageIndex === 0
   const isLastPackage = currentPackageIndex === patient.packages.length - 1
@@ -214,12 +206,15 @@ export function CurrentPackageCard({
       <div className="mt-8 flex justify-center border-t border-[#EAECF0] pt-6">
         <button
           type="button"
+          onClick={() => setOpenHistoryModal(true)}
           className="flex items-center gap-2 rounded-lg border border-[#D0D5DD] bg-white px-4 py-2 text-sm font-medium text-[#344054] transition-colors hover:bg-[#F9FAFB]"
         >
           <History size={16} />
           Histórico
         </button>
       </div>
+
+      {openHistoryModal === true && <PackageHistoryModal />}
     </section>
   )
 }

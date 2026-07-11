@@ -77,10 +77,22 @@ export function PackageSession({
 
   const visibleSession =
     patient.typeService === "Pacote" && currentPackage
-      ? patient.session.filter(
-          (session) => session.packageId === currentPackage.id
+      ? [...patient.session]
+          .filter((session) => session.packageId === currentPackage.id)
+          .sort(
+            (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+          )
+      : [...patient.session].sort(
+          (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
         )
-      : patient.session
+  console.log(
+    "visibleSession",
+    visibleSession.map((session) => ({
+      id: session.id,
+      number: session.number,
+      date: session.date,
+    }))
+  )
 
   return (
     <section className="rounded-md bg-white px-2 py-3">
@@ -164,7 +176,7 @@ export function PackageSession({
       >
         {visibleSession.map((session) => (
           <SessionCard
-            key={session.id}
+            key={`${session.id}-${session.date}`}
             session={session}
             defaultTime={currentPackage?.defaultTime ?? "08:00"}
             isSelected={selectedSessions.includes(session.id)}

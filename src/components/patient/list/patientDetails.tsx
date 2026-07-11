@@ -3,10 +3,8 @@ import Image from "next/image"
 import { PencilLine } from "lucide-react"
 import { PatientContactGrid } from "./patientContactGrid"
 import { CurrentPackageCard } from "../package/currentPackageCard"
-import { getPackageProgress } from "@/utils/package/getPackageProgress"
 import { SeparateSessionInfoCard } from "./separateSessionInfoCard"
 import { PackageSession } from "../session/packageSession"
-import { getNextSession } from "@/utils/sessions/getNextSessionDate"
 import { useEffect, useState } from "react"
 
 type PatientDetailsProps = {

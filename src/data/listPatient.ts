@@ -5,7 +5,7 @@ import { MapPinHouse, Phone, Send } from "lucide-react"
 export const listPatientData: ListPatient[] = [
   {
     id: 1,
-    image: "/person.png",
+    image: "/person.jpg",
     name: "Anna Souza",
     typeService: "Pacote",
 
@@ -94,7 +94,7 @@ export const listPatientData: ListPatient[] = [
 
   {
     id: 3,
-    image: "/person.png",
+    image: "/person.jpg",
     name: "Mariana Lima",
     typeService: "Pacote",
     startDate: new Date(2026, 1, 1),
@@ -201,7 +201,7 @@ export const listPatientData: ListPatient[] = [
 
   {
     id: 5,
-    image: "/person.png",
+    image: "/person.jpg",
     name: "Fernanda Costa",
     typeService: "Pacote",
     startDate: new Date(2026, 1, 11),
@@ -289,7 +289,7 @@ export const listPatientData: ListPatient[] = [
 
   {
     id: 7,
-    image: "/person.png",
+    image: "/person.jpg",
     name: "Beatriz Rocha",
     typeService: "Pacote",
     startDate: new Date(2026, 2, 2),
@@ -377,7 +377,7 @@ export const listPatientData: ListPatient[] = [
 
   {
     id: 9,
-    image: "/person.png",
+    image: "/person.jpg",
     name: "Camila Ribeiro",
     typeService: "Pacote",
     startDate: new Date(2026, 2, 10),
@@ -421,7 +421,7 @@ export const listPatientData: ListPatient[] = [
       packageId: "camila-package-1",
       startDate: new Date(2026, 2, 10),
       total: 8,
-      daysOfWeek: [2, 5],
+      daysOfWeek: [2],
       typeService: "Pacote",
     }),
   },

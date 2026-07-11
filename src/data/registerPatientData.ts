@@ -22,15 +22,15 @@ export const serviceTypeOptionsData: serviceTypeOptionsDataType[] = [
 
 export const InitialStep: StepType = {
   step1: {
-    active: false,
-    completed: true,
+    active: true,
+    completed: false,
   },
   step2: {
     active: false,
-    completed: true,
+    completed: false,
   },
   step3: {
-    active: true,
+    active: false,
     completed: false,
   },
 }

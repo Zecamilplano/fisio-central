@@ -1,4 +1,4 @@
-import { DatePicker } from "@/components/ui/dataPicker"
+import { DatePicker } from "@/components/ui/datePicker"
 import { daysOfWeek } from "@/data"
 import { DayOfWeek, TreatmentPackage } from "@/types"
 import { useEffect, useState } from "react"
@@ -79,8 +79,6 @@ export function AddSessionModal({
   }, [isOpen, currentPackage, patientType, suggestedPackageStartDate])
 
   if (!isOpen) return null
-
-  console.log("packageIsComplete", packageIsComplete)
 
   return (
     <div
