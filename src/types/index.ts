@@ -1,4 +1,4 @@
-export * from "./headerFormType"
+export * from "./subHeaderFormType"
 export * from "./registerPatientsTypes"
 export * from "./typeServiceType"
 export * from "./schedulingSessionsType"

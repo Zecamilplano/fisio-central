@@ -1,9 +1,9 @@
 import { useState } from "react"
-import { useGlobalPatient } from "@/context/patientContext"
+import { imageType } from "@/types"
 
-function useHeaderForm() {
+function useImageInput() {
   const [isDragging, setIsDragging] = useState(false)
-  const { image, setImage } = useGlobalPatient()
+  const [image, setImage] = useState<imageType>([])
 
   const dragEvents = {
     onDragEnter: (e: React.DragEvent<HTMLLabelElement>) => {
@@ -76,4 +76,4 @@ function useHeaderForm() {
   }
 }
 
-export default useHeaderForm
+export default useImageInput

@@ -2,13 +2,14 @@
 
 import Button from "@/components/ui/buttonCustom"
 import TypeOfService, {
-  HeaderFormRegister,
+  SubHeaderFormRegister,
   Profile,
   LineStep,
   StepBall,
   SchedulingSessions,
 } from "@/components/patient/"
 import { useRegisterPatient } from "@/hook/useRegisterPatient"
+import useImageInput from "@/hook/useImageInput"
 
 function RegisterPatient() {
   const {
@@ -27,6 +28,7 @@ function RegisterPatient() {
   } = useRegisterPatient()
 
   const { selectService, totalSessions } = formTypeService.serviceForm
+  const imageInput = useImageInput()
 
   return (
     <section className=" flex justify-center items-center">
@@ -65,7 +67,8 @@ function RegisterPatient() {
           {step1.active && (
             <>
               <header>
-                <HeaderFormRegister
+                <SubHeaderFormRegister
+                  img={imageInput}
                   title="Dados do Paciente"
                   subtitle="Preencha as informacoes basicas"
                   icon="person"
@@ -87,7 +90,7 @@ function RegisterPatient() {
           {step2.active && (
             <>
               <header>
-                <HeaderFormRegister
+                <SubHeaderFormRegister
                   title="Tipo de  atendimento"
                   subtitle="Escolha entre pacote ou sessoes avulsas"
                   icon="square"
@@ -110,7 +113,7 @@ function RegisterPatient() {
           {step3.active && (
             <>
               <header>
-                <HeaderFormRegister
+                <SubHeaderFormRegister
                   title={`${
                     selectService === "pacote"
                       ? "Agenda sessões do pacote"

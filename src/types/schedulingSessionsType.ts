@@ -1,4 +1,3 @@
-import { daysOfWeek } from "@/data/registerPatientData"
 import { TypeServiceType } from "./typeServiceType"
 
 export type summaryCardType = {
@@ -6,7 +5,6 @@ export type summaryCardType = {
   label: string
 }[]
 
-export type DayOfWeek = (typeof daysOfWeek)[number]
 export type PaymentType = "metade" | "integral" | "depois"
 
 export type Session_ = {

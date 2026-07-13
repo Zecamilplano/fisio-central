@@ -1,11 +1,15 @@
-import useHeaderForm from "@/hook/useHeaderForm"
-import { HeaderFormRegisterType } from "@/types/headerFormType"
+import { SubHeaderFormRegisterType } from "@/types/subHeaderFormType"
 import { Box, UserRoundPlus, X } from "lucide-react"
 import Image from "next/image"
 
-function HeaderFormRegister({ title, subtitle, icon }: HeaderFormRegisterType) {
-  const { dragEvents, isDragging, image, removeImage, handleFileChange } =
-    useHeaderForm()
+function SubHeaderFormRegister({
+  img,
+  title,
+  subtitle,
+  icon,
+}: SubHeaderFormRegisterType) {
+  if (!img) return null
+  const { dragEvents, isDragging, image, removeImage, handleFileChange } = img
 
   return (
     <fieldset className="font-montserrat my-8 flex flex-col items-center">
@@ -86,4 +90,4 @@ function HeaderFormRegister({ title, subtitle, icon }: HeaderFormRegisterType) {
     </fieldset>
   )
 }
-export default HeaderFormRegister
+export default SubHeaderFormRegister

@@ -1,5 +1,4 @@
 "use client"
-
 import { useGlobalPatient } from "@/context/patientContext"
 import { PatientOptionalType, PatientType } from "@/types/registerPatientsTypes"
 import { formatTelephone } from "@/utils/form/phone"

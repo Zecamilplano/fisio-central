@@ -1,5 +1,8 @@
+import useImageInput from "@/hook/useImageInput"
+
 // Header form
-export type HeaderFormRegisterType = {
+export type SubHeaderFormRegisterType = {
+  img?: ReturnType<typeof useImageInput>
   title: string
   subtitle: string
   icon: "person" | "square"
