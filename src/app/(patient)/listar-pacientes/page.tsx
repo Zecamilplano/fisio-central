@@ -1,14 +1,11 @@
 "use client"
 import { PatientDetails } from "@/components/patient/list/patientDetails"
-import "../../../styles/modal.css"
 import { listPatientData } from "@/data"
-import type { ListPatient, PaidKey } from "@/types/"
+import type { ListPatient } from "@/types/"
 import { useState } from "react"
-import { SessionCardProvider } from "@/context/sessionCardContext"
 import { PatientSidebar } from "@/components/patient/list/patientSidebar"
 import { SubHeaderPatientList } from "@/components/patient/list/subHeaderPatient"
 import { PatientEmptyState } from "@/components/patient/list/patientEmptyState"
-import { usePatientSessions } from "@/hook/usePatientSessions"
 
 function ListPatient() {
   const [listPatient, setListPatient] = useState<ListPatient[]>(listPatientData)
@@ -16,20 +13,8 @@ function ListPatient() {
   const [selectedPatientId, setSelectedPatientId] = useState<number | null>(
     null
   )
-  const {
-    selectedPatient,
-    openSessionId,
-    setOpenSessionId,
-    selectedSessions,
-    deletingSessionId,
-    openDeleteModal,
-    handleChange,
-    handleSelectSession,
-  } = usePatientSessions({
-    listPatient,
-    setListPatient,
-    selectedPatientId,
-  })
+  const selectedPatient =
+    listPatient.find((patient) => patient.id === selectedPatientId) ?? null
 
   return (
     <section className="font-open-sans ">
