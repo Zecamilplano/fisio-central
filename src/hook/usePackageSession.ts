@@ -2,20 +2,7 @@ import type { DayOfWeek, ListPatient, PaidKey, Session } from "@/types"
 import { addDays, format, getDay, parseISO } from "date-fns"
 import { useEffect, useState } from "react"
 import { toast } from "react-toastify"
-
-type UsePackageSession = {
-  patient: ListPatient
-  setListPatient: React.Dispatch<React.SetStateAction<ListPatient[]>>
-  currentPackageIndex: number
-}
-
-type DeleteModal = {
-  isOpen: boolean
-  sessionId: string | null
-  sessionNumber: number | null
-}
-
-type SessionChangeField = "finish" | "paid" | "date" | "time"
+import { UsePackageSession, SessionChangeField, DeleteModal } from "@/types"
 
 const weekDayMap = {
   Domingo: 0,

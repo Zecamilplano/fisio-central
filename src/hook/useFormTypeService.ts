@@ -5,6 +5,7 @@ const serviceFormData: ServiceForm = {
   selectService: null,
   totalSessions: null,
   selectPackage: null,
+  priceSession: "60",
 }
 
 const STORAGE_KEY = "typeServiceForm"
@@ -20,7 +21,6 @@ function useFormTypeService() {
   })
   const [error, setError] = useState<ErrorTypeService | null>(null)
   const [submitted, setSubmitted] = useState(false)
-  const prevService = useRef("")
 
   const inputRef = useRef<HTMLInputElement | null>(null)
   const isCustom = serviceForm?.selectPackage === "custom"
@@ -43,12 +43,7 @@ function useFormTypeService() {
     field: K,
     value: (typeof serviceForm)[K]
   ) {
-    console.log(field, typeof field)
-    const changedOption =
-      field === "selectService" && value !== serviceForm.selectService
-    if (changedOption) {
-      console.log("Service modified")
-    }
+    console.log(`field ${field}: value ${value}`)
 
     setServiceForm((prev) => {
       const newData = { ...prev, [field]: value }

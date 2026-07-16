@@ -19,6 +19,7 @@ export type ServiceForm = {
   selectService: TypeServiceType | null
   totalSessions: number | null
   selectPackage: PackageSelectType | null
+  priceSession: string
 }
 
 export type typeOfServiceParams = {

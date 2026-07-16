@@ -1,4 +1,4 @@
-import { summaryCardType, StepType } from "@/types/"
+import { StepType, summaryCardType } from "@/types/"
 import {
   serviceTypeOptionsDataType,
   totalNumberSessionType,
@@ -22,11 +22,11 @@ export const serviceTypeOptionsData: serviceTypeOptionsDataType[] = [
 
 export const InitialStep: StepType = {
   step1: {
-    active: true,
+    active: false,
     completed: false,
   },
   step2: {
-    active: false,
+    active: true,
     completed: false,
   },
   step3: {

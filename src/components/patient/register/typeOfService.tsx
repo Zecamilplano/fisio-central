@@ -4,6 +4,7 @@ import {
   totalNumberSession,
 } from "@/data/registerPatientData"
 import { useFormTypeService } from "@/hook/useFormTypeService"
+import { NumericFormat } from "react-number-format"
 
 type TypeOfServiceProps = {
   form: ReturnType<typeof useFormTypeService>
@@ -154,6 +155,42 @@ function TypeOfService({ form }: TypeOfServiceProps) {
         </fieldset>
       )}
       {/*Botões de total de sessões por pacote*/}
+
+      {/*Input de preço da sessão*/}
+      <div className="flex flex-col shrink-0">
+        <label
+          htmlFor="priceSession"
+          className=" text-lg text-right text-[#FFA726] font-medium w-full flex items-center gap-1"
+        >
+          Preço da sessão
+        </label>
+
+        <div className="relative w-32">
+          <NumericFormat
+            value={serviceForm.priceSession}
+            thousandSeparator="."
+            decimalSeparator=","
+            decimalScale={2}
+            fixedDecimalScale
+            prefix="R$ "
+            allowNegative={false}
+            allowLeadingZeros={false}
+            onValueChange={(values) =>
+              handleChange("priceSession", values.value || "0")
+            }
+            isAllowed={(values) => values.value.length <= 6}
+            className="w-full rounded-md border-2 border-[#EAECF0] px-3 py-2 text-[#333] focus:border-[#FFA726] focus:outline-none"
+          />
+        </div>
+
+        {/* {errorPatient.addressNumber && ( */}
+        {/*   <> */}
+        {/*     <span className="flex  text-[red] pl-2 pt-1 "> */}
+        {/*       {errorPatient.addressNumber} */}
+        {/*     </span> */}
+        {/*   </> */}
+        {/* )} */}
+      </div>
     </section>
   )
 }
