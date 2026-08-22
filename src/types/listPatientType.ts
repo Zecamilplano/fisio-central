@@ -1,3 +1,4 @@
+import { Evolution } from "@/components/patient/evolution"
 import { daysOfWeek } from "@/data"
 import { LucideIcon } from "lucide-react"
 
@@ -42,6 +43,8 @@ export type Session = {
   time?: string
   finish: boolean
   paid: PaidKey
+
+  evolution?: Evolution
 }
 
 export type UsePackageSession = {

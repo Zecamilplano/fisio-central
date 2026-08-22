@@ -95,3 +95,26 @@ input:-webkit-autofill {
 *::-webkit-scrollbar-thumb:hover {
   background: #6b7280;
 }
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(-3px);
+  }
+
+  50% {
+    transform: translateX(3px);
+  }
+
+  75% {
+    transform: translateX(-2px);
+  }
+}
+
+.animate-shake {
+  animation: shake 0.25s ease-in-out;
+}

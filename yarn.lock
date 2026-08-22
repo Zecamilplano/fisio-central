@@ -771,6 +771,11 @@ styled-jsx@5.1.6:
   dependencies:
     client-only "0.0.1"
 
+tailwind-variants@^3.3.1:
+  version "3.3.1"
+  resolved "https://registry.yarnpkg.com/tailwind-variants/-/tailwind-variants-3.3.1.tgz#7eca8fac48ad83fe9c9e1424a379e8411ed3f5ca"
+  integrity sha512-4pAvwUtM4HKBiRZftncAbpn6V9Hhwoa5Fl7O2u5zbp7Z5Cvu+/o/6+176WY3WCEES209543quG8zFIcXCsc5Jw==
+
 tailwindcss@4.2.0:
   version "4.2.0"
   resolved "https://registry.npmjs.org/tailwindcss/-/tailwindcss-4.2.0.tgz"

@@ -85,14 +85,6 @@ export function PackageSession({
       : [...patient.session].sort(
           (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
         )
-  console.log(
-    "visibleSession",
-    visibleSession.map((session) => ({
-      id: session.id,
-      number: session.number,
-      date: session.date,
-    }))
-  )
 
   return (
     <section className="rounded-md bg-white px-2 py-3">
