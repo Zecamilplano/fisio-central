@@ -1,12 +1,10 @@
 import { PaidKey } from "@/types"
-import { Check, Clock3, Wallet, LucideIcon } from "lucide-react"
 
-export type StatusSessaoKey = "realizado" | "pendente"
+export type StatusSessaoKey = "realizado" | "pendente" | "cancelado"
 
 export interface StatusConfig {
   label: string
-  value: boolean
-  Icon: LucideIcon
+  value: StatusSessaoKey
 
   button: {
     active: string
@@ -31,8 +29,7 @@ type StatusSessao = {
 export const statusConfig: Record<StatusSessaoKey, StatusConfig> = {
   realizado: {
     label: "Realizado",
-    value: true,
-    Icon: Check,
+    value: "realizado",
 
     button: {
       active: "bg-emerald-100 text-emerald-700",
@@ -42,20 +39,27 @@ export const statusConfig: Record<StatusSessaoKey, StatusConfig> = {
 
   pendente: {
     label: "Pendente",
-    value: false,
-    Icon: Clock3,
+    value: "pendente",
 
     button: {
       active: "bg-amber-100 text-amber-700",
       inactive: "text-slate-500 hover:bg-slate-100 hover:text-slate-900",
     },
   },
+  cancelado: {
+    label: "Cancelado",
+    value: "cancelado",
+    button: {
+      active: "bg-slate-100 text-slate-700 border border-slate-300",
+      inactive: "text-slate-500 hover:bg-slate-100 hover:text-slate-900",
+    },
+  },
 } as const
 
 export const pagamentoConfig: Record<PaidKey, PagamentoConfig> = {
-  pago: {
-    label: "PAGO",
-    value: "pago",
+  realizado: {
+    label: "Realizado",
+    value: "realizado",
     button: {
       active: "bg-emerald-100 text-emerald-700",
       inactive: "text-slate-500 hover:bg-slate-100 hover:text-slate-900",
@@ -91,11 +95,16 @@ export const statusRealizacao: Record<StatusSessaoKey, StatusSessao> = {
     label: "Pendente",
     className: "bg-amber-100 text-amber-700 border border-amber-200",
   },
+
+  cancelado: {
+    label: "Cancelado",
+    className: "bg-slate-100 text-slate-700 border border-slate-300",
+  },
 }
 
-export const statusPagamento = {
-  pago: {
-    label: "Pago",
+export const statusPagamento: Record<StatusSessaoKey, StatusSessao> = {
+  realizado: {
+    label: "Realizado",
     className: "bg-emerald-100 text-emerald-700 border border-emerald-200",
   },
 
@@ -127,7 +136,7 @@ export const sessionActions = [
 
 export const paymentActions = [
   {
-    value: "pago",
+    value: "realizado",
     label: "Pago",
     active: "bg-green-100 text-green-700 border-green-200",
     inactive: "bg-white border-[#EAECF0] text-[#667085]",

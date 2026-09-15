@@ -1,15 +1,9 @@
-import { Evolution } from "@/components/patient/evolution"
 import { daysOfWeek } from "@/data"
 import { LucideIcon } from "lucide-react"
+import { Session } from "./session"
 
 export type TypeService = "Pacote" | "Sessão avulsa"
-
-export type PaidKey = "pendente" | "pago" | "cancelado"
-
-export type SessionChangeField = "finish" | "paid" | "date" | "time"
-
 export type ContactInfoKey = "tel" | "address" | "reference"
-
 export type DayOfWeek = (typeof daysOfWeek)[number]
 
 type ContactInfoData = {
@@ -34,29 +28,10 @@ export type TreatmentPackage = {
   current: boolean
 }
 
-export type Session = {
-  id: string
-  number: number
-  packageId?: string
-  date: string
-  originalDate?: Date
-  time?: string
-  finish: boolean
-  paid: PaidKey
-
-  evolution?: Evolution
-}
-
 export type UsePackageSession = {
   patient: ListPatient
   setListPatient: React.Dispatch<React.SetStateAction<ListPatient[]>>
   currentPackageIndex: number
-}
-
-export type DeleteModal = {
-  isOpen: boolean
-  sessionId: string | null
-  sessionNumber: number | null
 }
 
 export type SeparateSessionInfo = {

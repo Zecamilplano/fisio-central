@@ -1,4 +1,4 @@
-import type { ListPatient } from "@/types"
+import type { ListPatient, SessionController } from "@/types"
 import { format, parseISO } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { ChevronLeft, ChevronRight, History } from "lucide-react"
@@ -9,12 +9,14 @@ type CurrentPackageCardProps = {
   patient: Extract<ListPatient, { typeService: "Pacote" }>
   currentPackageIndex: number
   setCurrentPackageIndex: React.Dispatch<React.SetStateAction<number>>
+  sessionController: SessionController
 }
 
 export function CurrentPackageCard({
   patient,
   currentPackageIndex,
   setCurrentPackageIndex,
+  sessionController,
 }: CurrentPackageCardProps) {
   const [openHistoryModal, setOpenHistoryModal] = useState(false)
 
@@ -25,7 +27,7 @@ export function CurrentPackageCard({
   )
 
   const completedSessions = packageSessions.filter(
-    (session) => session.finish
+    (session) => session.finish === "realizado"
   ).length
 
   const remainingSessions = currentPackage.totalSessions - completedSessions
@@ -40,7 +42,13 @@ export function CurrentPackageCard({
     progress,
   }
 
-  const nextSession = packageSessions.find((session) => !session.finish) ?? null
+  const nextSession = packageSessions
+    .filter((session) => session.finish === "pendente")
+    .sort((a, b) => a.date.localeCompare(b.date))[0]
+
+  const nextSessionFormated = nextSession
+    ? format(new Date(nextSession.date), "EEEE, dd/MM/yyyy", { locale: ptBR })
+    : "Nenhuma"
 
   const isFirstPackage = currentPackageIndex === 0
   const isLastPackage = currentPackageIndex === patient.packages.length - 1
@@ -188,10 +196,8 @@ export function CurrentPackageCard({
         <article className="rounded-xl bg-[#F9FAFB] p-4">
           <dl>
             <dt className="text-sm text-[#667085]">Próxima sessão</dt>
-            <dd className="mt-2 font-semibold text-[#101828]">
-              {nextSession
-                ? format(parseISO(nextSession.date), "dd/MM/yyyy")
-                : "Nenhuma"}
+            <dd className="mt-2 capitalize font-semibold text-[#101828]">
+              {nextSessionFormated}
             </dd>
 
             {nextSession && (
@@ -207,14 +213,20 @@ export function CurrentPackageCard({
         <button
           type="button"
           onClick={() => setOpenHistoryModal(true)}
-          className="flex items-center gap-2 rounded-lg border border-[#D0D5DD] bg-white px-4 py-2 text-sm font-medium text-[#344054] transition-colors hover:bg-[#F9FAFB]"
+          className="flex items-center gap-2 rounded-lg border border-[#D0D5DD] bg-white px-4 py-2 text-sm font-medium text-[#344054] transition-colors hover:bg-[#F9FAFB] cursor-pointer"
         >
           <History size={16} />
           Histórico
         </button>
       </div>
 
-      {openHistoryModal === true && <PackageHistoryModal />}
+      {openHistoryModal === true && (
+        <PackageHistoryModal
+          patient={patient}
+          onClose={() => setOpenHistoryModal(false)}
+          sessionController={sessionController}
+        />
+      )}
     </section>
   )
 }

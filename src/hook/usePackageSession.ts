@@ -3,6 +3,7 @@ import { addDays, format, getDay, parseISO } from "date-fns"
 import { useEffect, useState } from "react"
 import { toast } from "react-toastify"
 import { UsePackageSession, SessionChangeField, DeleteModal } from "@/types"
+import { StatusSessaoKey } from "@/data/optionsSessionsData"
 
 const weekDayMap = {
   Domingo: 0,
@@ -43,15 +44,15 @@ function usePackageSession({
 
   const allFinished =
     selectedSessionItems.length > 0 &&
-    selectedSessionItems.every((session) => session.finish === true)
+    selectedSessionItems.every((session) => session.finish === "realizado")
 
   const allPending =
     selectedSessionItems.length > 0 &&
-    selectedSessionItems.every((session) => session.finish === false)
+    selectedSessionItems.every((session) => session.finish === "pendente")
 
   const allPaid =
     selectedSessionItems.length > 0 &&
-    selectedSessionItems.every((session) => session.paid === "pago")
+    selectedSessionItems.every((session) => session.paid === "realizado")
 
   const allCancelled =
     selectedSessionItems.length > 0 &&
@@ -69,8 +70,6 @@ function usePackageSession({
     selectedSessions.length > 0 &&
     selectedSessions.length === patient.session.length
 
-  const isSingleSession = patient?.typeService === "Sessão avulsa"
-
   const currentPackage =
     patient.typeService === "Pacote"
       ? patient.packages[currentPackageIndex]
@@ -84,13 +83,60 @@ function usePackageSession({
       : []
 
   const completedCurrentPackageSessions = currentPackageSessions.filter(
-    (session) => session.finish
+    (session) => session.finish === "realizado"
   ).length
 
   const packageIsComplete =
     patient.typeService === "Pacote" && currentPackage
       ? completedCurrentPackageSessions >= currentPackage.totalSessions
       : false
+
+  const selectedStatus = {
+    finish: {
+      allFinished:
+        selectedSessionItems.length > 0 &&
+        selectedSessionItems.every((session) => session.finish === "realizado"),
+
+      allPending:
+        selectedSessionItems.length > 0 &&
+        selectedSessionItems.every((session) => session.finish === "pendente"),
+
+      allCancelled:
+        selectedSessionItems.length > 0 &&
+        selectedSessionItems.every((session) => session.finish === "cancelado"),
+    },
+
+    payment: {
+      allPaid:
+        selectedSessionItems.length > 0 &&
+        selectedSessionItems.every((session) => session.paid === "realizado"),
+
+      allPending:
+        selectedSessionItems.length > 0 &&
+        selectedSessionItems.every((session) => session.paid === "pendente"),
+
+      allCancelled:
+        selectedSessionItems.length > 0 &&
+        selectedSessionItems.every((session) => session.paid === "cancelado"),
+    },
+  }
+
+  const selectedActions = {
+    finish: {
+      markFinished: () => changeFinishStatus("realizado"),
+      markPending: () => changeFinishStatus("pendente"),
+      markCancelled: () => changeFinishStatus("cancelado"),
+    },
+
+    payment: {
+      markPaid: () => changePaymentStatus("realizado"),
+      markPending: () => changePaymentStatus("pendente"),
+      markCancelled: () => changePaymentStatus("cancelado"),
+    },
+
+    clear: clearSelection,
+    delete: openSelectedDeleteModal,
+  }
 
   const suggestedPackageStartDate =
     currentPackage && currentPackageSessions.length > 0
@@ -99,6 +145,7 @@ function usePackageSession({
           currentPackage.fixedWeekDays
         )
       : new Date()
+
   function clearSelection() {
     setSelectedSessions([])
   }
@@ -108,6 +155,12 @@ function usePackageSession({
       prev.includes(sessionId)
         ? prev.filter((item) => item !== sessionId)
         : [...prev, sessionId]
+    )
+  }
+
+  function handleToggleSession(sessionId: string) {
+    setOpenSessionId((currentId) =>
+      currentId === sessionId ? null : sessionId
     )
   }
 
@@ -137,7 +190,7 @@ function usePackageSession({
   function openDeleteModal(sessionId: string, sessionNumber: number) {
     const session = patient.session.find((item) => item.id === sessionId)
 
-    if (session?.finish) {
+    if (session?.finish === "realizado") {
       toast.error(
         `A sessão #${session.number} já foi realizada e não pode ser excluída.`
       )
@@ -155,58 +208,116 @@ function usePackageSession({
   function handleChange(
     sessionId: string,
     field: SessionChangeField,
-    value: boolean | PaidKey | string
+    value: StatusSessaoKey | PaidKey | string
   ) {
     setListPatient((prev) =>
       prev.map((item) => {
         if (item.id !== patient.id) return item
 
+        // REALIZAÇÃO
+        if (field === "finish") {
+          return {
+            ...item,
+            session: item.session.map((session) =>
+              session.id === sessionId
+                ? {
+                    ...session,
+                    finish: value as StatusSessaoKey,
+                  }
+                : session
+            ),
+          }
+        }
+
+        // PAGAMENTO / CANCELAMENTO
+        if (field === "paid") {
+          return {
+            ...item,
+            session: item.session.map((session) =>
+              session.id === sessionId
+                ? {
+                    ...session,
+                    paid: value as PaidKey,
+                  }
+                : session
+            ),
+          }
+        }
+
+        // REAGENDAMENTO
         if (field === "date") {
           const changedSession = item.session.find(
             (session) => session.id === sessionId
           )
 
-          if (!changedSession?.packageId) {
+          if (!changedSession) return item
+
+          // Sessão avulsa
+          if (!changedSession.packageId) {
             return {
               ...item,
               session: item.session.map((session) =>
                 session.id === sessionId
-                  ? { ...session, date: String(value) }
+                  ? {
+                      ...session,
+                      date: String(value),
+                    }
                   : session
               ),
             }
           }
 
+          if (item.typeService !== "Pacote") return item
+
+          const currentPackage = item.packages.find(
+            (packageItem) => packageItem.id === changedSession.packageId
+          )
+
+          if (!currentPackage) return item
+
           const packageSessions = item.session
             .filter((session) => session.packageId === changedSession.packageId)
             .sort((a, b) => a.number - b.number)
-
-          const otherSessions = item.session.filter(
-            (session) => session.packageId !== changedSession.packageId
-          )
 
           const changedIndex = packageSessions.findIndex(
             (session) => session.id === sessionId
           )
 
-          const oldDates = packageSessions.map((session) => session.date)
+          if (changedIndex === -1) return item
 
-          const updatedPackageSessions = packageSessions.map(
-            (session, index) => {
-              if (index < changedIndex) return session
+          const updatedPackageSessions: Session[] = []
 
-              if (index === changedIndex) {
-                return {
-                  ...session,
-                  date: String(value),
-                }
-              }
+          for (let index = 0; index < packageSessions.length; index++) {
+            const session = packageSessions[index]
 
-              return {
-                ...session,
-                date: oldDates[index - 1],
-              }
+            if (index < changedIndex) {
+              updatedPackageSessions.push(session)
+              continue
             }
+
+            if (index === changedIndex) {
+              updatedPackageSessions.push({
+                ...session,
+                date: String(value),
+              })
+              continue
+            }
+
+            const previousSession = updatedPackageSessions[index - 1]
+
+            const nextDate = getNextPackageDate(
+              parseISO(previousSession.date),
+              currentPackage.fixedWeekDays
+            )
+
+            updatedPackageSessions.push({
+              ...session,
+              date: format(nextDate, "yyyy-MM-dd"),
+            })
+          }
+
+          const otherSessions = item.session.filter(
+            (session) => session.packageId !== changedSession.packageId
           )
 
           return {
@@ -215,83 +326,12 @@ function usePackageSession({
           }
         }
 
-        const changedSession = item.session.find(
-          (session) => session.id === sessionId
-        )
-
-        if (!changedSession?.packageId) {
-          return {
-            ...item,
-            session: item.session.map((session) =>
-              session.id === sessionId
-                ? { ...session, date: String(value) }
-                : session
-            ),
-          }
-        }
-
-        if (item.typeService !== "Pacote") return item
-
-        const currentPackage = item.packages.find(
-          (packageItem) => packageItem.id === changedSession.packageId
-        )
-
-        if (!currentPackage) return item
-
-        const packageSessions = item.session
-          .filter((session) => session.packageId === changedSession.packageId)
-          .sort((a, b) => a.number - b.number)
-
-        const changedIndex = packageSessions.findIndex(
-          (session) => session.id === sessionId
-        )
-
-        if (changedIndex === -1) return item
-
-        const updatedPackageSessions: Session[] = []
-
-        for (let index = 0; index < packageSessions.length; index++) {
-          const session = packageSessions[index]
-
-          if (index < changedIndex) {
-            updatedPackageSessions.push(session)
-            continue
-          }
-
-          if (index === changedIndex) {
-            updatedPackageSessions.push({
-              ...session,
-              date: String(value),
-            })
-            continue
-          }
-
-          const previousSession = updatedPackageSessions[index - 1]
-
-          const nextDate = getNextPackageDate(
-            parseISO(previousSession.date),
-            currentPackage.fixedWeekDays
-          )
-
-          updatedPackageSessions.push({
-            ...session,
-            date: format(nextDate, "yyyy-MM-dd"),
-          })
-        }
-
-        const otherSessions = item.session.filter(
-          (session) => session.packageId !== changedSession.packageId
-        )
-
-        return {
-          ...item,
-          session: [...otherSessions, ...updatedPackageSessions],
-        }
+        return item
       })
     )
   }
 
-  function changeFinishStatus(value: boolean) {
+  function changeFinishStatus(value: StatusSessaoKey) {
     setListPatient((prev) =>
       prev.map((item) => {
         if (item.id !== patient.id) return item
@@ -351,7 +391,7 @@ function usePackageSession({
       packageId: lastSession.packageId,
       number: sessions.length + 1,
       date: format(nextDate, "yyyy-MM-dd"),
-      finish: false,
+      finish: "pendente",
       paid: "pendente",
     }
   }
@@ -365,7 +405,8 @@ function usePackageSession({
     if (sessionsToDelete.length === 0) return
 
     const hasFinishedSession = patient.session.some(
-      (session) => sessionsToDelete.includes(session.id) && session.finish
+      (session) =>
+        sessionsToDelete.includes(session.id) && session.finish === "realizado"
     )
 
     if (hasFinishedSession) {
@@ -437,7 +478,7 @@ function usePackageSession({
     if (selectedSessionItems.length === 0) return
 
     const hasFinishedSession = selectedSessionItems.some(
-      (session) => session.finish
+      (session) => session.finish === "realizado"
     )
 
     if (hasFinishedSession) {
@@ -466,7 +507,7 @@ function usePackageSession({
       number: createSessionNumber(sessions),
       packageId,
       date: date.toISOString(),
-      finish: false,
+      finish: "pendente",
       paid: "pendente",
     }
   }
@@ -577,7 +618,7 @@ function usePackageSession({
         packageId: data.packageId,
         number: index + 1,
         date: sessionDate.toISOString(),
-        finish: false,
+        finish: "pendente",
         paid: "pendente",
       })
 
@@ -675,12 +716,7 @@ function usePackageSession({
     selectionState: {
       selectedSessions,
       allSessionsSelected,
-      isSingleSession,
-      allFinished,
-      allPending,
-      allPaid,
-      allUnpaid,
-      allCancelled,
+      selectedStatus,
     },
 
     deleteState: {
@@ -691,6 +727,7 @@ function usePackageSession({
 
     sessionActions: {
       setOpenSessionId,
+      handleToggleSession,
       handleChange,
       openDeleteModal,
       addSeparateSession,
@@ -706,6 +743,7 @@ function usePackageSession({
       handleSelectAllSessions,
       changeFinishStatus,
       changePaymentStatus,
+      selectedActions,
     },
 
     deleteActions: {
@@ -718,3 +756,5 @@ function usePackageSession({
 }
 
 export { usePackageSession }
+
+export type UsePackageSessionReturn = ReturnType<typeof usePackageSession>

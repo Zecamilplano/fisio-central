@@ -135,14 +135,14 @@ export function DeleteSessionModal({
         <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 rounded-full bg-slate-100 px-4 py-2 font-medium text-slate-700 outline-none transition-all hover:bg-slate-200"
+            className="flex-1 rounded-full bg-slate-100 px-4 py-2 font-medium text-slate-700 outline-none transition-all hover:bg-slate-200 cursor-pointer"
           >
             Cancelar
           </button>
 
           <button
             onClick={onConfirm}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 font-medium outline-none transition-all ${
+            className={`flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 font-medium outline-none transition-all cursor-pointer ${
               isDeletingAllSessions
                 ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
                 : "bg-red-100 text-red-700 hover:bg-red-200"

@@ -3,8 +3,14 @@ import {
   statusConfig,
   statusPagamento,
   statusRealizacao,
+  StatusSessaoKey,
 } from "@/data/optionsSessionsData"
-import type { Session } from "@/types"
+import type {
+  PaidKey,
+  Session,
+  SessionChangeField,
+  SessionChangeValue,
+} from "@/types"
 import { createTimeOptions } from "@/utils/sessions/createTimeOptions"
 import { format, parseISO } from "date-fns"
 import { ptBR } from "date-fns/locale"
@@ -16,6 +22,7 @@ import EvolutionView from "../evolution/evolutionView"
 import Modal from "@/components/ui/modal"
 import { EvolutionFormData, EvolutionSaveData } from "../evolution"
 import EvolutionForm from "../evolution/evolutionForm"
+import { cn } from "tailwind-variants"
 
 type SessionCardProps = {
   session: Session
@@ -28,8 +35,8 @@ type SessionCardProps = {
   onOpenDeleteModal: (sessionId: string, sessionNumber: number) => void
   onChangeSession: (
     sessionId: string,
-    field: "finish" | "paid" | "date" | "time",
-    value: boolean | string
+    field: SessionChangeField,
+    value: SessionChangeValue
   ) => void
 }
 
@@ -84,8 +91,13 @@ export function SessionCard({
       <li
         className={`
         w-full rounded-2xl border border-[#EAECF0] bg-[#FCFCFD] px-4 py-3
-        transition-all duration-300 ease-in-out hover:border-[#D0D5DD] hover:shadow-sm
-        ${isDeleting ? "translate-x-40 scale-95 opacity-0" : "translate-x-0 scale-100 opacity-100"}
+        transition-all duration-300 ease-in-out
+        hover:border-[#D0D5DD] hover:shadow-sm
+        ${
+          isDeleting
+            ? "translate-x-40 scale-95 opacity-0"
+            : "translate-x-0 scale-100 opacity-100"
+        }
         ${isOpen ? "col-span-2" : ""}
       `}
       >
@@ -93,7 +105,7 @@ export function SessionCard({
           <div className="flex w-full flex-col">
             <div className="flex w-full flex-wrap justify-between md:flex-nowrap">
               <div className="flex w-full flex-col gap-3 pb-2 md:flex-row md:items-center">
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center justify-left gap-3">
                   <div className="flex items-center gap-2">
                     <label className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-md border border-[#D0D5DD] bg-white">
                       <input
@@ -110,15 +122,20 @@ export function SessionCard({
                       />
                     </label>
 
-                    <span
-                      className={`flex h-9 w-9 items-center justify-center rounded-full text-lg font-medium ${
-                        session.finish
-                          ? "bg-emerald-100 text-emerald-700"
-                          : "bg-[#FEF3C7] text-[#D97706]"
-                      }`}
-                    >
-                      {session.number}
-                    </span>
+                    {(() => {
+                      const status = statusRealizacao[session.finish]
+
+                      return (
+                        <span
+                          className={cn(
+                            "flex h-9 w-9 items-center justify-center rounded-full text-lg font-medium",
+                            status.className
+                          )}
+                        >
+                          {session.number}
+                        </span>
+                      )
+                    })()}
                   </div>
 
                   <div className="flex flex-col leading-tight">
@@ -131,6 +148,7 @@ export function SessionCard({
 
                     <p className="rounded-full text-xs text-slate-400">
                       {weekDay}
+
                       {hasCustomTime && (
                         <span className="ml-1 font-medium text-[#F79009]">
                           • {session.time}
@@ -141,23 +159,20 @@ export function SessionCard({
                 </div>
               </div>
 
-              <div className="hidden w-full justify-between items-center gap-3 text-sm md:flex md:justify-end">
+              <div className="hidden w-full items-center justify-between gap-3 text-sm md:flex md:justify-end">
                 <div className="flex flex-col font-medium">
                   <span className="px-3 py-2 text-xs text-slate-600 uppercase">
                     Realização
                   </span>
 
                   {(() => {
-                    const status =
-                      statusRealizacao[
-                        session.finish ? "realizado" : "pendente"
-                      ]
+                    const status = statusRealizacao[session.finish]
 
                     return (
                       <span
-                        className={`rounded-full border px-3 py-1 text-sm ${status.className}`}
+                        className={`rounded-full border px-3 py-1 text-sm capitalize ${status.className}`}
                       >
-                        {session.finish ? "Realizado" : "Pendente"}
+                        {session.finish}
                       </span>
                     )
                   })()}
@@ -173,6 +188,7 @@ export function SessionCard({
 
                     return (
                       <button
+                        type="button"
                         className={`rounded-full border px-3 py-1 text-sm font-medium ${pay.className}`}
                       >
                         {pay.label}
@@ -203,8 +219,13 @@ export function SessionCard({
           </div>
 
           <button
+            type="button"
             onClick={onToggleOpen}
             className="ml-4 flex cursor-pointer items-center justify-center self-center outline-none"
+            aria-expanded={isOpen}
+            aria-label={
+              isOpen ? "Fechar opções da sessão" : "Abrir opções da sessão"
+            }
           >
             <ChevronDown
               size={20}
@@ -242,6 +263,7 @@ export function SessionCard({
                 setEvolutionMode("view")
                 return
               }
+
               setEvolutionMode(null)
             }}
             onSave={(data) => {

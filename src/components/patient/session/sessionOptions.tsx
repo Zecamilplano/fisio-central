@@ -1,18 +1,32 @@
 import { format } from "date-fns"
 import { Trash2 } from "lucide-react"
 import { DatePicker } from "@/components/ui/datePicker"
+import {
+  PagamentoConfig,
+  StatusConfig,
+  StatusSessaoKey,
+} from "@/data/optionsSessionsData"
+import { PaidKey, Session } from "@/types"
+
+type SessionFieldValue = {
+  finish: StatusSessaoKey
+  paid: PaidKey
+  date: string
+  time: string
+}
 
 type SessionOptionsProps = {
-  session: any
+  session: Session
   convertDate: Date | undefined
   defaultTime: string
   timeOptions: string[]
-  statusConfig: any
-  pagamentoConfig: any
-  onChangeSession: (
+
+  statusConfig: Record<StatusSessaoKey, StatusConfig>
+  pagamentoConfig: Record<PaidKey, PagamentoConfig>
+  onChangeSession: <K extends keyof SessionFieldValue>(
     sessionId: string,
-    field: "finish" | "paid" | "date" | "time",
-    value: boolean | string
+    field: K,
+    value: SessionFieldValue[K]
   ) => void
   onOpenDeleteModal: (sessionId: string, sessionNumber: number) => void
 }
@@ -32,15 +46,14 @@ export function SessionOptions({
       <div className="h-px w-full bg-linear-to-r from-transparent via-[#E4E7EC] to-transparent" />
 
       <div className="mt-3 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <div className="grid flex-1 grid-cols-1 items-stretch gap-3 lg:grid-cols-3">
+        <div className="flex flex-1 gap-3 flex-wrap">
           <section className="rounded-md border border-[#EAECF0] bg-white p-3">
             <h4 className="mb-2 text-xs font-semibold tracking-wide text-[#667085] uppercase">
               Realização
             </h4>
 
-            <div className="flex flex-wrap gap-1">
-              {Object.values(statusConfig).map((status: any) => {
-                const Icon = status.Icon
+            <div className="min-w-55 max-w-70 flex-1 flex flex-col gap-1">
+              {Object.values(statusConfig).map((status) => {
                 const isActive = session.finish === status.value
 
                 return (
@@ -54,7 +67,6 @@ export function SessionOptions({
                       isActive ? status.button.active : status.button.inactive
                     }`}
                   >
-                    <Icon size={16} />
                     {status.label}
                   </button>
                 )
@@ -67,7 +79,7 @@ export function SessionOptions({
               Pagamento
             </h4>
 
-            <div className="flex flex-col gap-1">
+            <div className="min-w-55 max-w-70 flex-1 flex flex-col gap-1">
               {Object.values(pagamentoConfig).map((pay: any) => {
                 const isActive = session.paid === pay.value
 
@@ -89,16 +101,15 @@ export function SessionOptions({
             </div>
           </section>
 
-          <section className="flex h-full flex-col rounded-md border border-[#EAECF0] bg-white p-3">
+          <section className=" flex h-full flex-col rounded-md border border-[#EAECF0] bg-white p-3">
             <h4 className="mb-2 text-xs font-semibold tracking-wide text-[#667085] uppercase">
               Horário
             </h4>
 
-            <div className="flex flex-col gap-2">
+            <div className="min-w-55 flex flex-col gap-2">
               <DatePicker
                 date={convertDate || new Date()}
                 setDate={(value) => {
-                  console.log("DATEPICKER VALUE:", value)
                   onChangeSession(
                     session.id,
                     "date",
@@ -106,17 +117,6 @@ export function SessionOptions({
                   )
                 }}
               />
-              <button
-                type="button"
-                onClick={() => {
-                  console.log("BOTÃO TESTE CLICOU")
-                  onChangeSession(session.id, "date", "2026-03-13")
-                }}
-                className="rounded bg-red-500 px-3 py-1 text-white"
-              >
-                Testar data
-              </button>
-              <span>ID: {session.id.slice(0, 4)}</span>
               <select
                 value={session.time ?? defaultTime}
                 onChange={(e) =>

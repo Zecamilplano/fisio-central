@@ -1,22 +1,23 @@
 import { CalendarDays } from "lucide-react"
-import type { ListPatient } from "@/types"
+import type { ListPatient, SessionController, UsePackageSession } from "@/types"
 import { SelectedSessionsActions } from "./selectedSessionsActions"
 import { DeleteSessionModal } from "./deleteSessionModal"
 import { SessionCard } from "./sessionCard"
 import { AddSessionModal } from "./addSessionModal"
-import { usePackageSession } from "@/hook/usePackageSession"
+import { UsePackageSessionReturn } from "@/hook/usePackageSession"
+import { cn } from "tailwind-variants"
 
-type SessionAgendaProps = {
+type PackageSessionProps = {
   patient: ListPatient
-  setListPatient: React.Dispatch<React.SetStateAction<ListPatient[]>>
-  currentPackageIndex: number
+  packageSession: UsePackageSessionReturn
+  sessionController: SessionController
 }
 
 export function PackageSession({
   patient,
-  setListPatient,
-  currentPackageIndex,
-}: SessionAgendaProps) {
+  packageSession,
+  sessionController,
+}: PackageSessionProps) {
   const {
     sessionState,
     selectionState,
@@ -24,7 +25,7 @@ export function PackageSession({
     sessionActions,
     selectionActions,
     deleteActions,
-  } = usePackageSession({ patient, setListPatient, currentPackageIndex })
+  } = packageSession
 
   const {
     openSessionId,
@@ -35,16 +36,8 @@ export function PackageSession({
     suggestedPackageStartDate,
   } = sessionState
 
-  const {
-    selectedSessions,
-    allSessionsSelected,
-    isSingleSession,
-    allFinished,
-    allPending,
-    allPaid,
-    allUnpaid,
-    allCancelled,
-  } = selectionState
+  const { selectedSessions, allSessionsSelected, selectedStatus } =
+    selectionState
 
   const { deleteModal, createReplacementSession, isDeletingAllSessions } =
     deleteState
@@ -60,20 +53,11 @@ export function PackageSession({
     createNextPackage,
   } = sessionActions
 
-  const {
-    clearSelection,
-    handleSelectSession,
-    handleSelectAllSessions,
-    changeFinishStatus,
-    changePaymentStatus,
-  } = selectionActions
+  const { handleSelectSession, handleSelectAllSessions, selectedActions } =
+    selectionActions
 
-  const {
-    openSelectedDeleteModal,
-    setCreateReplacementSession,
-    closeDeleteModal,
-    confirmDelete,
-  } = deleteActions
+  const { setCreateReplacementSession, closeDeleteModal, confirmDelete } =
+    deleteActions
 
   const visibleSession =
     patient.typeService === "Pacote" && currentPackage
@@ -99,7 +83,7 @@ export function PackageSession({
 
         <button
           onClick={openAddSessionModal}
-          className="flex items-center gap-2 rounded-lg bg-[#FDB022] px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-[#F79009]"
+          className="flex justify-center items-center gap-2 rounded-lg bg-[#FDB022] px-4 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-[#F79009]"
         >
           + Adicionar sessão
         </button>
@@ -137,34 +121,27 @@ export function PackageSession({
 
       <SelectedSessionsActions
         selectedCount={selectedSessions.length}
-        allFinished={allFinished}
-        allPending={allPending}
-        allPaid={allPaid}
-        allCancelled={allCancelled}
-        allUnpaid={allUnpaid}
-        onMarkFinished={() => changeFinishStatus(true)}
-        onMarkPending={() => changeFinishStatus(false)}
-        onMarkPaid={() => changePaymentStatus("pago")}
-        onMarkUnpaid={() => changePaymentStatus("pendente")}
-        onMarkCancelled={() => changePaymentStatus("cancelado")}
-        onClearSelection={clearSelection}
-        onDeleteSelected={openSelectedDeleteModal}
+        status={selectedStatus}
+        actions={selectedActions}
       />
 
-      <DeleteSessionModal
-        isOpen={deleteModal.isOpen}
-        isDeletingAllSessions={isDeletingAllSessions}
-        sessionNumber={deleteModal.sessionNumber}
-        createReplacementSession={createReplacementSession}
-        setCreateReplacementSession={setCreateReplacementSession}
-        onClose={closeDeleteModal}
-        onConfirm={confirmDelete}
-      />
+      {/* <DeleteSessionModal */}
+      {/*   isOpen={deleteModal.isOpen} */}
+      {/*   isDeletingAllSessions={isDeletingAllSessions} */}
+      {/*   sessionNumber={deleteModal.sessionNumber} */}
+      {/*   createReplacementSession={createReplacementSession} */}
+      {/*   setCreateReplacementSession={setCreateReplacementSession} */}
+      {/*   onClose={closeDeleteModal} */}
+      {/*   onConfirm={confirmDelete} */}
+      {/* /> */}
 
       <ol
-        className={`grid gap-3 ${
-          isSingleSession ? "grid-cols-1" : "grid-cols-2"
-        }`}
+        className={cn(
+          "grid gap-3",
+          visibleSession.length === 1
+            ? "grid-cols-1"
+            : "grid-cols-1 lg:grid-cols-2"
+        )}
       >
         {visibleSession.map((session) => (
           <SessionCard

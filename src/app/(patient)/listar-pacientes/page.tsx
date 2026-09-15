@@ -13,17 +13,27 @@ function ListPatient() {
   const [selectedPatientId, setSelectedPatientId] = useState<number | null>(
     null
   )
+  const [search, setSearch] = useState<string>("")
+
+  const findPatient =
+    search.length > 1
+      ? listPatient.filter((patient) =>
+          patient.name.toLocaleLowerCase().includes(search)
+        )
+      : listPatient
+
   const selectedPatient =
     listPatient.find((patient) => patient.id === selectedPatientId) ?? null
 
   return (
     <section className="font-open-sans ">
       {/*Barra de pesquisa | botão adicionar paciente*/}
-      <SubHeaderPatientList />
+      <SubHeaderPatientList onSearchChange={setSearch} />
 
       <div className="flex flex-col lg:flex-row lg:items-stretch lg:min-h-130 lg:max-h-[calc(100vh-210px)] px-2 pb-2">
         <PatientSidebar
-          patients={listPatient}
+          patients={findPatient}
+          search={search}
           selectedPatientId={selectedPatientId}
           onSelectPatient={setSelectedPatientId}
         />

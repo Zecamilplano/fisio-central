@@ -1,35 +1,46 @@
 import { Trash2 } from "lucide-react"
 
+export type SelectedSessionsStatus = {
+  finish: {
+    allFinished: boolean
+    allPending: boolean
+    allCancelled: boolean
+  }
+
+  payment: {
+    allPaid: boolean
+    allPending: boolean
+    allCancelled: boolean
+  }
+}
+
+export type SelectedSessionsActionHandlers = {
+  finish: {
+    markFinished: () => void
+    markPending: () => void
+    markCancelled: () => void
+  }
+
+  payment: {
+    markPaid: () => void
+    markPending: () => void
+    markCancelled: () => void
+  }
+
+  clear: () => void
+  delete: () => void
+}
+
 type SelectedSessionsActionsProps = {
   selectedCount: number
-  allFinished: boolean
-  allPending: boolean
-  allPaid: boolean
-  allCancelled: boolean
-  allUnpaid: boolean
-  onMarkFinished: () => void
-  onMarkPending: () => void
-  onMarkPaid: () => void
-  onMarkUnpaid: () => void
-  onMarkCancelled: () => void
-  onClearSelection: () => void
-  onDeleteSelected: () => void
+  status: SelectedSessionsStatus
+  actions: SelectedSessionsActionHandlers
 }
 
 export function SelectedSessionsActions({
   selectedCount,
-  allFinished,
-  allPending,
-  allPaid,
-  allCancelled,
-  allUnpaid,
-  onMarkFinished,
-  onMarkPending,
-  onMarkPaid,
-  onMarkUnpaid,
-  onMarkCancelled,
-  onClearSelection,
-  onDeleteSelected,
+  status,
+  actions,
 }: SelectedSessionsActionsProps) {
   if (selectedCount === 0) return null
 
@@ -57,8 +68,8 @@ export function SelectedSessionsActions({
 
           <button
             type="button"
-            onClick={onClearSelection}
-            className="rounded-lg px-3 py-2 text-sm font-medium text-slate-500 hover:bg-slate-100"
+            onClick={actions.clear}
+            className="rounded-lg px-3 py-2 text-sm font-medium text-slate-500 hover:bg-slate-100 cursor-pointer"
           >
             Limpar
           </button>
@@ -73,22 +84,34 @@ export function SelectedSessionsActions({
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={onMarkFinished}
-                className={`rounded-lg border px-3 py-2 text-sm font-medium transition ${
-                  allFinished ? finishActiveClass : neutralClass
+                onClick={actions.finish.markFinished}
+                className={`rounded-lg border px-3 py-2 text-sm font-medium transition cursor-pointer ${
+                  status.finish.allFinished ? finishActiveClass : neutralClass
                 }`}
               >
-                Marcar realizada
+                Realizada
               </button>
 
               <button
                 type="button"
-                onClick={onMarkPending}
-                className={`rounded-lg border px-3 py-2 text-sm font-medium transition ${
-                  allPending ? pendingActiveClass : neutralClass
+                onClick={actions.finish.markPending}
+                className={`rounded-lg border px-3 py-2 text-sm font-medium transition cursor-pointer ${
+                  status.finish.allPending ? pendingActiveClass : neutralClass
                 }`}
               >
-                Marcar pendente
+                Pendente
+              </button>
+
+              <button
+                type="button"
+                onClick={actions.finish.markCancelled}
+                className={`rounded-lg border px-3 py-2 text-sm font-medium transition cursor-pointer ${
+                  status.finish.allCancelled
+                    ? "border-red-300 bg-red-100 text-red-700"
+                    : neutralClass
+                }`}
+              >
+                Cancelar
               </button>
             </div>
           </div>
@@ -101,33 +124,33 @@ export function SelectedSessionsActions({
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={onMarkPaid}
-                className={`rounded-lg border px-3 py-2 text-sm font-medium transition ${
-                  allPaid
+                onClick={actions.payment.markPaid}
+                className={`rounded-lg border px-3 py-2 text-sm font-medium transition cursor-pointer ${
+                  status.payment.allPaid
                     ? "border-green-300 bg-green-100 text-green-700"
                     : neutralClass
                 }`}
               >
-                Pago
+                Realizado
               </button>
 
               <button
                 type="button"
-                onClick={onMarkUnpaid}
-                className={`rounded-lg border px-3 py-2 text-sm font-medium transition ${
-                  allUnpaid
+                onClick={actions.payment.markPending}
+                className={`rounded-lg border px-3 py-2 text-sm font-medium transition cursor-pointer ${
+                  status.payment.allPending
                     ? "border-blue-300 bg-blue-100 text-blue-700"
                     : neutralClass
                 }`}
               >
-                Não pago
+                Pendente
               </button>
 
               <button
                 type="button"
-                onClick={onMarkCancelled}
-                className={`rounded-lg border px-3 py-2 text-sm font-medium transition ${
-                  allCancelled
+                onClick={actions.payment.markCancelled}
+                className={`rounded-lg border px-3 py-2 text-sm font-medium transition cursor-pointer ${
+                  status.payment.allCancelled
                     ? "border-red-300 bg-red-100 text-red-700"
                     : neutralClass
                 }`}
@@ -140,8 +163,8 @@ export function SelectedSessionsActions({
           <div className="">
             <button
               type="button"
-              onClick={onDeleteSelected}
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-red-200 bg-red-50 text-red-600 transition-colors hover:bg-red-100"
+              onClick={actions.delete}
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-red-200 bg-red-50 text-red-600 transition-colors hover:bg-red-100 cursor-pointer"
             >
               <Trash2 className="h-4 w-4" />
             </button>

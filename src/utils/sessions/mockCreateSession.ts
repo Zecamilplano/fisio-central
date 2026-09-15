@@ -1,3 +1,4 @@
+import { StatusSessaoKey } from "@/data/optionsSessionsData"
 import { TypeService } from "@/types"
 import { PaidKey, Session } from "@/types/listPatientType"
 import { addDays, format } from "date-fns"
@@ -21,7 +22,27 @@ type CreateSessionParams = {
 }
 
 function randomPaymentStatus(): PaidKey {
-  const status: PaidKey[] = ["pago", "pago", "pago", "pendente", "cancelado"]
+  const status: PaidKey[] = [
+    "realizado",
+    "realizado",
+    "realizado",
+    "pendente",
+    "cancelado",
+  ]
+
+  const randomIndex = Math.floor(Math.random() * status.length)
+
+  return status[randomIndex]
+}
+
+function randomFinishStatus(): StatusSessaoKey {
+  const status: StatusSessaoKey[] = [
+    "realizado",
+    "realizado",
+    "pendente",
+    "pendente",
+    "cancelado",
+  ]
 
   const randomIndex = Math.floor(Math.random() * status.length)
 
@@ -50,7 +71,9 @@ export function createSessions({
     const isValidDay = daysOfWeek.includes(currentWeekDay as WeekDay)
 
     if (isValidDay) {
-      const finish = forceFinished ? true : Math.random() > 0.5
+      const finish: StatusSessaoKey = forceFinished
+        ? "realizado"
+        : randomFinishStatus()
 
       sessions.push({
         id: crypto.randomUUID(),
@@ -62,7 +85,7 @@ export function createSessions({
 
         packageId: packageId || "",
         finish,
-        paid: forceFinished ? "pago" : randomPaymentStatus(),
+        paid: forceFinished ? "realizado" : randomPaymentStatus(),
       })
     }
     currentDate = addDays(currentDate, 1)

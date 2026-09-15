@@ -1,4 +1,4 @@
-import type { ListPatient } from "@/types"
+import type { ListPatient, SessionController } from "@/types"
 import Image from "next/image"
 import { PencilLine } from "lucide-react"
 import { PatientContactGrid } from "./patientContactGrid"
@@ -6,6 +6,9 @@ import { CurrentPackageCard } from "../package/currentPackageCard"
 import { SeparateSessionInfoCard } from "./separateSessionInfoCard"
 import { PackageSession } from "../session/packageSession"
 import { useEffect, useState } from "react"
+import { usePackageSession } from "@/hook/usePackageSession"
+import { DeleteSessionModal } from "../session/deleteSessionModal"
+import { getInitialLetters } from "@/utils/patient/getInitialLetters"
 
 type PatientDetailsProps = {
   patient: ListPatient
@@ -17,6 +20,31 @@ export function PatientDetails({
   setListPatient,
 }: PatientDetailsProps) {
   const [currentPackageIndex, setCurrentPackageIndex] = useState(0)
+  const packageSession = usePackageSession({
+    patient,
+    setListPatient,
+    currentPackageIndex,
+  })
+
+  const { deleteModal, createReplacementSession, isDeletingAllSessions } =
+    packageSession.deleteState
+  const { setCreateReplacementSession, closeDeleteModal, confirmDelete } =
+    packageSession.deleteActions
+
+  const sessionController: SessionController = {
+    selectedSessions: packageSession.selectionState.selectedSessions,
+    openSessionId: packageSession.sessionState.openSessionId,
+    deletingSessionId: packageSession.sessionState.deletingSessionId,
+
+    selectedStatus: packageSession.selectionState.selectedStatus,
+    selectedAction: packageSession.selectionActions.selectedActions,
+
+    selectSession: packageSession.selectionActions.handleSelectSession,
+    toggleSession: packageSession.sessionActions.handleToggleSession,
+
+    openDeleteModal: packageSession.sessionActions.openDeleteModal,
+    changeSession: packageSession.sessionActions.handleChange,
+  }
 
   useEffect(() => {
     if (patient.typeService !== "Pacote") {
@@ -36,20 +64,26 @@ export function PatientDetails({
       <div className="h-full overflow-y-auto px-3 py-4">
         <header className="flex flex-col justify-between gap-4 pb-5 md:flex-row md:items-center">
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
-            <Image
-              src={patient.image ?? "/person.png"}
-              width={110}
-              height={110}
-              alt="Foto de perfil"
-              className="rounded-full"
-            />
+            {(patient.image?.length ?? 0) > 1 ? (
+              <img
+                src={patient.image ?? "/person.png"}
+                alt="Foto de perfil"
+                height={64}
+                width={64}
+                className="h-16 w-16 shrink-0 rounded-full object-cover"
+              />
+            ) : (
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-amber-400 text-xl font-medium text-white uppercase">
+                {getInitialLetters(patient.name)}
+              </div>
+            )}
 
             <div className="text-center sm:text-left">
-              <h2 className="text-xl text-[#2D3748] md:text-2xl">
+              <h1 className="text-xl font-medium text-slate-700 ">
                 {patient.name}
-              </h2>
+              </h1>
 
-              <p className="mt-2 rounded-4xl bg-[#FFA726]/20 px-5 py-2 text-center text-[#FFA726]">
+              <p className="mt-2 inline-flex min-w-28 justify-center rounded-full bg-amber-100 px-4 py-1 text-sm text-amber-500">
                 {patient.typeService}
               </p>
             </div>
@@ -69,6 +103,7 @@ export function PatientDetails({
             patient={patient}
             currentPackageIndex={currentPackageIndex}
             setCurrentPackageIndex={setCurrentPackageIndex}
+            sessionController={sessionController}
           />
         )}
 
@@ -81,8 +116,19 @@ export function PatientDetails({
         {/* Sessões em pacote */}
         <PackageSession
           patient={patient}
-          setListPatient={setListPatient}
-          currentPackageIndex={currentPackageIndex}
+          packageSession={packageSession}
+          sessionController={sessionController}
+        />
+
+        {/* Modal de exclusão de sessão*/}
+        <DeleteSessionModal
+          isOpen={deleteModal.isOpen}
+          isDeletingAllSessions={isDeletingAllSessions}
+          sessionNumber={deleteModal.sessionNumber}
+          createReplacementSession={createReplacementSession}
+          setCreateReplacementSession={setCreateReplacementSession}
+          onClose={closeDeleteModal}
+          onConfirm={confirmDelete}
         />
       </div>
     </section>
