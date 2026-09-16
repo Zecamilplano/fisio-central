@@ -25,7 +25,6 @@ export type Package = {
   defaultTime: string
   paymentType: PaymentType
 
-  totalSessions: number | null
   weeklyAmount: number | null
   selectedDays: Record<string, boolean>
   sessions: Session_[]
@@ -40,6 +39,8 @@ export type SingleSession = {
 }
 
 export type SchedulingForm = {
+  initialDateSession: Date | null
+  totalSessions: number | null
   serviceType: TypeServiceType | null
   package: Package
   singleSession: SingleSession | null

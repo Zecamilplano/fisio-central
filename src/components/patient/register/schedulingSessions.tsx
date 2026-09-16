@@ -85,26 +85,50 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
           </section>
 
           {/*Sessões já realizadas*/}
-          <section className="flex justify-center flex-col gap-2">
-            <h2 className="text-lg text-[#FFA726] text-center font-semibold">
-              Sessões já realizadas
-            </h2>
-            <input
-              type="number"
-              value={schedulingForm.package.totalSessions ?? ""}
-              onChange={(e) => {
-                const value = e.target.value
+          <section className="flex justify-center gap-2">
+            <div>
+              <label className="flex items-center gap-2 text-lg text-[#FFA726] text-center font-semibold">
+                <CalendarDays size={16} />
+                Inicío de tudo
+              </label>
 
-                setSchedulingForm((prev) => ({
-                  ...prev,
-                  package: {
-                    ...prev.package,
+              <input
+                type="date"
+                value={
+                  schedulingForm.initialDateSession
+                    ? new Date(schedulingForm.initialDateSession)
+                        .toISOString()
+                        .split("T")[0]
+                    : ""
+                }
+                onChange={(e) =>
+                  setSchedulingForm((prev) => ({
+                    ...prev,
+                    initialDateSession: new Date(e.target.value),
+                  }))
+                }
+                className="w-38 text-[#333] border-2 border-[#D0D7DE]/80 focus:outline-[#FFA726] rounded-md py-2 px-3"
+              />
+            </div>
+
+            <div className="flex justify-center flex-col ">
+              <h2 className="text-lg text-[#FFA726] text-center font-semibold">
+                Sessões já realizadas
+              </h2>
+              <input
+                type="number"
+                value={schedulingForm.totalSessions ?? ""}
+                onChange={(e) => {
+                  const value = e.target.value
+
+                  setSchedulingForm((prev) => ({
+                    ...prev,
                     totalSessions: value === "" ? null : Number(value),
-                  },
-                }))
-              }}
-              className=" w-52 flex self-center text-[#333] placeholder:text-text-gray-400 border-2 border-solid border-[#D0D7DE]/80 focus:outline-[#FFA726] rounded-md py-2 pl-2 "
-            />
+                  }))
+                }}
+                className=" w-52 flex self-center text-[#333] placeholder:text-text-gray-400 border-2 border-solid border-[#D0D7DE]/80 focus:outline-[#FFA726] rounded-md py-2 pl-2 "
+              />
+            </div>
           </section>
 
           {/*Data inicial e horário*/}
