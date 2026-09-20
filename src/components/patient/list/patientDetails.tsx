@@ -1,25 +1,32 @@
 import type { ListPatient, SessionController } from "@/types"
-import Image from "next/image"
 import { PencilLine } from "lucide-react"
 import { PatientContactGrid } from "./patientContactGrid"
 import { CurrentPackageCard } from "../package/currentPackageCard"
 import { SeparateSessionInfoCard } from "./separateSessionInfoCard"
 import { PackageSession } from "../session/packageSession"
-import { useEffect, useState } from "react"
-import { usePackageSession } from "@/hook/usePackageSession"
+import { useEffect } from "react"
+import {
+  usePackageSession,
+  UsePackageSessionReturn,
+} from "@/hook/usePackageSession"
 import { DeleteSessionModal } from "../session/deleteSessionModal"
 import { getInitialLetters } from "@/utils/patient/getInitialLetters"
 
 type PatientDetailsProps = {
   patient: ListPatient
   setListPatient: React.Dispatch<React.SetStateAction<ListPatient[]>>
+  currentPackageIndex: number
+  setCurrentPackageIndex: React.Dispatch<React.SetStateAction<number>>
+  packageSession?: UsePackageSessionReturn
 }
 
 export function PatientDetails({
   patient,
+  currentPackageIndex,
   setListPatient,
+  setCurrentPackageIndex,
+  // packageSession,
 }: PatientDetailsProps) {
-  const [currentPackageIndex, setCurrentPackageIndex] = useState(0)
   const packageSession = usePackageSession({
     patient,
     setListPatient,
@@ -34,7 +41,7 @@ export function PatientDetails({
   const sessionController: SessionController = {
     selectedSessions: packageSession.selectionState.selectedSessions,
     openSessionId: packageSession.sessionState.openSessionId,
-    deletingSessionId: packageSession.sessionState.deletingSessionId,
+    deletingSessionId: packageSession.deleteState.deletingSessionId,
 
     selectedStatus: packageSession.selectionState.selectedStatus,
     selectedAction: packageSession.selectionActions.selectedActions,

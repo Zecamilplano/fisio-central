@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import {
   Package,
+  PaymentType,
   SchedulingErrorForm,
   SchedulingForm,
   TypeServiceType,
@@ -16,12 +17,13 @@ function buildInitialSchedulingForm(
 ): SchedulingForm {
   return {
     serviceType,
+    totalSessions: null,
+    initialDateSession: null,
     package: {
       startDate: null,
       defaultTime: "16:00",
       paymentType: "metade",
 
-      totalSessions: null,
       weeklyAmount: null,
       selectedDays: {},
       sessions: [],
@@ -271,6 +273,46 @@ export function useSchedulingSessions(
     clearError()
   }
 
+  const handlers = {
+    initialDateSession: (date: Date) =>
+      setSchedulingForm((prev) => ({
+        ...prev,
+        initialDateSession: date ?? null,
+      })),
+    totalSessions: (sessions: number) =>
+      setSchedulingForm((prev) => ({
+        ...prev,
+        totalSessions: sessions ?? null,
+      })),
+    "package.startDate": (startDate: Date) =>
+      setSchedulingForm((prev) => ({
+        ...prev,
+        package: { ...prev.package, startDate: startDate },
+      })),
+    "package.defaultTime": (defaultTime: string) =>
+      setSchedulingForm((prev) => ({
+        ...prev,
+        package: { ...prev.package, defaultTime },
+      })),
+    "package.summary.weeklyAmount": handleWeeklyAmount,
+    "package.summary.selectedDays": handleDayToggle,
+    "package.paymentType": (paymentType: PaymentType) =>
+      setSchedulingForm((prev) => ({
+        ...prev,
+        package: { ...prev.package, paymentType },
+      })),
+    handleDeleteSession,
+    handleAddSessions,
+    handleDateChange,
+  }
+
+  function handleChange(field: keyof typeof handlers, value?: any) {
+    const handler = handlers[field as keyof typeof handlers]
+
+    if (!handler) return
+    ;(handler as (value?: any) => void)(value)
+  }
+
   return {
     // estado
     summary,
@@ -284,6 +326,7 @@ export function useSchedulingSessions(
     schedulingFormErrors,
     isSchedulingFormValid,
     // handlers
+    handleChange,
     handleWeeklyAmount,
     handleDayToggle,
     handleAddSessions,

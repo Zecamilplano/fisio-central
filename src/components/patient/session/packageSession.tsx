@@ -125,16 +125,6 @@ export function PackageSession({
         actions={selectedActions}
       />
 
-      {/* <DeleteSessionModal */}
-      {/*   isOpen={deleteModal.isOpen} */}
-      {/*   isDeletingAllSessions={isDeletingAllSessions} */}
-      {/*   sessionNumber={deleteModal.sessionNumber} */}
-      {/*   createReplacementSession={createReplacementSession} */}
-      {/*   setCreateReplacementSession={setCreateReplacementSession} */}
-      {/*   onClose={closeDeleteModal} */}
-      {/*   onConfirm={confirmDelete} */}
-      {/* /> */}
-
       <ol
         className={cn(
           "grid gap-3",

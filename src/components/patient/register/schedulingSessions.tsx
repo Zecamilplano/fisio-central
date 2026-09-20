@@ -41,6 +41,7 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
     selectedDays,
     maxDaysReached,
     schedulingFormErrors,
+    handleChange,
     handleWeeklyAmount,
     handleDayToggle,
     handleAddSessions,
@@ -102,10 +103,7 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
                     : ""
                 }
                 onChange={(e) =>
-                  setSchedulingForm((prev) => ({
-                    ...prev,
-                    initialDateSession: new Date(e.target.value),
-                  }))
+                  handleChange("initialDateSession", e.target.value)
                 }
                 className="w-38 text-[#333] border-2 border-[#D0D7DE]/80 focus:outline-[#FFA726] rounded-md py-2 px-3"
               />
@@ -119,12 +117,7 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
                 type="number"
                 value={schedulingForm.totalSessions ?? ""}
                 onChange={(e) => {
-                  const value = e.target.value
-
-                  setSchedulingForm((prev) => ({
-                    ...prev,
-                    totalSessions: value === "" ? null : Number(value),
-                  }))
+                  handleChange("totalSessions", e.target.value)
                 }}
                 className=" w-52 flex self-center text-[#333] placeholder:text-text-gray-400 border-2 border-solid border-[#D0D7DE]/80 focus:outline-[#FFA726] rounded-md py-2 pl-2 "
               />
@@ -149,15 +142,7 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
                     : ""
                 }
                 onChange={(e) =>
-                  setSchedulingForm((prev) => ({
-                    ...prev,
-                    package: {
-                      ...prev.package,
-                      startDate: e.target.value
-                        ? new Date(e.target.value)
-                        : null,
-                    },
-                  }))
+                  handleChange("package.startDate", e.target.value)
                 }
                 className="w-38 text-[#333] border-2 border-[#D0D7DE]/80 focus:outline-[#FFA726] rounded-md py-2 px-3"
               />
@@ -172,13 +157,7 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
                 type="time"
                 value={schedulingForm.package.defaultTime}
                 onChange={(e) =>
-                  setSchedulingForm((prev) => ({
-                    ...prev,
-                    package: {
-                      ...prev.package,
-                      defaultTime: e.target.value,
-                    },
-                  }))
+                  handleChange("package.defaultTime", e.target.value)
                 }
                 className="text-[#333] border-2 border-[#D0D7DE]/80 focus:outline-[#FFA726] rounded-md py-2 px-3"
               />
@@ -213,7 +192,12 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
                     id={`vezes-${value}`}
                     name="times"
                     value={value}
-                    onChange={(e) => handleWeeklyAmount(Number(e.target.value))}
+                    onChange={(e) =>
+                      handleChange(
+                        "package.summary.weeklyAmount",
+                        Number(e.target.value)
+                      )
+                    }
                     className="hidden"
                   />
                 </label>
@@ -253,7 +237,9 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
                     name="dia"
                     value={day}
                     disabled={isDisabled}
-                    onChange={() => handleDayToggle(day)}
+                    onChange={() =>
+                      handleChange("package.summary.selectedDays", day)
+                    }
                     className="hidden peer"
                   />
                   {day}
@@ -280,13 +266,7 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
                   key={payment.value}
                   type="button"
                   onClick={() =>
-                    setSchedulingForm((prev) => ({
-                      ...prev,
-                      package: {
-                        ...prev.package,
-                        paymentType: payment.value,
-                      },
-                    }))
+                    handleChange("package.paymentType", payment.value)
                   }
                   className={`
                       rounded-lg py-3 px-4 text-center border-2 transition
@@ -376,7 +356,7 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
 
                   <button
                     type="button"
-                    onClick={() => handleDeleteSession(index)}
+                    onClick={() => handleChange("handleDeleteSession", index)}
                     className="cursor-pointer hover:opacity-80 active:opacity-60 text-white"
                   >
                     <Trash />
@@ -388,7 +368,7 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
 
           <button
             type="button"
-            onClick={handleAddSessions}
+            onClick={() => handleChange("handleAddSessions")}
             className="hover:text-[#F59E0B] active:text-[#D97706] hover:bg-[#FFF3E0] active:bg-[#FFE0B2]  text-center text-[#FFA726] text-xl align-middle border-2 border-solid border-[#FFA726]/30 py-3 rounded-md cursor-pointer"
           >
             Gerar sessões
