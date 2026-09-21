@@ -3,10 +3,11 @@ import { PatientDetails } from "@/components/patient/list/patientDetails"
 import { listPatientData } from "@/data"
 import type { ListPatient } from "@/types/"
 import { useEffect, useState } from "react"
-import { PatientSidebar } from "@/components/patient/list/patientSidebar"
-import { SubHeaderPatientList } from "@/components/patient/list/subHeaderPatient"
-import { PatientEmptyState } from "@/components/patient/list/patientEmptyState"
-import { usePackageSession } from "@/hook/usePackageSession"
+import {
+  PatientSidebar,
+  SubHeaderPatientList,
+  PatientEmptyState,
+} from "@/components/patient/list"
 
 function ListPatient() {
   const [listPatient, setListPatient] = useState<ListPatient[]>(listPatientData)
@@ -26,12 +27,6 @@ function ListPatient() {
 
   const selectedPatient =
     listPatient.find((patient) => patient.id === selectedPatientId) ?? null
-
-  //     const packageSession = usePackageSession(({
-  //   patient:selectedPatient,
-  //   setListPatient,
-  //   currentPackageIndex
-  // }))
 
   useEffect(() => {
     setCurrentPackageIndex(0)

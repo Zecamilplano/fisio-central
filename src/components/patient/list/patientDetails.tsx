@@ -1,8 +1,7 @@
 import type { ListPatient, SessionController } from "@/types"
 import { PencilLine } from "lucide-react"
-import { PatientContactGrid } from "./patientContactGrid"
 import { CurrentPackageCard } from "../package/currentPackageCard"
-import { SeparateSessionInfoCard } from "./separateSessionInfoCard"
+import { PatientContactGrid, SeparateSessionInfoCard } from "./"
 import { PackageSession } from "../session/packageSession"
 import { useEffect } from "react"
 import {
@@ -25,7 +24,6 @@ export function PatientDetails({
   currentPackageIndex,
   setListPatient,
   setCurrentPackageIndex,
-  // packageSession,
 }: PatientDetailsProps) {
   const packageSession = usePackageSession({
     patient,
