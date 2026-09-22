@@ -1,4 +1,5 @@
 import type { ListPatient, Session } from "@/types"
+import { useFisioStore } from "@/store/fisio/fisioStore"
 import { useState } from "react"
 import { toast } from "react-toastify"
 
@@ -6,7 +7,6 @@ type UseSessionDeletionProps = {
   patient: ListPatient
   selectedSessions: string[]
   selectedSessionItems: Session[]
-  setListPatient: React.Dispatch<React.SetStateAction<ListPatient[]>>
   clearSelection: () => void
   createReplacementDeletedSession: (sessions: Session[]) => Session
 }
@@ -15,10 +15,11 @@ export function useSessionDeletion({
   patient,
   selectedSessions,
   selectedSessionItems,
-  setListPatient,
   clearSelection,
   createReplacementDeletedSession,
 }: UseSessionDeletionProps) {
+  const deleteSessions = useFisioStore((state) => state.deleteSessions)
+  const addSession = useFisioStore((state) => state.addSession)
   const [deletingSessionId, setDeletingSessionId] = useState<string | null>(
     null
   )
@@ -108,45 +109,19 @@ export function useSessionDeletion({
     setDeletingSessionId(sessionsToDelete[0])
 
     setTimeout(() => {
-      setListPatient((prev) =>
-        prev.map((item) => {
-          if (item.id !== patient.id) return item
+      deleteSessions(patient.id, sessionsToDelete)
 
-          const filteredSessions = item.session.filter(
-            (session) => !sessionsToDelete.includes(session.id)
-          )
+      if (shouldCreateReplacement) {
+        let sessions = patient.session
+          .filter((session) => !sessionsToDelete.includes(session.id))
+          .map((session, index) => ({ ...session, number: index + 1 }))
 
-          const reorderedSessions = filteredSessions.map((session, index) => ({
-            ...session,
-            number: index + 1,
-          }))
-
-          if (!shouldCreateReplacement) {
-            return {
-              ...item,
-              session: reorderedSessions,
-            }
-          }
-
-          let sessionsWithReplacement = [...reorderedSessions]
-
-          for (let index = 0; index < amountDeleted; index++) {
-            const replacementSession = createReplacementDeletedSession(
-              sessionsWithReplacement
-            )
-
-            sessionsWithReplacement = [
-              ...sessionsWithReplacement,
-              replacementSession,
-            ]
-          }
-
-          return {
-            ...item,
-            session: sessionsWithReplacement,
-          }
-        })
-      )
+        for (let index = 0; index < amountDeleted; index++) {
+          const replacementSession = createReplacementDeletedSession(sessions)
+          sessions = [...sessions, replacementSession]
+          addSession(patient.id, replacementSession)
+        }
+      }
 
       clearSelection()
 

@@ -1,7 +1,5 @@
 "use client"
 import { PatientDetails } from "@/components/patient/list/patientDetails"
-import { listPatientData } from "@/data"
-import type { ListPatient } from "@/types/"
 import { useEffect, useState } from "react"
 import {
   PatientSidebar,
@@ -11,9 +9,7 @@ import {
 import { useFisioStore } from "@/store/fisio/fisioStore"
 
 function ListPatient() {
-  // const [listPatient, setListPatient] = useState<ListPatient[]>(listPatientData)
   const listPatient = useFisioStore((state) => state.patients)
-  const setListPatients = useFisioStore((state) => state.setListPatients)
 
   const [currentPackageIndex, setCurrentPackageIndex] = useState(0)
   const [selectedPatientId, setSelectedPatientId] = useState<number | null>(
@@ -30,14 +26,6 @@ function ListPatient() {
 
   const selectedPatient =
     listPatient.find((patient) => patient.id === selectedPatientId) ?? null
-
-  function setListPatient(
-    value: ListPatient[] | ((patients: ListPatient[]) => ListPatient[])
-  ) {
-    const patients = useFisioStore.getState().patients
-
-    setListPatients(typeof value === "function" ? value(patients) : value)
-  }
 
   useEffect(() => {
     setCurrentPackageIndex(0)
@@ -65,7 +53,6 @@ function ListPatient() {
             <PatientDetails
               patient={selectedPatient}
               currentPackageIndex={currentPackageIndex}
-              setListPatient={setListPatient}
               setCurrentPackageIndex={setCurrentPackageIndex}
               // packageSession={packageSession}
             />

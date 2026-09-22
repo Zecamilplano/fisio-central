@@ -30,7 +30,6 @@ export type TreatmentPackage = {
 
 export type UsePackageSession = {
   patient: ListPatient
-  setListPatient: React.Dispatch<React.SetStateAction<ListPatient[]>>
   currentPackageIndex: number
 }
 

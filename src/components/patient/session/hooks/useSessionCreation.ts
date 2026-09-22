@@ -1,9 +1,9 @@
 import type { DayOfWeek, ListPatient, Session, TreatmentPackage } from "@/types"
+import { useFisioStore } from "@/store/fisio/fisioStore"
 import { parseISO } from "date-fns"
 
 type UseSessionCreationProps = {
   patient: ListPatient
-  setListPatient: React.Dispatch<React.SetStateAction<ListPatient[]>>
   currentPackage: TreatmentPackage | null
   currentPackageSessions: Session[]
   getNextPackageDate: (lastDate: Date, fixedWeekDays: DayOfWeek[]) => Date
@@ -13,13 +13,14 @@ type UseSessionCreationProps = {
 
 export function useSessionCreation({
   patient,
-  setListPatient,
   currentPackage,
   currentPackageSessions,
   getNextPackageDate,
   getFirstPackageDate,
   closeAddSessionModal,
 }: UseSessionCreationProps) {
+  const addSession = useFisioStore((state) => state.addSession)
+  const startNextPackage = useFisioStore((state) => state.startNextPackage)
   function createSessionNumber(sessions: Session[]) {
     return sessions.length + 1
   }
@@ -42,16 +43,7 @@ export function useSessionCreation({
   function addSeparateSession(selectedDate: Date) {
     const newSession = createBaseSession(patient.session, selectedDate)
 
-    setListPatient((prev) =>
-      prev.map((item) => {
-        if (item.id !== patient.id) return item
-
-        return {
-          ...item,
-          session: [...item.session, newSession],
-        }
-      })
-    )
+    addSession(patient.id, newSession)
 
     closeAddSessionModal()
   }
@@ -74,16 +66,7 @@ export function useSessionCreation({
       currentPackage.id
     )
 
-    setListPatient((prev) =>
-      prev.map((item) => {
-        if (item.id !== patient.id) return item
-
-        return {
-          ...item,
-          session: [...item.session, newSession],
-        }
-      })
-    )
+    addSession(patient.id, newSession)
 
     closeAddSessionModal()
   }
@@ -159,29 +142,11 @@ export function useSessionCreation({
       currentSessions: patient.session,
     })
 
-    setListPatient((prev) =>
-      prev.map((item) => {
-        if (item.id !== patient.id) return item
-        if (item.typeService !== "Pacote") return item
-
-        return {
-          ...item,
-          packages: [
-            ...item.packages.map((packageItem) =>
-              packageItem.current
-                ? {
-                    ...packageItem,
-                    current: false,
-                    endDate: getLastPackageSessionDate(packageItem.id),
-                  }
-                : packageItem
-            ),
-
-            newPackage,
-          ],
-          session: [...item.session, ...newPackageSessions],
-        }
-      })
+    startNextPackage(
+      patient.id,
+      newPackage,
+      newPackageSessions,
+      getLastPackageSessionDate(currentPackage.id)
     )
 
     closeAddSessionModal()

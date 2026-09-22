@@ -1,51 +1,22 @@
-import { listPatientData } from "@/data"
-import { ListPatient } from "@/types"
 import { create } from "zustand"
+import {
+  createEvolutionsSlice,
+  type EvolutionsSlice,
+} from "./slices/evolutionsSlice"
+import { createPackagesSlice, type PackagesSlice } from "./slices/packagesSlice"
+import { createPatientsSlice, type PatientsSlice } from "./slices/patientsSlice"
+import { createSessionsSlice, type SessionsSlice } from "./slices/sessionsSlice"
 
-type PatientId = ListPatient["id"]
+export type FisioStore = PatientsSlice &
+  SessionsSlice &
+  PackagesSlice &
+  EvolutionsSlice
 
-type FisioStore = {
-  patients: ListPatient[]
-
-  setListPatients: (patients: ListPatient[]) => void
-
-  addPatient: (patient: ListPatient) => void
-
-  updatePatient: (
-    patientId: PatientId,
-    updater: (patient: ListPatient) => ListPatient
-  ) => void
-
-  removePatient: (patientId: PatientId) => void
-}
-
-const useFisioStore = create<FisioStore>((set) => ({
-  patients: listPatientData,
-
-  setListPatients: (patients) => {
-    set({ patients })
-  },
-
-  addPatient: (patient) => {
-    set((state) => ({
-      patients: [...state.patients, patient],
-    }))
-  },
-
-  updatePatient: (patientId, updater) => {
-    set((state) => ({
-      patients: state.patients.map((patient) =>
-        patient.id === patientId ? updater(patient) : patient
-      ),
-    }))
-  },
-
-  removePatient: (patientId) => {
-    set((state) => ({
-      patients: state.patients.filter((patient) => patient.id !== patientId),
-    }))
-  },
+const useFisioStore = create<FisioStore>()((...args) => ({
+  ...createPatientsSlice(...args),
+  ...createSessionsSlice(...args),
+  ...createPackagesSlice(...args),
+  ...createEvolutionsSlice(...args),
 }))
 
 export { useFisioStore }
-export type { FisioStore }

@@ -1,19 +1,30 @@
 import { StatusSessaoKey } from "@/data/optionsSessionsData"
+import { useFisioStore } from "@/store/fisio/fisioStore"
 import { ListPatient, PaidKey } from "@/types"
-import React from "react"
 import { toast } from "react-toastify"
 
 type UseSessionStatusProps = {
   patient: ListPatient
   selectedSessions: string[]
-  setListPatient: React.Dispatch<React.SetStateAction<ListPatient[]>>
 }
 
 export function useSessionStatus({
   patient,
   selectedSessions,
-  setListPatient,
 }: UseSessionStatusProps) {
+  const changeSessionFinishInStore = useFisioStore(
+    (state) => state.changeSessionFinish
+  )
+  const changeSessionPaymentInStore = useFisioStore(
+    (state) => state.changeSessionPayment
+  )
+  const changeSessionsFinishInStore = useFisioStore(
+    (state) => state.changeSessionsFinish
+  )
+  const changeSessionsPaymentInStore = useFisioStore(
+    (state) => state.changeSessionsPayment
+  )
+
   const selectedSessionItems = patient.session.filter((session) =>
     selectedSessions.includes(session.id)
   )
@@ -39,71 +50,21 @@ export function useSessionStatus({
     selectedSessionItems.every((session) => session.paid === "pendente")
 
   function changeFinishStatus(value: StatusSessaoKey) {
-    setListPatient((prev) =>
-      prev.map((item) => {
-        if (item.id !== patient.id) return item
-
-        return {
-          ...item,
-          session: item.session.map((session) =>
-            selectedSessions.includes(session.id)
-              ? { ...session, finish: value }
-              : session
-          ),
-        }
-      })
-    )
-
+    changeSessionsFinishInStore(patient.id, selectedSessions, value)
     toast.success("Status da sessão atualizado!")
   }
 
   function changePaymentStatus(value: PaidKey) {
-    setListPatient((prev) =>
-      prev.map((item) => {
-        if (item.id !== patient.id) return item
-
-        return {
-          ...item,
-          session: item.session.map((session) =>
-            selectedSessions.includes(session.id)
-              ? { ...session, paid: value }
-              : session
-          ),
-        }
-      })
-    )
-
+    changeSessionsPaymentInStore(patient.id, selectedSessions, value)
     toast.success("Status do pagamento atualizado!")
   }
 
   function changeSessionFinish(sessionId: string, value: StatusSessaoKey) {
-    setListPatient((prev) =>
-      prev.map((item) => {
-        if (item.id !== patient.id) return item
-
-        return {
-          ...item,
-          session: item.session.map((session) =>
-            session.id === sessionId ? { ...session, finish: value } : session
-          ),
-        }
-      })
-    )
+    changeSessionFinishInStore(patient.id, sessionId, value)
   }
 
   function changeSessionPayment(sessionId: string, value: PaidKey) {
-    setListPatient((prev) =>
-      prev.map((item) => {
-        if (item.id !== patient.id) return item
-
-        return {
-          ...item,
-          session: item.session.map((session) =>
-            session.id === sessionId ? { ...session, paid: value } : session
-          ),
-        }
-      })
-    )
+    changeSessionPaymentInStore(patient.id, sessionId, value)
   }
 
   const selectedActions = {

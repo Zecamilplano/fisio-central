@@ -13,7 +13,6 @@ import { getInitialLetters } from "@/utils/patient/getInitialLetters"
 
 type PatientDetailsProps = {
   patient: ListPatient
-  setListPatient: React.Dispatch<React.SetStateAction<ListPatient[]>>
   currentPackageIndex: number
   setCurrentPackageIndex: React.Dispatch<React.SetStateAction<number>>
   packageSession?: UsePackageSessionReturn
@@ -22,12 +21,10 @@ type PatientDetailsProps = {
 export function PatientDetails({
   patient,
   currentPackageIndex,
-  setListPatient,
   setCurrentPackageIndex,
 }: PatientDetailsProps) {
   const packageSession = usePackageSession({
     patient,
-    setListPatient,
     currentPackageIndex,
   })
 

@@ -1,5 +1,6 @@
-import { DayOfWeek, ListPatient, Session } from "@/types"
-import { addDays, format, getDay, parseISO } from "date-fns"
+import { useFisioStore } from "@/store/fisio/fisioStore"
+import { DayOfWeek, ListPatient } from "@/types"
+import { addDays, getDay } from "date-fns"
 
 const weekDayMap = {
   Domingo: 0,
@@ -13,13 +14,10 @@ const weekDayMap = {
 
 type UseSessionSchedulingProps = {
   patient: ListPatient
-  setListPatient: React.Dispatch<React.SetStateAction<ListPatient[]>>
 }
 
-export function useSessionScheduling({
-  patient,
-  setListPatient,
-}: UseSessionSchedulingProps) {
+export function useSessionScheduling({ patient }: UseSessionSchedulingProps) {
+  const rescheduleSession = useFisioStore((state) => state.rescheduleSession)
   function getNextSessionDate(lastDate: Date, weekDays: number[]) {
     let nextDate = addDays(lastDate, 1)
 
@@ -59,90 +57,7 @@ export function useSessionScheduling({
   }
 
   function handleChangeDate(sessionId: string, value: string) {
-    setListPatient((prev) =>
-      prev.map((item) => {
-        if (item.id !== patient.id) return item
-
-        const changedSession = item.session.find(
-          (session) => session.id === sessionId
-        )
-
-        if (!changedSession) return item
-
-        // Sessão avulsa
-        if (!changedSession.packageId) {
-          return {
-            ...item,
-            session: item.session.map((session) =>
-              session.id === sessionId
-                ? {
-                    ...session,
-                    date: value,
-                  }
-                : session
-            ),
-          }
-        }
-
-        if (item.typeService !== "Pacote") return item
-
-        const currentPackage = item.packages.find(
-          (packageItem) => packageItem.id === changedSession.packageId
-        )
-
-        if (!currentPackage) return item
-
-        const packageSessions = item.session
-          .filter((session) => session.packageId === changedSession.packageId)
-          .sort((a, b) => a.number - b.number)
-
-        const changedIndex = packageSessions.findIndex(
-          (session) => session.id === sessionId
-        )
-
-        if (changedIndex === -1) return item
-
-        const updatedPackageSessions: Session[] = []
-
-        for (let index = 0; index < packageSessions.length; index++) {
-          const session = packageSessions[index]
-
-          if (index < changedIndex) {
-            updatedPackageSessions.push(session)
-            continue
-          }
-
-          if (index === changedIndex) {
-            updatedPackageSessions.push({
-              ...session,
-              date: value,
-            })
-            continue
-          }
-
-          const previousSession = updatedPackageSessions[index - 1]
-
-          const nextDate = getNextPackageDate(
-            parseISO(previousSession.date),
-            currentPackage.fixedWeekDays
-          )
-
-          updatedPackageSessions.push({
-            ...session,
-            date: format(nextDate, "yyyy-MM-dd"),
-          })
-        }
-
-        const otherSessions = item.session.filter(
-          (session) => session.packageId !== changedSession.packageId
-        )
-
-        return {
-          ...item,
-          session: [...otherSessions, ...updatedPackageSessions],
-        }
-      })
-    )
+    rescheduleSession(patient.id, sessionId, value)
   }
 
   return {

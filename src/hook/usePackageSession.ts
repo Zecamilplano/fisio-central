@@ -13,7 +13,6 @@ import {
 
 function usePackageSession({
   patient,
-  setListPatient,
   currentPackageIndex,
 }: UsePackageSession) {
   const sessionSelection = useSessionSelection(
@@ -23,21 +22,18 @@ function usePackageSession({
   const sessionStatus = useSessionStatus({
     patient,
     selectedSessions: sessionSelection.selectedSessions,
-    setListPatient,
   })
 
   const sessionDeletion = useSessionDeletion({
     patient,
     selectedSessions: sessionSelection.selectedSessions,
     selectedSessionItems: sessionStatus.selectedSessionItems,
-    setListPatient,
     clearSelection: sessionSelection.clearSelection,
     createReplacementDeletedSession,
   })
 
   const sessionScheduling = useSessionScheduling({
     patient,
-    setListPatient,
   })
 
   const currentPackage =
@@ -54,7 +50,6 @@ function usePackageSession({
 
   const sessionCreation = useSessionCreation({
     patient,
-    setListPatient,
     currentPackage,
     currentPackageSessions,
     getNextPackageDate: sessionScheduling.getNextPackageDate,
