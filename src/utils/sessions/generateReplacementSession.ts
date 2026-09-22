@@ -42,7 +42,7 @@ export function generateReplacementSession(
     number: patient.session.length + 1,
     packageId: currentPackage.id,
     date: format(nextDate, "yyyy-MM-dd"),
-    finish: false,
+    finish: "pendente",
     paid: "pendente",
   }
 }

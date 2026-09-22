@@ -1,6 +1,5 @@
 import { StatusSessaoKey } from "@/data/optionsSessionsData"
-import { TypeService } from "@/types"
-import { PaidKey, Session } from "@/types/listPatientType"
+import { PaidKey, Session, TypeService } from "@/types"
 import { addDays, format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 

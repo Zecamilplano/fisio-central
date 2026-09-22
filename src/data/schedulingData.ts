@@ -17,8 +17,13 @@ const dayToIndex: Record<string, number> = {
 }
 
 const schedulingFormData: SchedulingForm = {
+  initialDateSession: null,
+  totalSessions: null,
   serviceType: "sessoes",
   package: {
+    startDate: null,
+    defaultTime: "",
+    paymentType: "integral",
     weeklyAmount: null,
     selectedDays: {},
     sessions: [],
@@ -32,6 +37,9 @@ const schedulingFormData: SchedulingForm = {
 }
 
 export const initialErrors: SchedulingErrorForm = {
+  startDate: [],
+  defaultTime: [],
+  paymentType: [],
   weeklyAmount: [],
   selectedDays: [],
   sessions: [],

@@ -1,5 +1,5 @@
 "use client"
-import { StepKey } from "@/types/patientsTypes"
+import { StepKey } from "@/types/registerPatientsTypes"
 import { createContext, useContext, useState } from "react"
 
 type StepContextType = {
