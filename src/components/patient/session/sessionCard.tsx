@@ -3,10 +3,9 @@ import {
   statusConfig,
   statusPagamento,
   statusRealizacao,
-  StatusSessaoKey,
 } from "@/data/optionsSessionsData"
 import type {
-  PaidKey,
+  ListPatient,
   Session,
   SessionChangeField,
   SessionChangeValue,
@@ -23,8 +22,10 @@ import Modal from "@/components/ui/modal"
 import { EvolutionFormData, EvolutionSaveData } from "../evolution"
 import EvolutionForm from "../evolution/evolutionForm"
 import { cn } from "tailwind-variants"
+import { useFisioStore } from "@/store/fisio/fisioStore"
 
 type SessionCardProps = {
+  patient: Pick<ListPatient, "name" | "typeService">
   session: Session
   defaultTime: string
   isSelected: boolean
@@ -43,6 +44,7 @@ type SessionCardProps = {
 type EvolutionMode = "view" | "create" | "edit" | null
 
 export function SessionCard({
+  patient,
   session,
   defaultTime,
   isSelected,
@@ -54,7 +56,10 @@ export function SessionCard({
   onChangeSession,
 }: SessionCardProps) {
   const [evolutionMode, setEvolutionMode] = useState<EvolutionMode>(null)
-  const [evolution, setEvolution] = useState<EvolutionSaveData | null>(null)
+  const evolution = useFisioStore(
+    (state) => state.evolutions[session.id] ?? null
+  )
+  const saveEvolution = useFisioStore((state) => state.saveEvolution)
 
   const convertDate = parseISO(session.date)
 
@@ -79,11 +84,23 @@ export function SessionCard({
     data: EvolutionSaveData
   ): EvolutionFormData {
     return {
-      ...data,
+      goals: data.goals ?? [""],
+      exercises: data.exercises ?? [],
+      vitalSigns: {
+        bloodPressure: "",
+        heartRate: "",
+        respiratoryRate: "",
+        oxygenSaturation: "",
+        observations: "",
+        ...data.vitalSigns,
+      },
+      conducts: data.conducts ?? [""],
+      orientations: data.orientations ?? [""],
       complications: data.complications ?? "",
       progress: data.progress ?? "",
       painBefore: data.painBefore ?? null,
       painAfter: data.painAfter ?? null,
+      nextConducts: data.nextConducts ?? [""],
     }
   }
   return (
@@ -246,6 +263,9 @@ export function SessionCard({
         {evolutionMode === "view" && evolution && (
           <EvolutionView
             evolution={normalizeEvolutionForForm(evolution)}
+            patient={patient}
+            session={session}
+            defaultTime={defaultTime}
             onEdit={() => setEvolutionMode("edit")}
           />
         )}
@@ -253,6 +273,9 @@ export function SessionCard({
         {(evolutionMode === "create" || evolutionMode === "edit") && (
           <EvolutionForm
             mode={evolutionMode}
+            patient={patient}
+            session={session}
+            defaultTime={defaultTime}
             initialData={
               evolutionMode === "edit" && evolution
                 ? normalizeEvolutionForForm(evolution)
@@ -267,7 +290,7 @@ export function SessionCard({
               setEvolutionMode(null)
             }}
             onSave={(data) => {
-              setEvolution(data)
+              saveEvolution(session.id, data)
               setEvolutionMode("view")
             }}
           />

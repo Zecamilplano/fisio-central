@@ -225,6 +225,7 @@ export function PackageHistoryModal({
                             {packageSession.map((session) => (
                               <SessionCard
                                 key={`${session.id}-${session.date}`}
+                                patient={patient}
                                 session={session}
                                 defaultTime={pkg.defaultTime}
                                 isSelected={selectedSessions.includes(

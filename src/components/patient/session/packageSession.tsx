@@ -30,7 +30,6 @@ export function PackageSession({
   const {
     openSessionId,
     currentPackage,
-    deletingSessionId,
     isAddSessionModalOpen,
     packageIsComplete,
     suggestedPackageStartDate,
@@ -39,8 +38,12 @@ export function PackageSession({
   const { selectedSessions, allSessionsSelected, selectedStatus } =
     selectionState
 
-  const { deleteModal, createReplacementSession, isDeletingAllSessions } =
-    deleteState
+  const {
+    deleteModal,
+    deletingSessionId,
+    createReplacementSession,
+    isDeletingAllSessions,
+  } = deleteState
 
   const {
     setOpenSessionId,
@@ -136,6 +139,7 @@ export function PackageSession({
         {visibleSession.map((session) => (
           <SessionCard
             key={`${session.id}-${session.date}`}
+            patient={patient}
             session={session}
             defaultTime={currentPackage?.defaultTime ?? "08:00"}
             isSelected={selectedSessions.includes(session.id)}
