@@ -1,12 +1,24 @@
 import { Calendar, Clock, User } from "lucide-react"
+import { format, parseISO } from "date-fns"
+import { ptBR } from "date-fns/locale"
+import type { EvolutionFormProps } from "../evolution.types"
 
-type EvolutionFormHeaderProps = {
-  mode: "create" | "edit"
-}
+type EvolutionFormHeaderProps = Pick<
+  EvolutionFormProps,
+  "mode" | "patient" | "session" | "defaultTime"
+>
 
 export default function EvolutionFormHeader({
   mode,
+  patient,
+  session,
+  defaultTime,
 }: EvolutionFormHeaderProps) {
+  const sessionDate = parseISO(session.date)
+  const sessionWeekDay = format(sessionDate, "EEEE", { locale: ptBR })
+    .replace("-feira", "")
+    .replace(/^./, (letter) => letter.toUpperCase())
+
   return (
     <>
       <header className="mb-6 text-center">
@@ -25,27 +37,25 @@ export default function EvolutionFormHeader({
 
           <div>
             <h2 className="text-lg font-semibold text-slate-800">
-              João da Silva
+              {patient.name}
             </h2>
 
-            <p className="text-sm text-slate-500">
-              Prontuário: 000123 • 32 anos
-            </p>
+            <p className="text-sm text-slate-500">{patient.typeService}</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm sm:grid-cols-3">
           <div className="flex items-center gap-2 text-slate-700">
             <Calendar size={17} className="text-emerald-700" />
-            <span>10/07/2025</span>
+            <span>{format(sessionDate, "dd/MM/yyyy")}</span>
           </div>
 
           <div className="flex items-center gap-2 text-slate-700">
             <Clock size={17} className="text-emerald-700" />
-            <span>16:00</span>
+            <span>{session.time ?? defaultTime}</span>
           </div>
 
-          <span className="text-slate-700">sexta-feira</span>
+          <span className="text-slate-700">{sessionWeekDay}</span>
         </div>
       </section>
     </>

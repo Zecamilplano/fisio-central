@@ -64,6 +64,9 @@ export type EvolutionFormProps = {
   mode?: "create" | "edit"
 
   initialData?: EvolutionFormData
+  patient: Pick<ListPatient, "name" | "typeService">
+  session: Pick<Session, "date" | "time">
+  defaultTime: string
 
   onCancel: () => void
   onSave: (data: EvolutionSaveData) => void
@@ -96,16 +99,19 @@ export type WarningField =
   | "updatePainAfter"
   | keyof VitalSigns
 
-export type EvolutionSaveData = Omit<
-  EvolutionFormData,
-  "complications" | "progress" | "painBefore" | "painAfter"
+export type EvolutionSaveData = Partial<
+  Omit<
+    EvolutionFormData,
+    "complications" | "painBefore" | "painAfter" | "vitalSigns"
+  >
 > & {
   complications?: string
-  progress?: string
   painBefore?: number
   painAfter?: number
+  vitalSigns?: Partial<VitalSigns>
 }
 export type TemporaryWarning = {
   field: WarningField
   message: string
 }
+import type { ListPatient, Session } from "@/types"

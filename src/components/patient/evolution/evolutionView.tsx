@@ -12,16 +12,30 @@ import {
 } from "lucide-react"
 
 import type { EvolutionFormData } from "./evolution.types"
+import type { ListPatient, Session } from "@/types"
+import { format, parseISO } from "date-fns"
+import { ptBR } from "date-fns/locale"
 
 type EvolutionViewProps = {
   evolution: EvolutionFormData
+  patient: Pick<ListPatient, "name" | "typeService">
+  session: Pick<Session, "date" | "time">
+  defaultTime: string
   onEdit: () => void
 }
 
 export default function EvolutionView({
   evolution,
+  patient,
+  session,
+  defaultTime,
   onEdit,
 }: EvolutionViewProps) {
+  const sessionDate = parseISO(session.date)
+  const sessionWeekDay = format(sessionDate, "EEEE", { locale: ptBR })
+    .replace("-feira", "")
+    .replace(/^./, (letter) => letter.toUpperCase())
+
   return (
     <div className="rounded-3xl bg-white p-5 shadow-2xl md:p-8">
       {/* Título */}
@@ -40,12 +54,10 @@ export default function EvolutionView({
 
           <div>
             <h2 className="text-lg font-semibold text-slate-800 md:text-xl">
-              João da Silva
+              {patient.name}
             </h2>
 
-            <p className="text-sm text-slate-500">
-              Prontuário: 000123 • 32 anos
-            </p>
+            <p className="text-sm text-slate-500">{patient.typeService}</p>
           </div>
         </div>
 
@@ -53,16 +65,16 @@ export default function EvolutionView({
           <div className="grid grid-cols-1 gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-slate-700 sm:grid-cols-3">
             <div className="flex items-center gap-2">
               <Calendar size={17} className="text-emerald-700" />
-              <span>10/07/2025</span>
+              <span>{format(sessionDate, "dd/MM/yyyy")}</span>
             </div>
 
             <div className="flex items-center gap-2">
               <Clock size={17} className="text-emerald-700" />
-              <span>16:00</span>
+              <span>{session.time ?? defaultTime}</span>
             </div>
 
             <div className="flex items-center">
-              <span>sexta-feira</span>
+              <span>{sessionWeekDay}</span>
             </div>
           </div>
 

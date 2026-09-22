@@ -23,6 +23,9 @@ function EvolutionForm({
   initialData,
   onSave,
   onCancel,
+  patient,
+  session,
+  defaultTime,
 }: EvolutionFormProps) {
   const {
     form,
@@ -60,7 +63,12 @@ function EvolutionForm({
       className="rounded-3xl bg-white"
     >
       <div className="p-5 md:p-8">
-        <EvolutionFormHeader mode={mode} />
+        <EvolutionFormHeader
+          mode={mode}
+          patient={patient}
+          session={session}
+          defaultTime={defaultTime}
+        />
 
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
           <EvolutionListSection

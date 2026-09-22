@@ -128,35 +128,38 @@ export function useEvolutionForm({
 
     if (Object.keys(newErrors).length > 0) return
 
-    const { complications, progress, painBefore, painAfter, ...restForm } = form
+    const goals = form.goals.map((item) => item.trim()).filter(Boolean)
+    const conducts = form.conducts.map((item) => item.trim()).filter(Boolean)
+    const orientations = form.orientations
+      .map((item) => item.trim())
+      .filter(Boolean)
+    const nextConducts = form.nextConducts
+      .map((item) => item.trim())
+      .filter(Boolean)
+    const exercises = form.exercises
+      .filter((exercise) => exercise.name.trim() && exercise.details.trim())
+      .map((exercise) => ({
+        ...exercise,
+        name: exercise.name.trim(),
+        details: exercise.details.trim(),
+      }))
+    const vitalSigns = Object.fromEntries(
+      Object.entries(form.vitalSigns).filter(([, value]) => value.trim())
+    )
 
-    let normalizedForm: EvolutionSaveData = {
-      ...restForm,
-
-      goals: form.goals.filter((item) => item.trim()),
-      conducts: form.conducts.filter((item) => item.trim()),
-      orientations: form.orientations.filter((item) => item.trim()),
-      nextConducts: form.nextConducts.filter((item) => item.trim()),
-
-      exercises: form.exercises.filter(
-        (exercise) => exercise.name.trim() || exercise.details.trim()
-      ),
-
-      ...(complications?.trim() && {
-        complications: complications.trim(),
+    const normalizedForm: EvolutionSaveData = {
+      ...(goals.length > 0 && { goals }),
+      ...(conducts.length > 0 && { conducts }),
+      ...(orientations.length > 0 && { orientations }),
+      ...(nextConducts.length > 0 && { nextConducts }),
+      ...(exercises.length > 0 && { exercises }),
+      ...(Object.keys(vitalSigns).length > 0 && { vitalSigns }),
+      ...(form.complications?.trim() && {
+        complications: form.complications.trim(),
       }),
-
-      ...(progress.trim() && {
-        progress: progress.trim(),
-      }),
-
-      ...(painBefore !== null && {
-        painBefore,
-      }),
-
-      ...(painAfter !== null && {
-        painAfter,
-      }),
+      ...(form.progress.trim() && { progress: form.progress.trim() }),
+      ...(form.painBefore !== null && { painBefore: form.painBefore }),
+      ...(form.painAfter !== null && { painAfter: form.painAfter }),
     }
 
     onSave(normalizedForm)
