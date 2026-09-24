@@ -85,7 +85,6 @@ export function PackageSession({
           packageIsComplete={packageIsComplete}
           onClose={closeAddSessionModal}
           onContinueCurrentPackage={addSessionToCurrentPackage}
-          onStartNextPackage={() => {}}
           currentPackage={currentPackage}
           onCreateSeparateSession={addSeparateSession}
           onCreateNextPackage={createNextPackage}

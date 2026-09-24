@@ -11,7 +11,6 @@ type AddSessionModalProps = {
   suggestedPackageStartDate: Date
   onClose: () => void
   onContinueCurrentPackage: () => void
-  onStartNextPackage: () => void
   onCreateSeparateSession: (selectedDate: Date) => void
   onCreateNextPackage: (data: {
     startDate: Date
@@ -29,7 +28,6 @@ export function AddSessionModal({
   suggestedPackageStartDate,
   onClose,
   onContinueCurrentPackage,
-  onStartNextPackage,
   onCreateSeparateSession,
   onCreateNextPackage,
 }: AddSessionModalProps) {
@@ -77,6 +75,24 @@ export function AddSessionModal({
       setPackageWeekDays(currentPackage.fixedWeekDays)
     }
   }, [isOpen, currentPackage, patientType, suggestedPackageStartDate])
+
+  useEffect(() => {
+    if (!isOpen) return
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        onClose()
+      }
+    }
+
+    document.addEventListener("keydown", handleEscape)
+    document.body.style.overflow = "hidden"
+
+    return () => {
+      document.addEventListener("keydown", handleEscape)
+      document.body.style.overflow = ""
+    }
+  }, [isOpen, onClose])
 
   if (!isOpen) return null
 
