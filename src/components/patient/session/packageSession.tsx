@@ -1,7 +1,6 @@
 import { CalendarDays } from "lucide-react"
-import type { ListPatient, SessionController, UsePackageSession } from "@/types"
+import type { ListPatient } from "@/types"
 import { SelectedSessionsActions } from "./selectedSessionsActions"
-import { DeleteSessionModal } from "./deleteSessionModal"
 import { SessionCard } from "./sessionCard"
 import { AddSessionModal } from "./addSessionModal"
 import { UsePackageSessionReturn } from "@/hook/usePackageSession"
@@ -10,13 +9,11 @@ import { cn } from "tailwind-variants"
 type PackageSessionProps = {
   patient: ListPatient
   packageSession: UsePackageSessionReturn
-  sessionController: SessionController
 }
 
 export function PackageSession({
   patient,
   packageSession,
-  sessionController,
 }: PackageSessionProps) {
   const {
     sessionState,
@@ -24,7 +21,6 @@ export function PackageSession({
     deleteState,
     sessionActions,
     selectionActions,
-    deleteActions,
   } = packageSession
 
   const {
@@ -38,12 +34,7 @@ export function PackageSession({
   const { selectedSessions, allSessionsSelected, selectedStatus } =
     selectionState
 
-  const {
-    deleteModal,
-    deletingSessionId,
-    createReplacementSession,
-    isDeletingAllSessions,
-  } = deleteState
+  const { deletingSessionId } = deleteState
 
   const {
     setOpenSessionId,
@@ -58,9 +49,6 @@ export function PackageSession({
 
   const { handleSelectSession, handleSelectAllSessions, selectedActions } =
     selectionActions
-
-  const { setCreateReplacementSession, closeDeleteModal, confirmDelete } =
-    deleteActions
 
   const visibleSession =
     patient.typeService === "Pacote" && currentPackage

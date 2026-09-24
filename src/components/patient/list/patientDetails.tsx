@@ -116,11 +116,7 @@ export function PatientDetails({
         )}
 
         {/* Sessões em pacote */}
-        <PackageSession
-          patient={patient}
-          packageSession={packageSession}
-          sessionController={sessionController}
-        />
+        <PackageSession patient={patient} packageSession={packageSession} />
 
         {/* Modal de exclusão de sessão*/}
         <DeleteSessionModal
