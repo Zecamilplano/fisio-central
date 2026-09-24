@@ -33,7 +33,7 @@ export default function EvolutionVitalSignsSection({
     <EvolutionSection
       title="Sinais vitais"
       icon={<HeartPulse size={20} />}
-      optional
+      optional="opcional"
     >
       <div className="space-y-3">
         <VitalField

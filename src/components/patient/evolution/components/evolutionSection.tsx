@@ -4,7 +4,7 @@ type EvolutionSectionProps = {
   title: string
   error?: string
   icon: ReactNode
-  optional?: boolean
+  optional?: "opcional" | "obrigatorio" | "none"
   className?: string
   children: ReactNode
 }
@@ -13,7 +13,7 @@ export default function EvolutionSection({
   title,
   error,
   icon,
-  optional = false,
+  optional = "none",
   className = "",
   children,
 }: EvolutionSectionProps) {
@@ -26,8 +26,14 @@ export default function EvolutionSection({
 
         <h3 className="font-semibold text-slate-800">{title}</h3>
 
-        {optional && (
+        {optional === "opcional" && (
           <span className="text-xs font-normal text-slate-400">(opcional)</span>
+        )}
+
+        {optional === "obrigatorio" && (
+          <span className="text-xs font-normal text-red-600">
+            * Obrigatório
+          </span>
         )}
       </div>
 

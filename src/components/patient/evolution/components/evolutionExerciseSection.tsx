@@ -205,6 +205,7 @@ export default function EvolutionExerciseSection({
   return (
     <EvolutionSection
       title="Exercícios realizados"
+      optional="obrigatorio"
       icon={<Dumbbell size={20} />}
     >
       <div className="overflow-hidden rounded-xl border border-slate-200">

@@ -36,6 +36,21 @@ export default function EvolutionView({
     .replace("-feira", "")
     .replace(/^./, (letter) => letter.toUpperCase())
 
+  const {
+    bloodPressure,
+    heartRate,
+    respiratoryRate,
+    oxygenSaturation,
+    observations,
+  } = evolution.vitalSigns
+  const hasContentVitalSigns = [
+    bloodPressure,
+    heartRate,
+    respiratoryRate,
+    oxygenSaturation,
+    observations,
+  ].every((value) => value.trim())
+
   return (
     <div className="rounded-3xl bg-white p-5 shadow-2xl md:p-8">
       {/* Título */}
@@ -157,35 +172,35 @@ export default function EvolutionView({
         </ContentSection>
 
         {/* Sinais vitais */}
-        <ContentSection
-          title="Sinais vitais"
-          icon={<HeartPulse size={20} />}
-          optional
-        >
-          <div className="overflow-hidden rounded-xl border border-slate-200">
-            <VitalRow
-              label="Pressão arterial"
-              value={evolution.vitalSigns.bloodPressure}
-            />
+        {hasContentVitalSigns && (
+          <ContentSection
+            title="Sinais vitais"
+            icon={<HeartPulse size={20} />}
+            optional
+          >
+            <div className="overflow-hidden rounded-xl border border-slate-200">
+              <VitalRow
+                label="Pressão arterial"
+                value={evolution.vitalSigns.bloodPressure}
+              />
 
-            <VitalRow
-              label="Frequência cardíaca"
-              value={evolution.vitalSigns.heartRate}
-            />
+              <VitalRow
+                label="Frequência cardíaca"
+                value={evolution.vitalSigns.heartRate}
+              />
 
-            <VitalRow
-              label="Frequência respiratória"
-              value={evolution.vitalSigns.respiratoryRate}
-            />
+              <VitalRow
+                label="Frequência respiratória"
+                value={evolution.vitalSigns.respiratoryRate}
+              />
 
-            <VitalRow
-              label="Saturação"
-              value={evolution.vitalSigns.oxygenSaturation}
-              last
-            />
-          </div>
+              <VitalRow
+                label="Saturação"
+                value={evolution.vitalSigns.oxygenSaturation}
+                last
+              />
+            </div>
 
-          {evolution.vitalSigns.observations.trim() && (
             <div className="mt-4 rounded-xl bg-slate-50 px-4 py-3">
               <p className="mb-1 text-xs font-medium uppercase text-slate-400">
                 Observações
@@ -195,8 +210,8 @@ export default function EvolutionView({
                 {evolution.vitalSigns.observations}
               </p>
             </div>
-          )}
-        </ContentSection>
+          </ContentSection>
+        )}
 
         {/* Condutas */}
         <ContentSection title="Conduta" icon={<ClipboardList size={20} />}>
@@ -346,7 +361,7 @@ function ListContent({ items, emptyMessage }: ListContentProps) {
   return (
     <ul className="text-wrap list-disc space-y-2 pl-5 text-sm leading-6 text-slate-600">
       {validItems.map((item, index) => (
-        <li key={`${item}-${index}`} className="[overflow-wrap:anywhere]">
+        <li key={`${item}-${index}`} className="wrap-anywhere">
           {item}
         </li>
       ))}

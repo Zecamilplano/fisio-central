@@ -22,7 +22,11 @@ export default function EvolutionPainSection({
   onChangeAfter,
 }: EvolutionPainSectionProps) {
   return (
-    <EvolutionSection title="Escala de dor (EVA)" icon={<Activity size={20} />}>
+    <EvolutionSection
+      title="Escala de dor (EVA)"
+      optional="opcional"
+      icon={<Activity size={20} />}
+    >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="flex flex-col">
           <PainField

@@ -18,6 +18,7 @@ type EvolutionListSectionProps = {
   addLabel: string
   error?: string
   temporaryWarning?: string
+  optional?: "opcional" | "obrigatorio" | "none"
   onChange: (index: number, value: string) => void
   onAdd: () => void
   onRemove: (index: number) => void
@@ -33,6 +34,7 @@ export default function EvolutionListSection({
   addLabel,
   error,
   temporaryWarning,
+  optional = "none",
   onChange,
   onAdd,
   onRemove,
@@ -171,7 +173,7 @@ export default function EvolutionListSection({
   }
 
   return (
-    <EvolutionSection title={title} icon={icon}>
+    <EvolutionSection title={title} icon={icon} optional={optional}>
       <div ref={listRef} className="space-y-2">
         {values.map((value, index) => {
           const isActive = activeIndex === index

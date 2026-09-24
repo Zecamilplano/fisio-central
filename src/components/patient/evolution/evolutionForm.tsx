@@ -84,6 +84,7 @@ function EvolutionForm({
                 ? temporaryWarning.message
                 : undefined
             }
+            optional="obrigatorio"
             onRemove={(index) => removeStringListItem("goals", index)}
             onClear={() => clearStringList("goals")}
           />
@@ -91,6 +92,7 @@ function EvolutionForm({
           <EvolutionSection
             title="Intercorrências"
             icon={<AlertTriangle size={20} />}
+            optional="opcional"
           >
             <textarea
               value={form.complications ?? ""}
@@ -147,6 +149,7 @@ function EvolutionForm({
             icon={<ClipboardList size={20} />}
             values={form.conducts}
             error={errors.conducts}
+            optional="obrigatorio"
             temporaryWarning={
               temporaryWarning?.field === "conducts"
                 ? temporaryWarning?.message
@@ -166,6 +169,7 @@ function EvolutionForm({
             icon={<Activity size={20} />}
             values={form.orientations}
             error={errors.orientations}
+            optional="opcional"
             temporaryWarning={
               temporaryWarning?.field === "orientations"
                 ? temporaryWarning?.message
@@ -184,6 +188,7 @@ function EvolutionForm({
             title="Evolução / Melhora"
             icon={<Activity size={20} />}
             error={errors.progress}
+            optional="obrigatorio"
             className="lg:col-span-2"
           >
             <textarea
@@ -240,6 +245,7 @@ function EvolutionForm({
             icon={<Activity size={20} />}
             values={form.nextConducts}
             error={errors.nextConducts}
+            optional="opcional"
             temporaryWarning={
               temporaryWarning?.field === "nextConducts"
                 ? temporaryWarning?.message
