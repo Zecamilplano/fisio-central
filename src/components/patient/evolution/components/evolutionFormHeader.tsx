@@ -37,7 +37,7 @@ export default function EvolutionFormHeader({
 
           <div>
             <h2 className="text-lg font-semibold text-slate-800">
-              {patient.name}
+              {`${patient.firstName} ${patient.surName}`.trim()}
             </h2>
 
             <p className="text-sm text-slate-500">{patient.typeService}</p>

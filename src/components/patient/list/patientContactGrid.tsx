@@ -1,12 +1,23 @@
-import { ListPatient } from "@/types"
+import { PatientAddressType } from "@/types/registerPatientsTypes"
+import { MapPinHouse, Phone, Send } from "lucide-react"
 
 type PatientContactGridProps = {
-  contactInfo: ListPatient["contactInfo"]
+  address: PatientAddressType
 }
-export function PatientContactGrid({ contactInfo }: PatientContactGridProps) {
+export function PatientContactGrid({ address }: PatientContactGridProps) {
+  const contactInfo = [
+    { Icon: Phone, label: "Telefone", value: address.telephone },
+    {
+      Icon: MapPinHouse,
+      label: "Endereço",
+      value: `${address.street}${address.noNumber ? "" : `, ${address.addressNumber ?? ""}`}${address.neighborhood ? `, ${address.neighborhood}` : ""}`,
+    },
+    { Icon: Send, label: "Referência", value: address.referenceHouse },
+  ]
+
   return (
     <section className="grid w-full grid-cols-1 gap-4 pb-6 sm:grid-cols-2 xl:grid-cols-3">
-      {Object.values(contactInfo).map((info, index) => {
+      {contactInfo.map((info, index) => {
         const Icon = info.Icon
 
         return (

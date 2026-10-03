@@ -19,12 +19,14 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
   const [patientGlobal, setPatientGlobal] = useState<PatientType>({
     firstName: "",
     surName: "",
-    telephone: "",
-    street: "",
-    addressNumber: null,
-    noNumber: false,
-    neighborhood: "Centro",
-    referenceHouse: "",
+    address: {
+      telephone: "",
+      street: "",
+      addressNumber: null,
+      noNumber: false,
+      neighborhood: "Centro",
+      referenceHouse: "",
+    },
   })
   const [image, setImage] = useState<imageType>([])
   const [hasValidPhoto, setHasValidPhoto] = useState<boolean>(false)
@@ -33,10 +35,10 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
     return (
       !!patientGlobal.firstName.trim() &&
       !!patientGlobal.surName.trim() &&
-      !!patientGlobal.telephone.trim() &&
-      !!patientGlobal.street.trim() &&
-      !!patientGlobal.neighborhood.trim() &&
-      (patientGlobal.noNumber || patientGlobal.addressNumber !== null)
+      !!patientGlobal.address.telephone.trim() &&
+      !!patientGlobal.address.street.trim() &&
+      !!patientGlobal.address.neighborhood.trim() &&
+      (patientGlobal.address.noNumber || patientGlobal.address.addressNumber !== null)
     )
   }, [patientGlobal, hasValidPhoto])
   // console.log("isFormValid:", isFormValid)

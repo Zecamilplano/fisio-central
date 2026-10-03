@@ -32,6 +32,7 @@ export function PatientDetails({
     packageSession.deleteState
   const { setCreateReplacementSession, closeDeleteModal, confirmDelete } =
     packageSession.deleteActions
+  const patientName = `${patient.firstName} ${patient.surName}`.trim()
 
   const sessionController: SessionController = {
     selectedSessions: packageSession.selectionState.selectedSessions,
@@ -76,13 +77,13 @@ export function PatientDetails({
               />
             ) : (
               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-amber-400 text-xl font-medium text-white uppercase">
-                {getInitialLetters(patient.name)}
+                {getInitialLetters(patientName)}
               </div>
             )}
 
             <div className="text-center sm:text-left">
               <h1 className="text-xl font-medium text-slate-700 ">
-                {patient.name}
+                {patientName}
               </h1>
 
               <p className="mt-2 inline-flex min-w-28 justify-center rounded-full bg-amber-100 px-4 py-1 text-sm text-amber-500">
@@ -97,7 +98,7 @@ export function PatientDetails({
         </header>
 
         {/* ContactGrid */}
-        <PatientContactGrid contactInfo={patient.contactInfo} />
+        <PatientContactGrid address={patient.address} />
 
         {/* CurrentPackageCard */}
         {patient.typeService === "Pacote" && (

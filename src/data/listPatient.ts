@@ -1,32 +1,23 @@
 import { ListPatient } from "@/types"
 import { createSessions } from "@/utils/sessions/mockCreateSession"
-import { MapPinHouse, Phone, Send } from "lucide-react"
 
 export const listPatientData: ListPatient[] = [
   {
     id: 1,
     image: "/person.jpg",
-    name: "Anna Souza",
+    firstName: "Anna",
+    surName: "Souza",
     typeService: "Pacote",
 
     startDate: new Date(2026, 1, 12),
 
-    contactInfo: {
-      tel: {
-        Icon: Phone,
-        label: "Telefone",
-        value: "(99) 99999-9999",
-      },
-      address: {
-        Icon: MapPinHouse,
-        label: "Endereço",
-        value: "Rua São Francisco, 05",
-      },
-      reference: {
-        Icon: Send,
-        label: "Referência",
-        value: "Ao lado da madeireira",
-      },
+    address: {
+      telephone: "(99) 99999-9999",
+      street: "Rua São Francisco",
+      addressNumber: 5,
+      noNumber: false,
+      neighborhood: "",
+      referenceHouse: "Ao lado da madeireira",
     },
 
     packages: [
@@ -58,26 +49,18 @@ export const listPatientData: ListPatient[] = [
   {
     id: 2,
     image: null,
-    name: "Carlos Oliveira",
+    firstName: "Carlos",
+    surName: "Oliveira",
     typeService: "Sessão avulsa",
     startDate: new Date(2026, 1, 10),
 
-    contactInfo: {
-      tel: {
-        Icon: Phone,
-        label: "Telefone",
-        value: "(88) 98888-1111",
-      },
-      address: {
-        Icon: MapPinHouse,
-        label: "Endereço",
-        value: "Rua Central, 10",
-      },
-      reference: {
-        Icon: Send,
-        label: "Referência",
-        value: "Próximo à praça",
-      },
+    address: {
+      telephone: "(88) 98888-1111",
+      street: "Rua Central",
+      addressNumber: 10,
+      noNumber: false,
+      neighborhood: "",
+      referenceHouse: "Próximo à praça",
     },
 
     separateSessionInfo: {
@@ -95,26 +78,18 @@ export const listPatientData: ListPatient[] = [
   {
     id: 3,
     image: "/person.jpg",
-    name: "Mariana Lima",
+    firstName: "Mariana",
+    surName: "Lima",
     typeService: "Pacote",
     startDate: new Date(2026, 1, 1),
 
-    contactInfo: {
-      tel: {
-        Icon: Phone,
-        label: "Telefone",
-        value: "(77) 97777-2222",
-      },
-      address: {
-        Icon: MapPinHouse,
-        label: "Endereço",
-        value: "Rua das Flores, 20",
-      },
-      reference: {
-        Icon: Send,
-        label: "Referência",
-        value: "Em frente ao mercado",
-      },
+    address: {
+      telephone: "(77) 97777-2222",
+      street: "Rua das Flores",
+      addressNumber: 20,
+      noNumber: false,
+      neighborhood: "",
+      referenceHouse: "Em frente ao mercado",
     },
 
     packages: [
@@ -165,26 +140,18 @@ export const listPatientData: ListPatient[] = [
   {
     id: 4,
     image: null,
-    name: "João Pedro Alves",
+    firstName: "João",
+    surName: "Pedro Alves",
     typeService: "Sessão avulsa",
     startDate: new Date(2026, 1, 11),
 
-    contactInfo: {
-      tel: {
-        Icon: Phone,
-        label: "Telefone",
-        value: "(66) 96666-3333",
-      },
-      address: {
-        Icon: MapPinHouse,
-        label: "Endereço",
-        value: "Rua da Paz, 12",
-      },
-      reference: {
-        Icon: Send,
-        label: "Referência",
-        value: "Casa azul",
-      },
+    address: {
+      telephone: "(66) 96666-3333",
+      street: "Rua da Paz",
+      addressNumber: 12,
+      noNumber: false,
+      neighborhood: "",
+      referenceHouse: "Casa azul",
     },
 
     separateSessionInfo: {
@@ -202,26 +169,18 @@ export const listPatientData: ListPatient[] = [
   {
     id: 5,
     image: "/person.jpg",
-    name: "Fernanda Costa",
+    firstName: "Fernanda",
+    surName: "Costa",
     typeService: "Pacote",
     startDate: new Date(2026, 1, 11),
 
-    contactInfo: {
-      tel: {
-        Icon: Phone,
-        label: "Telefone",
-        value: "(55) 95555-4444",
-      },
-      address: {
-        Icon: MapPinHouse,
-        label: "Endereço",
-        value: "Rua Primavera, 45",
-      },
-      reference: {
-        Icon: Send,
-        label: "Referência",
-        value: "Perto da escola",
-      },
+    address: {
+      telephone: "(55) 95555-4444",
+      street: "Rua Primavera",
+      addressNumber: 45,
+      noNumber: false,
+      neighborhood: "",
+      referenceHouse: "Perto da escola",
     },
 
     packages: [
@@ -253,26 +212,18 @@ export const listPatientData: ListPatient[] = [
   {
     id: 6,
     image: null,
-    name: "Lucas Martins",
+    firstName: "Lucas",
+    surName: "Martins",
     typeService: "Sessão avulsa",
     startDate: new Date(2026, 1, 25),
 
-    contactInfo: {
-      tel: {
-        Icon: Phone,
-        label: "Telefone",
-        value: "(44) 94444-5555",
-      },
-      address: {
-        Icon: MapPinHouse,
-        label: "Endereço",
-        value: "Rua Nova, 18",
-      },
-      reference: {
-        Icon: Send,
-        label: "Referência",
-        value: "Ao lado da farmácia",
-      },
+    address: {
+      telephone: "(44) 94444-5555",
+      street: "Rua Nova",
+      addressNumber: 18,
+      noNumber: false,
+      neighborhood: "",
+      referenceHouse: "Ao lado da farmácia",
     },
 
     separateSessionInfo: {
@@ -290,26 +241,18 @@ export const listPatientData: ListPatient[] = [
   {
     id: 7,
     image: "/person.jpg",
-    name: "Beatriz Rocha",
+    firstName: "Beatriz",
+    surName: "Rocha",
     typeService: "Pacote",
     startDate: new Date(2026, 2, 2),
 
-    contactInfo: {
-      tel: {
-        Icon: Phone,
-        label: "Telefone",
-        value: "(33) 93333-6666",
-      },
-      address: {
-        Icon: MapPinHouse,
-        label: "Endereço",
-        value: "Rua Horizonte, 90",
-      },
-      reference: {
-        Icon: Send,
-        label: "Referência",
-        value: "Próximo ao posto",
-      },
+    address: {
+      telephone: "(33) 93333-6666",
+      street: "Rua Horizonte",
+      addressNumber: 90,
+      noNumber: false,
+      neighborhood: "",
+      referenceHouse: "Próximo ao posto",
     },
 
     packages: [
@@ -341,26 +284,18 @@ export const listPatientData: ListPatient[] = [
   {
     id: 8,
     image: null,
-    name: "Gabriel Fernandes",
+    firstName: "Gabriel",
+    surName: "Fernandes",
     typeService: "Sessão avulsa",
     startDate: new Date(2026, 2, 5),
 
-    contactInfo: {
-      tel: {
-        Icon: Phone,
-        label: "Telefone",
-        value: "(22) 92222-7777",
-      },
-      address: {
-        Icon: MapPinHouse,
-        label: "Endereço",
-        value: "Rua do Sol, 30",
-      },
-      reference: {
-        Icon: Send,
-        label: "Referência",
-        value: "Casa branca",
-      },
+    address: {
+      telephone: "(22) 92222-7777",
+      street: "Rua do Sol",
+      addressNumber: 30,
+      noNumber: false,
+      neighborhood: "",
+      referenceHouse: "Casa branca",
     },
 
     separateSessionInfo: {
@@ -378,26 +313,18 @@ export const listPatientData: ListPatient[] = [
   {
     id: 9,
     image: "/person.jpg",
-    name: "Camila Ribeiro",
+    firstName: "Camila",
+    surName: "Ribeiro",
     typeService: "Pacote",
     startDate: new Date(2026, 2, 10),
 
-    contactInfo: {
-      tel: {
-        Icon: Phone,
-        label: "Telefone",
-        value: "(11) 91111-8888",
-      },
-      address: {
-        Icon: MapPinHouse,
-        label: "Endereço",
-        value: "Rua Esperança, 77",
-      },
-      reference: {
-        Icon: Send,
-        label: "Referência",
-        value: "Perto da igreja",
-      },
+    address: {
+      telephone: "(11) 91111-8888",
+      street: "Rua Esperança",
+      addressNumber: 77,
+      noNumber: false,
+      neighborhood: "",
+      referenceHouse: "Perto da igreja",
     },
 
     packages: [
@@ -429,26 +356,18 @@ export const listPatientData: ListPatient[] = [
   {
     id: 10,
     image: null,
-    name: "Rafael Mendes",
+    firstName: "Rafael",
+    surName: "Mendes",
     typeService: "Sessão avulsa",
     startDate: new Date(2026, 2, 15),
 
-    contactInfo: {
-      tel: {
-        Icon: Phone,
-        label: "Telefone",
-        value: "(00) 90000-9999",
-      },
-      address: {
-        Icon: MapPinHouse,
-        label: "Endereço",
-        value: "Rua das Acácias, 100",
-      },
-      reference: {
-        Icon: Send,
-        label: "Referência",
-        value: "Ao lado do estádio",
-      },
+    address: {
+      telephone: "(00) 90000-9999",
+      street: "Rua das Acácias",
+      addressNumber: 100,
+      noNumber: false,
+      neighborhood: "",
+      referenceHouse: "Ao lado do estádio",
     },
 
     separateSessionInfo: {

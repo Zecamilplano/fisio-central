@@ -20,7 +20,9 @@ function ListPatient() {
   const findPatient =
     search.length > 1
       ? listPatient.filter((patient) =>
-          patient.name.toLocaleLowerCase().includes(search)
+          `${patient.firstName} ${patient.surName}`
+            .toLocaleLowerCase()
+            .includes(search)
         )
       : listPatient
 

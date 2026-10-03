@@ -64,7 +64,7 @@ export type EvolutionFormProps = {
   mode?: "create" | "edit"
 
   initialData?: EvolutionFormData
-  patient: Pick<ListPatient, "name" | "typeService">
+  patient: Pick<ListPatient, "firstName" | "surName" | "typeService">
   session: Pick<Session, "date" | "time">
   defaultTime: string
 

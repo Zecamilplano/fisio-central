@@ -25,7 +25,7 @@ import { cn } from "tailwind-variants"
 import { useFisioStore } from "@/store/fisio/fisioStore"
 
 type SessionCardProps = {
-  patient: Pick<ListPatient, "name" | "typeService">
+  patient: Pick<ListPatient, "firstName" | "surName" | "typeService">
   session: Session
   defaultTime: string
   isSelected: boolean

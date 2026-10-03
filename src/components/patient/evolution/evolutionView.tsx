@@ -18,7 +18,7 @@ import { ptBR } from "date-fns/locale"
 
 type EvolutionViewProps = {
   evolution: EvolutionFormData
-  patient: Pick<ListPatient, "name" | "typeService">
+  patient: Pick<ListPatient, "firstName" | "surName" | "typeService">
   session: Pick<Session, "date" | "time">
   defaultTime: string
   onEdit: () => void
@@ -69,7 +69,7 @@ export default function EvolutionView({
 
           <div>
             <h2 className="text-lg font-semibold text-slate-800 md:text-xl">
-              {patient.name}
+              {`${patient.firstName} ${patient.surName}`.trim()}
             </h2>
 
             <p className="text-sm text-slate-500">{patient.typeService}</p>

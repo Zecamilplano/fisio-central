@@ -1,6 +1,4 @@
-export type PatientType = {
-  firstName: string
-  surName: string
+export type PatientAddressType = {
   telephone: string
   street: string
   addressNumber: number | null
@@ -9,7 +7,15 @@ export type PatientType = {
   referenceHouse: string
 }
 
-export type PatientOptionalType = Partial<Record<keyof PatientType, string>>
+export type PatientType = {
+  firstName: string
+  surName: string
+  address: PatientAddressType
+}
+
+export type PatientOptionalType = Partial<
+  Record<keyof PatientAddressType | "firstName" | "surName", string>
+>
 
 export type StepKey = "step1" | "step2" | "step3"
 

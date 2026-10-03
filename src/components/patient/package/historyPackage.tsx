@@ -20,6 +20,7 @@ export function PackageHistoryModal({
 }: PackageHistoryModalProps) {
   const packages = patient.packages.toReversed()
   const sessions = patient.session
+  const patientName = `${patient.firstName} ${patient.surName}`.trim()
 
   // console.log("packages: ", packages)
   // console.log("quantidade: ", packages.length)
@@ -66,7 +67,7 @@ export function PackageHistoryModal({
         <header className="flex items-start justify-between border-b border-slate-200 px-5 py-4">
           <div className="flex items-start gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-400 text-xs font-bold text-white">
-              {getInitialLetters(patient.name)}
+              {getInitialLetters(patientName)}
             </div>
 
             <div>
@@ -74,7 +75,7 @@ export function PackageHistoryModal({
                 Histórico de Pacotes
               </h2>
 
-              <p className="text-[11px] text-slate-500">{patient.name}</p>
+              <p className="text-[11px] text-slate-500">{patientName}</p>
             </div>
           </div>
 

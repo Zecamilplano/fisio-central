@@ -100,17 +100,17 @@ function Profile({ form }: ProfileProps) {
           name="tel"
           id="tel"
           placeholder="00 00000-0000"
-          value={patient.telephone}
+          value={patient.address.telephone}
           onChange={(e) => {
-            handleChange("telephone", e.target.value)
+            handleChange("address.telephone", e.target.value)
             setErrorPatient({ ...errorPatient, telephone: "" })
           }}
-          onBlur={(e) => handleErrors("telephone", e.target.value)}
+          onBlur={(e) => handleErrors("address.telephone", e.target.value)}
           data-error={!!errorPatient.telephone}
           maxLength={15}
           className={`w-full md:w-full border-2  rounded-md px-2 py-3
                        text-[#333] placeholder:text-text-gray-400
-                      ${patient.telephone ? "bg-white" : "bg-[#EAE9E9]"}
+                      ${patient.address.telephone ? "bg-white" : "bg-[#EAE9E9]"}
                       ${!errorPatient.telephone ? "border-[#D0D7DE]/40 focus:outline-[#FFA726]" : "border-[red] focus:outline-[red]"}
                       `}
         />
@@ -137,16 +137,16 @@ function Profile({ form }: ProfileProps) {
               name="street"
               id="street"
               placeholder="Digite o nome da rua"
-              value={patient.street}
+              value={patient.address.street}
               onChange={(e) => {
-                handleChange("street", e.target.value)
+                handleChange("address.street", e.target.value)
                 setErrorPatient({ ...errorPatient, street: "" })
               }}
-              onBlur={(e) => handleErrors("street", e.target.value)}
+              onBlur={(e) => handleErrors("address.street", e.target.value)}
               data-error={!!errorPatient.street}
               className={`w-full md:w-full border-2  rounded-md px-2 py-3
                        text-[#333] placeholder:text-text-gray-400
-                      ${patient.street ? "bg-white" : "bg-[#EAE9E9]"}
+                      ${patient.address.street ? "bg-white" : "bg-[#EAE9E9]"}
                       ${!errorPatient.street ? "border-[#D0D7DE]/40 focus:outline-[#FFA726]" : "border-[red] focus:outline-[red]"}
                       `}
             />
@@ -170,13 +170,13 @@ function Profile({ form }: ProfileProps) {
               name="addressNumber"
               id="addressNumber"
               placeholder="000º"
-              disabled={patient.noNumber}
-              value={patient.noNumber ? "" : (patient.addressNumber ?? "")}
+              disabled={patient.address.noNumber}
+              value={patient.address.noNumber ? "" : (patient.address.addressNumber ?? "")}
               onChange={(e) => {
                 const value = e.target.value
 
                 handleChange(
-                  "addressNumber",
+                  "address.addressNumber",
                   value === "" ? null : Number(value)
                 )
                 setErrorPatient({ ...errorPatient, addressNumber: "" })
@@ -184,14 +184,14 @@ function Profile({ form }: ProfileProps) {
               onBlur={(e) => {
                 const value = e.target.value
                 handleErrors(
-                  "addressNumber",
+                  "address.addressNumber",
                   value === "" ? null : Number(value)
                 )
               }}
               data-error={!!errorPatient.addressNumber}
               className={`w-32 border-2  rounded-md px-2 py-3
                        text-[#333] placeholder:text-text-gray-400
-                      ${patient.addressNumber ? "bg-white" : "bg-[#EAE9E9]"}
+                      ${patient.address.addressNumber ? "bg-white" : "bg-[#EAE9E9]"}
                       ${!errorPatient.addressNumber ? "border-[#D0D7DE]/40 focus:outline-[#FFA726]" : "border-[red] focus:outline-[red]"}
                       `}
             />
@@ -200,13 +200,18 @@ function Profile({ form }: ProfileProps) {
               <input
                 type="checkbox"
                 id="noNumber"
+                checked={patient.address.noNumber}
                 onChange={(e) => {
                   const checked = e.target.checked
                   setPatient((prev) => ({
                     ...prev,
-                    noNumber: checked,
-                    addressNumber: checked ? null : prev.addressNumber,
+                    address: {
+                      ...prev.address,
+                      noNumber: checked,
+                      addressNumber: checked ? null : prev.address.addressNumber,
+                    },
                   }))
+                  handleChange("address.noNumber", checked)
 
                   if (checked) {
                     setErrorPatient((prev) => ({
@@ -242,16 +247,16 @@ function Profile({ form }: ProfileProps) {
               type="text"
               name="neighborhood"
               id="neighborhood"
-              value={patient.neighborhood}
+              value={patient.address.neighborhood}
               onChange={(e) => {
-                handleChange("neighborhood", e.target.value)
+                handleChange("address.neighborhood", e.target.value)
                 setErrorPatient({ ...errorPatient, neighborhood: "" })
               }}
-              onBlur={(e) => handleErrors("neighborhood", e.target.value)}
+              onBlur={(e) => handleErrors("address.neighborhood", e.target.value)}
               data-error={!!errorPatient.neighborhood}
               className={`w-full md:w-full border-2 rounded-md px-2 py-3
                        text-[#333] placeholder:text-text-gray-400
-                      ${patient.neighborhood ? "bg-white" : "bg-[#EAE9E9]"}
+                      ${patient.address.neighborhood ? "bg-white" : "bg-[#EAE9E9]"}
                       ${!errorPatient.neighborhood ? "border-[#D0D7DE]/40 focus:outline-[#FFA726]" : "border-[red] focus:outline-[red]"}
                       `}
             />
@@ -278,14 +283,14 @@ function Profile({ form }: ProfileProps) {
           rows={4}
           placeholder="Ponto de referência"
           onChange={(e) => {
-            handleChange("referenceHouse", e.target.value)
+            handleChange("address.referenceHouse", e.target.value)
             setErrorPatient({ ...errorPatient, referenceHouse: "" })
           }}
-          onBlur={(e) => handleErrors("referenceHouse", e.target.value)}
+          onBlur={(e) => handleErrors("address.referenceHouse", e.target.value)}
           data-error={!!errorPatient.referenceHouse}
           className={`w-full md:w-full border-2  rounded-md px-2 py-3
                        text-[#333] placeholder:text-text-gray-400
-                      ${patient.referenceHouse ? "bg-white" : "bg-[#EAE9E9]"}
+                      ${patient.address.referenceHouse ? "bg-white" : "bg-[#EAE9E9]"}
                       ${!errorPatient.referenceHouse ? "border-[#D0D7DE]/40 focus:outline-[#FFA726]" : "border-[red] focus:outline-[red]"}
                       `}
         />

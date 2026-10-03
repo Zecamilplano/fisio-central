@@ -1,18 +1,9 @@
 import { daysOfWeek } from "@/data"
-import { LucideIcon } from "lucide-react"
 import { Session } from "./session"
+import type { PatientType } from "./registerPatientsTypes"
 
 export type TypeService = "Pacote" | "Sessão avulsa"
-export type ContactInfoKey = "tel" | "address" | "reference"
 export type DayOfWeek = (typeof daysOfWeek)[number]
-
-type ContactInfoData = {
-  Icon: LucideIcon
-  label: string
-  value: string
-}
-
-export type ContactInfo = Record<ContactInfoKey, ContactInfoData>
 
 export type TreatmentPackage = {
   id: string
@@ -37,31 +28,25 @@ export type SeparateSessionInfo = {
   priceSession: number
 }
 
-type PackagePatient = {
+type PackagePatient = PatientType & {
   id: number
-  name: string
   image: string | null
 
   typeService: "Pacote"
 
   startDate: Date
-  contactInfo: ContactInfo
-
   packages: TreatmentPackage[]
 
   session: Session[]
 }
 
-type SeparatePatient = {
+type SeparatePatient = PatientType & {
   id: number
-  name: string
   image: string | null
 
   typeService: "Sessão avulsa"
 
   startDate: Date
-  contactInfo: ContactInfo
-
   separateSessionInfo: {
     priceSession: number
   }

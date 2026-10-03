@@ -46,7 +46,8 @@ export function PatientSidebar({
       {patients.length > 0 && (
         <ol className="w-full">
           {patients.map((patient) => {
-            const initialLetters = getInitialLetters(patient.name)
+            const patientName = `${patient.firstName} ${patient.surName}`.trim()
+            const initialLetters = getInitialLetters(patientName)
 
             return (
               <li key={patient.id} className="font-open-sans w-full">
@@ -63,7 +64,7 @@ export function PatientSidebar({
                       <Image
                         src={patient.image}
                         fill
-                        alt={`Foto de perfil de ${patient.name}`}
+                        alt={`Foto de perfil de ${patientName}`}
                         className="rounded-full object-cover"
                       />
                     ) : (
@@ -74,7 +75,7 @@ export function PatientSidebar({
                   </div>
 
                   <span className="text-left text-sm wrap-break-words text-[#1B4332] md:text-base">
-                    <p>{highlightSearch(patient.name, search)}</p>
+                    <p>{highlightSearch(patientName, search)}</p>
                   </span>
                 </button>
               </li>
