@@ -1,6 +1,6 @@
 import { Search, X } from "lucide-react"
 import Link from "next/link"
-import React, { useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
 
 type SubHeaderPatientList = {
   onSearchChange: (e: string) => void
@@ -8,6 +8,7 @@ type SubHeaderPatientList = {
 
 export function SubHeaderPatientList({ onSearchChange }: SubHeaderPatientList) {
   const [search, setSearch] = useState<string>("")
+  const searchInputRef = useRef<HTMLInputElement>(null)
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const value = e.target.value.trim().toLocaleLowerCase()
@@ -16,14 +17,43 @@ export function SubHeaderPatientList({ onSearchChange }: SubHeaderPatientList) {
     onSearchChange(value)
   }
 
+  function clearSearch() {
+    setSearch("")
+    onSearchChange("")
+  }
+
+  useEffect(() => {
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key !== "Escape" && event.key !== "Esc" && event.code !== "Escape") {
+        return
+      }
+
+      const input = searchInputRef.current
+      if (!input) return
+
+      event.preventDefault()
+      input.focus()
+
+      if (input.value.length > 0) {
+        setSearch("")
+        onSearchChange("")
+      }
+    }
+
+    window.addEventListener("keydown", handleEscape, true)
+    return () => window.removeEventListener("keydown", handleEscape, true)
+  }, [onSearchChange])
+
   return (
     <header className="flex flex-col justify-between gap-4 px-2 py-6 lg:flex-row">
       <form
         role="search"
+        onSubmit={(event) => event.preventDefault()}
         className="flex h-14 w-full items-center justify-between rounded-4xl bg-white px-4 py-2 lg:w-1/3"
       >
         <input
           type="text"
+          ref={searchInputRef}
           value={search}
           onChange={handleChange}
           placeholder="Procurar por pacientes"
@@ -31,10 +61,15 @@ export function SubHeaderPatientList({ onSearchChange }: SubHeaderPatientList) {
         />
 
         {search.trim().length > 0 ? (
-          <X
-            size={28}
+          <button
+            type="button"
+            onClick={clearSearch}
+            aria-label="Limpar busca de pacientes"
+            title="Limpar busca"
             className="shrink-0 text-slate-400 hover:text-red-500 hover:opacity-80 active:opacity-60"
-          />
+          >
+            <X size={28} />
+          </button>
         ) : (
           <Search size={28} color="#9CA3AF" className="shrink-0" />
         )}
