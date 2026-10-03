@@ -4,10 +4,15 @@ import {
   PaymentType,
   SchedulingErrorForm,
   SchedulingForm,
+  Session_,
   TypeServiceType,
 } from "@/types"
 import { initialErrors } from "@/data/schedulingData"
-import { buildSessions, getLastDate } from "@/utils/form"
+import {
+  applyPaymentToSessions,
+  buildSessions,
+  getLastDate,
+} from "@/utils/form"
 
 const STORAGE_KEY = "schedulingForm"
 
@@ -198,8 +203,10 @@ export function useSchedulingSessions(
     if (!weeklyAmount) {
       newErrors.weeklyAmount.push("Selecione quantas vezes na semana.")
     }
-    if (activeDays.length === 0) {
-      newErrors.selectedDays.push("Selecione pelo menos um dia da semana.")
+    if (activeDays.length !== weeklyAmount) {
+      newErrors.selectedDays.push(
+        "Selecione a mesma quantidade de dias definida para a semana."
+      )
     }
     if (scheduledCount >= totalSessions) {
       newErrors.sessions.push("Limite de sessões atingido.")
@@ -219,10 +226,14 @@ export function useSchedulingSessions(
     }
 
     const lastDate = getLastDate(sessions)
+    const firstSessionDate = lastDate ?? startDate
+
+    if (!firstSessionDate) return
+
     const newSessions = buildSessions(
       activeDays,
       scheduledCount,
-      lastDate ?? startDate,
+      firstSessionDate,
       totalSessions,
       defaultTime,
       paymentType
@@ -239,6 +250,17 @@ export function useSchedulingSessions(
     updatePackage({ sessions: updatedSessions })
   }
 
+  function updateSessionStatus(
+    index: number,
+    fields: Partial<Pick<Session_, "finish" | "paid">>
+  ) {
+    updatePackage({
+      sessions: sessions.map((session, sessionIndex) =>
+        sessionIndex === index ? { ...session, ...fields } : session
+      ),
+    })
+  }
+
   function handleDateChange(date: Date) {
     setSchedulingForm((prev) => ({
       ...prev,
@@ -247,6 +269,7 @@ export function useSchedulingSessions(
         weekDay: date.toLocaleDateString("pt-BR", { weekday: "long" }),
         time: "16:00",
         paid: "pendente",
+        finish: "pendente",
       },
     }))
 
@@ -299,9 +322,17 @@ export function useSchedulingSessions(
     "package.paymentType": (paymentType: PaymentType) =>
       setSchedulingForm((prev) => ({
         ...prev,
-        package: { ...prev.package, paymentType },
+        package: {
+          ...prev.package,
+          paymentType,
+          sessions: applyPaymentToSessions(
+            prev.package.sessions,
+            paymentType
+          ),
+        },
       })),
     handleDeleteSession,
+    updateSessionStatus,
     handleAddSessions,
     handleDateChange,
   }
@@ -331,6 +362,7 @@ export function useSchedulingSessions(
     handleDayToggle,
     handleAddSessions,
     handleDeleteSession,
+    updateSessionStatus,
     handleDateChange,
     handleDateClear,
     handleValidateSingleSession,

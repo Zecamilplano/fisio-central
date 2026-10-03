@@ -1,4 +1,5 @@
 import { TypeServiceType } from "./typeServiceType"
+import type { Session } from "./session"
 
 export type summaryCardType = {
   value: number
@@ -7,12 +8,11 @@ export type summaryCardType = {
 
 export type PaymentType = "metade" | "integral" | "depois"
 
-export type Session_ = {
+export type Session_ = Pick<Session, "finish" | "paid"> & {
   sessionNumber: number
   fullDate: string
   weekDay: string
   time: string
-  paid: "pago" | "pendente"
 }
 
 export type SummaryItem = {
@@ -31,11 +31,10 @@ export type Package = {
   summary: SummaryItem[]
 }
 
-export type SingleSession = {
+export type SingleSession = Pick<Session, "finish" | "paid"> & {
   fullDate: Date
   weekDay: string
   time: string
-  paid: "pago" | "pendente"
 }
 
 export type SchedulingForm = {

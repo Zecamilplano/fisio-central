@@ -4,6 +4,7 @@ import { useSchedulingSessions } from "@/hook/useSchedulingSessions"
 import Calendar from "react-calendar"
 import { isSameDay, startOfDay } from "date-fns"
 import { PaymentType } from "@/types"
+import { cn } from "tailwind-variants"
 
 type SchedulingSessionsProps = {
   form: ReturnType<typeof useSchedulingSessions>
@@ -34,7 +35,6 @@ const paymentInitialOptions: {
 function SchedulingSessions({ form }: SchedulingSessionsProps) {
   const {
     schedulingForm,
-    setSchedulingForm,
     summary,
     sessions,
     weeklyAmount,
@@ -42,10 +42,7 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
     maxDaysReached,
     schedulingFormErrors,
     handleChange,
-    handleWeeklyAmount,
-    handleDayToggle,
-    handleAddSessions,
-    handleDeleteSession,
+    updateSessionStatus,
     handleDateChange,
     handleDateClear,
   } = form
@@ -256,8 +253,10 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
 
           {/* Pagamento inicial */}
           <fieldset className="font-open-sans flex flex-col items-center gap-3">
-            <legend className="text-lg text-[#FFA726] text-center font-semibold">
-              Pagamento inicial
+            <legend className="text-lg text-[#FFA726] text-center font-semibold pb-2">
+              {sessions.length > 0
+                ? "Aplicar pagamento às sessões"
+                : "Pagamento inicial"}
             </legend>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
@@ -284,6 +283,13 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
                 </button>
               ))}
             </div>
+
+            {sessions.length > 0 && (
+              <p className="text-center text-xs text-[#8C7B6B]">
+                Esta escolha atualizará o pagamento de todas as sessões da
+                agenda.
+              </p>
+            )}
           </fieldset>
           {/* Pagamento inicial */}
 
@@ -353,6 +359,57 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
                       </span>
                     </div>
                   </header>
+
+                  <div className="flex flex-wrap justify-end gap-2">
+                    <div className="flex overflow-hidden rounded-md border border-white/50 text-xs">
+                      {(
+                        [
+                          ["realizado", "Realizada"],
+                          ["pendente", "Pendente"],
+                        ] as const
+                      ).map(([value, label]) => (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() =>
+                            updateSessionStatus(index, { finish: value })
+                          }
+                          className={`px-2 py-1 font-medium transition ${
+                            session.finish === value
+                              ? "bg-white text-[#D97706]"
+                              : "text-white hover:bg-white/15"
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="flex overflow-hidden rounded-md border border-white/50 text-xs">
+                      {(
+                        [
+                          ["realizado", "Pago"],
+                          ["pendente", "Pendente"],
+                        ] as const
+                      ).map(([value, label]) => (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() =>
+                            updateSessionStatus(index, { paid: value })
+                          }
+                          className={cn(
+                            "px-2 py-1 font-medium transition",
+                            session.paid === value
+                              ? "bg-white text-[#D97706]"
+                              : "text-white hover:bg-white/15"
+                          )}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
 
                   <button
                     type="button"

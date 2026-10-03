@@ -18,6 +18,22 @@ const dayMap: Record<string, number> = {
   Sábado: 6,
 }
 
+export function applyPaymentToSessions(
+  sessions: Session_[],
+  paymentType: PaymentType
+): Session_[] {
+  const paidSessions = Math.ceil(sessions.length / 2)
+
+  return sessions.map((session, index) => ({
+    ...session,
+    paid:
+      paymentType === "integral" ||
+      (paymentType === "metade" && index < paidSessions)
+        ? "realizado"
+        : "pendente",
+  }))
+}
+
 export function buildSessions(
   activeDays: string[],
   scheduledCount: number,
@@ -38,36 +54,24 @@ export function buildSessions(
     if (activeDayNumbers.includes(currentDayNumber)) {
       const sessionNumber = scheduledCount + newSessions.length + 1
 
-      let paid: "pago" | "pendente" = "pendente"
-
-      if (paymentType === "integral") {
-        paid = "pago"
-      }
-
-      if (
-        paymentType === "metade" &&
-        sessionNumber <= Math.ceil(totalSessions / 2)
-      ) {
-        paid = "pago"
-      }
-
       newSessions.push({
         sessionNumber,
         fullDate: fn.format(currentDate, "dd/MM/yyyy"),
         weekDay: fn.format(currentDate, "EEEE", { locale: ptBR }),
         time: defaultTime,
-        paid,
+        finish: "pendente",
+        paid: "pendente",
       })
     }
 
     currentDate = fn.addDays(currentDate, 1)
   }
 
-  return newSessions
+  return applyPaymentToSessions(newSessions, paymentType)
 }
 
-export function getLastDate(sessions: Session_[]): Date {
-  if (sessions.length === 0) return new Date()
+export function getLastDate(sessions: Session_[]): Date | null {
+  if (sessions.length === 0) return null
 
   const parsed = fn.parse(
     sessions[sessions.length - 1].fullDate,
@@ -75,5 +79,5 @@ export function getLastDate(sessions: Session_[]): Date {
     new Date()
   )
 
-  return fn.isValid(parsed) ? parsed : new Date()
+  return fn.isValid(parsed) ? parsed : null
 }
