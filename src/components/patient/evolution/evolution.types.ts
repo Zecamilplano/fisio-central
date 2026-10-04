@@ -44,7 +44,6 @@ export type EvolutionFormData = {
 // ================================
 
 export type Evolution = EvolutionFormData & {
-  id: string
   sessionId: string
   patientId: string
 

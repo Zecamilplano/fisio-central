@@ -29,7 +29,7 @@ export type SeparateSessionInfo = {
 }
 
 type PackagePatient = PatientType & {
-  id: number
+  id: string
   image: string | null
 
   typeService: "Pacote"
@@ -41,7 +41,7 @@ type PackagePatient = PatientType & {
 }
 
 type SeparatePatient = PatientType & {
-  id: number
+  id: string
   image: string | null
 
   typeService: "Sessão avulsa"

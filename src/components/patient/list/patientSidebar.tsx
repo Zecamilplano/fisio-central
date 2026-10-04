@@ -4,9 +4,9 @@ import { getInitialLetters } from "@/utils/patient/getInitialLetters"
 
 type PatientSidebarProps = {
   patients: ListPatient[]
-  selectedPatientId: number | null
+  selectedPatientId: string | null
   search: string
-  onSelectPatient: (id: number) => void
+  onSelectPatient: (id: string) => void
 }
 
 function highlightSearch(name: string, search: string) {

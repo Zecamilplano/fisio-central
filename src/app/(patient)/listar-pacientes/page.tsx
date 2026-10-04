@@ -12,7 +12,7 @@ function ListPatient() {
   const listPatient = useFisioStore((state) => state.patients)
 
   const [currentPackageIndex, setCurrentPackageIndex] = useState(0)
-  const [selectedPatientId, setSelectedPatientId] = useState<number | null>(
+  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(
     null
   )
   const [search, setSearch] = useState<string>("")
