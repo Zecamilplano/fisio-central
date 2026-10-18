@@ -70,6 +70,8 @@ export function SessionCard({
   const timeOptions = createTimeOptions()
 
   const hasCustomTime = session.time && session.time !== defaultTime
+  const hasRescheduledDate =
+    session.originalDate !== undefined && session.originalDate !== session.date
 
   function handleOpenEvolution() {
     if (evolution) {
@@ -165,6 +167,12 @@ export function SessionCard({
 
                     <p className="rounded-full text-xs text-slate-400">
                       {weekDay}
+
+                      {hasRescheduledDate && (
+                        <span className="ml-1 font-medium text-[#F79009]">
+                          • Data remarcada
+                        </span>
+                      )}
 
                       {hasCustomTime && (
                         <span className="ml-1 font-medium text-[#F79009]">

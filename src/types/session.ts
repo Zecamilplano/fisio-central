@@ -14,7 +14,7 @@ export type Session = {
   number: number
   packageId?: string
   date: string
-  originalDate?: Date
+  originalDate?: string
   time?: string
   finish: StatusSessaoKey
   paid: PaidKey

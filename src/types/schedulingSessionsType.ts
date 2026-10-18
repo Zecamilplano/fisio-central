@@ -24,6 +24,7 @@ export type Package = {
   startDate: Date | null
   defaultTime: string
   paymentType: PaymentType
+  paidSessionsCount: number | null
 
   weeklyAmount: number | null
   selectedDays: Record<string, boolean>

@@ -20,15 +20,16 @@ const dayMap: Record<string, number> = {
 
 export function applyPaymentToSessions(
   sessions: Session_[],
-  paymentType: PaymentType
+  paymentType: PaymentType,
+  paidSessionsCount?: number
 ): Session_[] {
-  const paidSessions = Math.ceil(sessions.length / 2)
+  const paidSessions = paidSessionsCount ?? Math.floor(sessions.length / 2)
 
-  return sessions.map((session, index) => ({
+  return sessions.map((session) => ({
     ...session,
     paid:
       paymentType === "integral" ||
-      (paymentType === "metade" && index < paidSessions)
+      (paymentType === "metade" && session.sessionNumber <= paidSessions)
         ? "realizado"
         : "pendente",
   }))
@@ -40,7 +41,8 @@ export function buildSessions(
   startDate: Date,
   totalSessions: number,
   defaultTime: string,
-  paymentType: PaymentType
+  paymentType: PaymentType,
+  paidSessionsCount?: number
 ): Session_[] {
   const sessionsToAdd = totalSessions - scheduledCount
   const newSessions: Session_[] = []
@@ -67,7 +69,7 @@ export function buildSessions(
     currentDate = fn.addDays(currentDate, 1)
   }
 
-  return applyPaymentToSessions(newSessions, paymentType)
+  return applyPaymentToSessions(newSessions, paymentType, paidSessionsCount)
 }
 
 export function getLastDate(sessions: Session_[]): Date | null {

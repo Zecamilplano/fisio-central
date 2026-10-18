@@ -28,6 +28,7 @@ function buildInitialSchedulingForm(
       startDate: null,
       defaultTime: "16:00",
       paymentType: "metade",
+      paidSessionsCount: null,
 
       weeklyAmount: null,
       selectedDays: {},
@@ -46,6 +47,7 @@ export function useSchedulingSessions(
   totalSessions: number,
   serviceType: TypeServiceType | null = null
 ) {
+  const [isHalfPaymentModalOpen, setIsHalfPaymentModalOpen] = useState(false)
   const [schedulingForm, setSchedulingForm] = useState<SchedulingForm>(() =>
     buildInitialSchedulingForm(totalSessions, serviceType)
   )
@@ -79,6 +81,15 @@ export function useSchedulingSessions(
       }
 
       const parsed = JSON.parse(stored)
+      const savedTotalSessions = parsed.package?.summary?.find(
+        (item: { label: string }) => item.label === "Total"
+      )?.value
+      const packageQuantityChanged =
+        typeof savedTotalSessions === "number" &&
+        savedTotalSessions !== totalSessions
+      const restoredSessions = packageQuantityChanged
+        ? []
+        : (parsed.package?.sessions ?? [])
 
       setSchedulingForm({
         ...initial,
@@ -87,14 +98,18 @@ export function useSchedulingSessions(
         package: {
           ...initial.package,
           ...parsed.package,
+          sessions: restoredSessions,
+          paidSessionsCount: packageQuantityChanged
+            ? null
+            : (parsed.package?.paidSessionsCount ?? null),
           summary: [
             {
               label: "Agendadas",
-              value: parsed.package?.sessions?.length ?? 0,
+              value: restoredSessions.length,
             },
             {
               label: "Restante",
-              value: totalSessions - (parsed.package?.sessions?.length ?? 0),
+              value: totalSessions - restoredSessions.length,
             },
             { label: "Total", value: totalSessions },
           ],
@@ -225,6 +240,14 @@ export function useSchedulingSessions(
       return
     }
 
+    if (
+      paymentType === "metade" &&
+      schedulingForm.package.paidSessionsCount == null
+    ) {
+      setIsHalfPaymentModalOpen(true)
+      return
+    }
+
     const lastDate = getLastDate(sessions)
     const firstSessionDate = lastDate ?? startDate
 
@@ -236,7 +259,8 @@ export function useSchedulingSessions(
       firstSessionDate,
       totalSessions,
       defaultTime,
-      paymentType
+      paymentType,
+      schedulingForm.package.paidSessionsCount ?? Math.floor(totalSessions / 2)
     )
 
     updatePackage({ sessions: [...sessions, ...newSessions] })
@@ -248,6 +272,14 @@ export function useSchedulingSessions(
       .map((s, i) => ({ ...s, sessionNumber: i + 1 }))
 
     updatePackage({ sessions: updatedSessions })
+  }
+
+  function handleClearSessions() {
+    updatePackage({
+      sessions: [],
+      ...(paymentType === "metade" ? { paidSessionsCount: null } : {}),
+    })
+    setSchedulingFormErrors((prev) => ({ ...prev, sessions: [] }))
   }
 
   function updateSessionStatus(
@@ -281,6 +313,55 @@ export function useSchedulingSessions(
       ...prev,
       singleSession: null,
     }))
+  }
+
+  function handlePaymentType(paymentType: PaymentType) {
+    if (paymentType === "metade") {
+      setSchedulingForm((prev) => ({
+        ...prev,
+        package: {
+          ...prev.package,
+          paymentType,
+          paidSessionsCount: null,
+        },
+      }))
+      setIsHalfPaymentModalOpen(true)
+      return
+    }
+
+    const paidSessionsCount = null
+
+    setSchedulingForm((prev) => ({
+      ...prev,
+      package: {
+        ...prev.package,
+        paymentType,
+        paidSessionsCount,
+        sessions: applyPaymentToSessions(
+          prev.package.sessions,
+          paymentType,
+          paidSessionsCount ?? undefined
+        ),
+      },
+    }))
+    setIsHalfPaymentModalOpen(false)
+  }
+
+  function handleHalfPaymentChoice(paidSessionsCount: number) {
+    setSchedulingForm((prev) => ({
+      ...prev,
+      package: {
+        ...prev.package,
+        paymentType: "metade",
+        paidSessionsCount,
+        sessions: applyPaymentToSessions(
+          prev.package.sessions,
+          "metade",
+          paidSessionsCount
+        ),
+      },
+    }))
+    setIsHalfPaymentModalOpen(false)
   }
 
   function handleValidateSingleSession() {
@@ -319,18 +400,7 @@ export function useSchedulingSessions(
       })),
     "package.summary.weeklyAmount": handleWeeklyAmount,
     "package.summary.selectedDays": handleDayToggle,
-    "package.paymentType": (paymentType: PaymentType) =>
-      setSchedulingForm((prev) => ({
-        ...prev,
-        package: {
-          ...prev.package,
-          paymentType,
-          sessions: applyPaymentToSessions(
-            prev.package.sessions,
-            paymentType
-          ),
-        },
-      })),
+    "package.paymentType": handlePaymentType,
     handleDeleteSession,
     updateSessionStatus,
     handleAddSessions,
@@ -348,6 +418,10 @@ export function useSchedulingSessions(
     // estado
     summary,
     sessions,
+    totalSessions,
+    isHalfPaymentModalOpen,
+    setIsHalfPaymentModalOpen,
+    handleHalfPaymentChoice,
     weeklyAmount,
     selectedDays,
     scheduledCount,
@@ -362,6 +436,7 @@ export function useSchedulingSessions(
     handleDayToggle,
     handleAddSessions,
     handleDeleteSession,
+    handleClearSessions,
     updateSessionStatus,
     handleDateChange,
     handleDateClear,

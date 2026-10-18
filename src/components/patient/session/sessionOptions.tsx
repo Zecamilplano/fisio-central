@@ -1,4 +1,4 @@
-import { format } from "date-fns"
+import { format, parseISO } from "date-fns"
 import { Trash2 } from "lucide-react"
 import { DatePicker } from "@/components/ui/datePicker"
 import {
@@ -44,6 +44,15 @@ export function SessionOptions({
   return (
     <div className="w-full overflow-hidden pt-3 transition-all duration-300 ease-in-out">
       <div className="h-px w-full bg-linear-to-r from-transparent via-[#E4E7EC] to-transparent" />
+
+      {session.originalDate && session.originalDate !== session.date && (
+        <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          Data original:{" "}
+          <strong>
+            {format(parseISO(session.originalDate), "dd/MM/yyyy")}
+          </strong>
+        </div>
+      )}
 
       <div className="mt-3 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div className="flex flex-1 gap-3 flex-wrap">

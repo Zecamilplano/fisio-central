@@ -149,7 +149,13 @@ export const createSessionsSlice: StateCreator<
           return {
             ...patient,
             session: patient.session.map((session) =>
-              session.id === sessionId ? { ...session, date } : session
+              session.id === sessionId
+                ? {
+                    ...session,
+                    originalDate: session.originalDate ?? session.date,
+                    date,
+                  }
+                : session
             ),
           }
         }
@@ -174,6 +180,9 @@ export const createSessionsSlice: StateCreator<
 
         updatedPackageSessions.push({
           ...packageSessions[changedIndex],
+          originalDate:
+            packageSessions[changedIndex].originalDate ??
+            packageSessions[changedIndex].date,
           date,
         })
 
@@ -190,6 +199,7 @@ export const createSessionsSlice: StateCreator<
 
           updatedPackageSessions.push({
             ...session,
+            originalDate: session.originalDate ?? session.date,
             date: format(nextDate, "yyyy-MM-dd"),
           })
           previousDate = nextDate

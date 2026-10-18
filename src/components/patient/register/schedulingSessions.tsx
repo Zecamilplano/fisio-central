@@ -1,3 +1,5 @@
+"use client"
+
 import { daysOfWeek } from "@/data/registerPatientData"
 import { CalendarDays, Clock3, Trash } from "lucide-react"
 import { useSchedulingSessions } from "@/hook/useSchedulingSessions"
@@ -5,6 +7,7 @@ import Calendar from "react-calendar"
 import { isSameDay, startOfDay } from "date-fns"
 import { PaymentType } from "@/types"
 import { cn } from "tailwind-variants"
+import { useEffect, useState } from "react"
 
 type SchedulingSessionsProps = {
   form: ReturnType<typeof useSchedulingSessions>
@@ -33,6 +36,7 @@ const paymentInitialOptions: {
 ]
 
 function SchedulingSessions({ form }: SchedulingSessionsProps) {
+  const [paidSessionsInput, setPaidSessionsInput] = useState("")
   const {
     schedulingForm,
     summary,
@@ -45,9 +49,29 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
     updateSessionStatus,
     handleDateChange,
     handleDateClear,
+    handleClearSessions,
   } = form
 
   const { serviceType } = schedulingForm
+
+  useEffect(() => {
+    if (!form.isHalfPaymentModalOpen) return
+
+    setPaidSessionsInput(String(Math.floor(form.totalSessions / 2)))
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        form.setIsHalfPaymentModalOpen(false)
+      }
+    }
+
+    window.addEventListener("keydown", handleEscape)
+    return () => window.removeEventListener("keydown", handleEscape)
+  }, [
+    form.isHalfPaymentModalOpen,
+    form.setIsHalfPaymentModalOpen,
+    form.totalSessions,
+  ])
 
   return (
     // pacote
@@ -284,6 +308,101 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
               ))}
             </div>
 
+            {form.isHalfPaymentModalOpen && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                <section
+                  className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="half-payment-title"
+                >
+                  <h2
+                    id="half-payment-title"
+                    className="text-lg font-semibold text-[#2D2D2D]"
+                  >
+                    Defina o pagamento inicial
+                  </h2>
+                  <p className="mt-2 text-sm text-[#8C7B6B]">
+                    O pacote tem {form.totalSessions} sessões. Combine com o
+                    paciente quantas serão pagas agora.
+                  </p>
+                  <div className="mt-5 grid grid-cols-2 gap-3">
+                    {[
+                      ...new Set([
+                        Math.floor(form.totalSessions / 2),
+                        Math.ceil(form.totalSessions / 2),
+                      ]),
+                    ].map((paidCount) => (
+                      <button
+                        key={paidCount}
+                        type="button"
+                        onClick={() => setPaidSessionsInput(String(paidCount))}
+                        className="rounded-lg border border-[#FFA726] px-3 py-3 text-sm font-semibold text-[#B96A00] transition hover:bg-[#FFF3E0] cursor-pointer"
+                      >
+                        {paidCount} pagas / {form.totalSessions - paidCount}{" "}
+                        pendentes
+                      </button>
+                    ))}
+                  </div>
+                  <label
+                    htmlFor="paid-sessions-count"
+                    className="mt-5 block text-sm font-medium text-[#2D2D2D]"
+                  >
+                    Quantas sessões serão pagas agora?
+                  </label>
+                  <input
+                    id="paid-sessions-count"
+                    type="number"
+                    min={0}
+                    max={form.totalSessions}
+                    step={1}
+                    value={paidSessionsInput}
+                    onChange={(event) => setPaidSessionsInput(event.target.value)}
+                    onKeyDown={(event) => {
+                      const paidCount = Number(paidSessionsInput)
+                      const isValidPaidCount =
+                        paidSessionsInput !== "" &&
+                        Number.isInteger(paidCount) &&
+                        paidCount >= 0 &&
+                        paidCount <= form.totalSessions
+
+                      if (event.key === "Enter" && isValidPaidCount) {
+                        event.preventDefault()
+                        form.handleHalfPaymentChoice(paidCount)
+                      }
+                    }}
+                    className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-[#FFA726] focus:ring-2 focus:ring-[#FFA726]/20"
+                  />
+                  <p className="mt-1 text-xs text-[#8C7B6B]">
+                    As outras {form.totalSessions - Number(paidSessionsInput || 0)}{" "}
+                    sessões ficarão pendentes.
+                  </p>
+                  <button
+                    type="button"
+                    disabled={
+                      paidSessionsInput === "" ||
+                      !Number.isInteger(Number(paidSessionsInput)) ||
+                      Number(paidSessionsInput) < 0 ||
+                      Number(paidSessionsInput) > form.totalSessions
+                    }
+                    onClick={() =>
+                      form.handleHalfPaymentChoice(Number(paidSessionsInput))
+                    }
+                    className="mt-4 w-full rounded-lg bg-[#FFA726] px-3 py-2 text-sm font-semibold text-white hover:bg-[#F39813] disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Aplicar pagamento
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => form.setIsHalfPaymentModalOpen(false)}
+                    className="mt-2 w-full rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-700 hover:bg-slate-200 cursor-pointer"
+                  >
+                    Voltar
+                  </button>
+                </section>
+              </div>
+            )}
+
             {sessions.length > 0 && (
               <p className="text-center text-xs text-[#8C7B6B]">
                 Esta escolha atualizará o pagamento de todas as sessões da
@@ -335,6 +454,18 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
               {error}
             </p>
           ))}
+          {sessions.length > 0 && (
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={handleClearSessions}
+                className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
+              >
+                <Trash size={16} />
+                Limpar sessões
+              </button>
+            </div>
+          )}
           <ul
             className={`flex flex-col gap-3 rounded-t-lg pr-2 pt-1 ${sessions.length >= 4 && "h-68 overflow-y-scroll"}`}
           >
