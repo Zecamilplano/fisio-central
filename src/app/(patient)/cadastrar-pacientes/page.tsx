@@ -10,6 +10,8 @@ import TypeOfService, {
 } from "@/components/patient/"
 import { useRegisterPatient } from "@/hook/useRegisterPatient"
 import useImageInput from "@/hook/useImageInput"
+import { useEffect, useRef } from "react"
+import { signInDevUser } from "@/actions/devAuth"
 
 function RegisterPatient() {
   const {
@@ -29,6 +31,27 @@ function RegisterPatient() {
 
   const { selectService, totalSessions } = formTypeService.serviceForm
   const imageInput = useImageInput()
+
+  const devAuthStarted = useRef(false)
+
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "development" || devAuthStarted.current) {
+      return
+    }
+
+    devAuthStarted.current = true
+
+    void signInDevUser().then((result) => {
+      if (!result.success) {
+        console.error(
+          "Falha na autênticação de desenvolvimento:",
+          result.message
+        )
+        return
+      }
+      console.log("Logado")
+    })
+  }, [])
 
   return (
     <section className=" flex justify-center items-center">
@@ -80,7 +103,7 @@ function RegisterPatient() {
               <footer>
                 <Button
                   variant="single"
-                  onNext={() => handleNext("step1")}
+                  onNext={() => handleNext("step1", imageInput.image[0]?.file)}
                   active={isFormValid}
                 />
               </footer>

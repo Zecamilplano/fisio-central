@@ -21,7 +21,10 @@ function useFormProfile() {
 
   const debounceRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
 
-  type ProfileField = "firstName" | "surName" | `address.${keyof PatientType["address"] & string}`
+  type ProfileField =
+    | "firstName"
+    | "surName"
+    | `address.${keyof PatientType["address"] & string}`
 
   // Função para obter dados dos input nome, sobrenome, rua etc..
   function handleChange(
@@ -29,7 +32,8 @@ function useFormProfile() {
     value: string | number | null | boolean
   ) {
     const [section, key] = field.split(".")
-    const addressKey = section === "address" ? key as keyof PatientType["address"] : null
+    const addressKey =
+      section === "address" ? (key as keyof PatientType["address"]) : null
     let formatted = value
 
     if (field === "address.telephone" && typeof value === "string") {
@@ -41,9 +45,14 @@ function useFormProfile() {
       formatted = numValue
     }
 
-    setPatient((prev) => section === "address"
-      ? { ...prev, address: { ...prev.address, [addressKey!]: formatted } } as PatientType
-      : { ...prev, [field]: formatted } as PatientType)
+    setPatient((prev) =>
+      section === "address"
+        ? ({
+            ...prev,
+            address: { ...prev.address, [addressKey!]: formatted },
+          } as PatientType)
+        : ({ ...prev, [field]: formatted } as PatientType)
+    )
 
     if (debounceRef.current[field]) {
       clearTimeout(debounceRef.current[field])
@@ -53,9 +62,13 @@ function useFormProfile() {
       const dataSaved = JSON.parse(localStorage.getItem("formProfile") || "{}")
 
       const [savedSection, savedKey] = field.split(".")
-      const newData = savedSection === "address"
-        ? { ...dataSaved, address: { ...dataSaved.address, [savedKey]: formatted } }
-        : { ...dataSaved, [field]: formatted }
+      const newData =
+        savedSection === "address"
+          ? {
+              ...dataSaved,
+              address: { ...dataSaved.address, [savedKey]: formatted },
+            }
+          : { ...dataSaved, [field]: formatted }
 
       localStorage.setItem("formProfile", JSON.stringify(newData))
 
@@ -85,6 +98,10 @@ function useFormProfile() {
       hasError = !value.trim()
     }
 
+    if (field === "address.referenceHouse" && !String(value ?? "").trim()) {
+      setErrorPatient((prev) => ({ ...prev, referenceHouse: "" }))
+      return false
+    }
     if (field === "address.addressNumber") {
       const hasError = !patient.address.noNumber && value === null
 
@@ -142,10 +159,13 @@ function useFormProfile() {
         address: {
           telephone: parsed.address?.telephone ?? parsed.telephone ?? "",
           street: parsed.address?.street ?? parsed.street ?? "",
-          addressNumber: parsed.address?.addressNumber ?? parsed.addressNumber ?? null,
+          addressNumber:
+            parsed.address?.addressNumber ?? parsed.addressNumber ?? null,
           noNumber: parsed.address?.noNumber ?? parsed.noNumber ?? false,
-          neighborhood: parsed.address?.neighborhood ?? parsed.neighborhood ?? "Centro",
-          referenceHouse: parsed.address?.referenceHouse ?? parsed.referenceHouse ?? "",
+          neighborhood:
+            parsed.address?.neighborhood ?? parsed.neighborhood ?? "Centro",
+          referenceHouse:
+            parsed.address?.referenceHouse ?? parsed.referenceHouse ?? "",
         },
       }
       setPatient(migrated)
