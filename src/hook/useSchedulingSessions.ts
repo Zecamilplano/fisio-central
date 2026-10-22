@@ -293,6 +293,17 @@ export function useSchedulingSessions(
     })
   }
 
+  function updateSessionSchedule(
+    index: number,
+    fields: Partial<Pick<Session_, "fullDate" | "weekDay" | "time">>
+  ) {
+    updatePackage({
+      sessions: sessions.map((session, sessionIndex) =>
+        sessionIndex === index ? { ...session, ...fields } : session
+      ),
+    })
+  }
+
   function handleDateChange(date: Date) {
     setSchedulingForm((prev) => ({
       ...prev,
@@ -403,6 +414,7 @@ export function useSchedulingSessions(
     "package.paymentType": handlePaymentType,
     handleDeleteSession,
     updateSessionStatus,
+    updateSessionSchedule,
     handleAddSessions,
     handleDateChange,
   }
@@ -438,6 +450,7 @@ export function useSchedulingSessions(
     handleDeleteSession,
     handleClearSessions,
     updateSessionStatus,
+    updateSessionSchedule,
     handleDateChange,
     handleDateClear,
     handleValidateSingleSession,

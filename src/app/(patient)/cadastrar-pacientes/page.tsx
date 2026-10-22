@@ -24,6 +24,7 @@ function RegisterPatient() {
     formScheduling,
     handlePrev,
     handleNext,
+    handleSavePackageSchedule,
     handleStepClick,
     isFormValid,
     isNextActive,
@@ -114,8 +115,8 @@ function RegisterPatient() {
             <>
               <header>
                 <SubHeaderFormRegister
-                  title="Tipo de  atendimento"
-                  subtitle="Escolha entre pacote ou sessoes avulsas"
+                  title="Tipo de atendimento"
+                  subtitle="Escolha entre pacote ou sessões avulsas"
                   icon="square"
                 />
               </header>
@@ -157,6 +158,8 @@ function RegisterPatient() {
                 <Button
                   variant="finish"
                   onPrev={() => handlePrev("step3", "step2")}
+                  onRegisterAdd={handleSavePackageSchedule}
+                  onRegisterViewPatient={handleSavePackageSchedule}
                   active={formScheduling.isSchedulingFormValid}
                 />
               </footer>

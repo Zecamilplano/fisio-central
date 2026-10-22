@@ -43,20 +43,14 @@ function useFormTypeService() {
     field: K,
     value: (typeof serviceForm)[K]
   ) {
-    console.log(`field ${field}: value ${value}`)
-
     setServiceForm((prev) => {
       const newData = { ...prev, [field]: value }
 
-      if (field === "selectService" && value === "sessoes") {
-        newData.totalSessions = null
-      }
-
       if (field === "selectPackage") {
         if (value !== "custom") {
-          newData.totalSessions = Number(value) // converte direto pra number
+          newData.totalSessions = Number(value)
         } else {
-          newData.totalSessions = null // aguarda digitar
+          newData.totalSessions = null
         }
       }
 
@@ -68,7 +62,6 @@ function useFormTypeService() {
       const newError = validateFormTypeService(newData)
 
       setError(newError)
-      // console.log("teste", serviceForm.selectPackage)
       return newData
     })
   }
@@ -85,6 +78,11 @@ function useFormTypeService() {
 
     if (isInvalidTotalSessions) {
       newError.package = "Escolha a quantidade de sessões"
+    } else if (
+      form.selectService === "pacote" &&
+      (!Number.isInteger(form.totalSessions) || (form.totalSessions ?? 0) < 1)
+    ) {
+      newError.package = "Informe uma quantidade inteira de sessões maior que zero"
     }
 
     return newError

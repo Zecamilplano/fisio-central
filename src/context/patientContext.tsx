@@ -9,8 +9,6 @@ export type PatientContextType = {
   isFormValid: boolean
   image: imageType
   setImage: React.Dispatch<React.SetStateAction<imageType>>
-  hasValidPhoto: boolean
-  setHasValidPhoto: React.Dispatch<React.SetStateAction<boolean>>
 }
 
 const PatientContext = createContext<PatientContextType | null>(null)
@@ -29,7 +27,6 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
     },
   })
   const [image, setImage] = useState<imageType>([])
-  const [hasValidPhoto, setHasValidPhoto] = useState<boolean>(false)
 
   const isFormValid = useMemo(() => {
     return (
@@ -40,7 +37,7 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
       !!patientGlobal.address.neighborhood.trim() &&
       (patientGlobal.address.noNumber || patientGlobal.address.addressNumber !== null)
     )
-  }, [patientGlobal, hasValidPhoto])
+  }, [patientGlobal])
   // console.log("isFormValid:", isFormValid)
 
   return (
@@ -51,8 +48,6 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
         setPatientGlobal: setPatientGlobal,
         image: image,
         setImage: setImage,
-        hasValidPhoto: hasValidPhoto,
-        setHasValidPhoto: setHasValidPhoto,
       }}
     >
       {children}

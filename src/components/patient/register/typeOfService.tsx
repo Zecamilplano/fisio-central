@@ -14,24 +14,24 @@ function TypeOfService({ form }: TypeOfServiceProps) {
   const { serviceForm, error, handleChange, submitted, inputRef } = form
 
   return (
-    <section>
+    <section className="w-full">
       <fieldset className="mt-8 mb-7">
-        <legend className="sr-only">Tipo de agendamento</legend>
+        <legend className="sr-only">Tipo de atendimento</legend>
 
-        {/*Botões pacote e sessões */}
         <div className="flex flex-col md:flex-row gap-3">
           {serviceTypeOptionsData.map((data) => {
             const Icon: LucideIcon = data.Icone
+            const selected = serviceForm.selectService === data.value
 
             return (
               <label
                 key={data.value}
-                htmlFor={String(data.value)}
-                className={`cursor-pointer font-open-sans rounded-md w-80 md:w-90 flex flex-col px-3 py-5
+                htmlFor={data.value}
+                className={`cursor-pointer font-open-sans rounded-md w-full md:w-90 flex flex-col px-3 py-5 border-3 transition-colors focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[#FFA726]
                   ${
-                    serviceForm.selectService === data.value
-                      ? "bg-[#FFF5EA] border-3 border-solid border-[#FFA726]"
-                      : "border-3 border-solid border-[#F0E6DC]"
+                    selected
+                      ? "bg-[#FFF5EA] border-solid border-[#FFA726]"
+                      : "border-solid border-[#F0E6DC]"
                   }
                 `}
               >
@@ -40,136 +40,145 @@ function TypeOfService({ form }: TypeOfServiceProps) {
                   id={data.value}
                   name="type-service"
                   value={data.value}
-                  onClick={() =>
-                    handleChange(
-                      "selectService",
-                      serviceForm.selectService === data.value
-                        ? null
-                        : data.value
-                    )
+                  checked={selected}
+                  onChange={() => handleChange("selectService", data.value)}
+                  aria-describedby={
+                    submitted && error?.service ? "service-error" : undefined
                   }
                   className="sr-only"
                 />
 
-                {/*Parte do check*/}
                 <div className="flex justify-between">
                   <div />
-                  <div
-                    className={`
-                      text-white text-xl rounded-[50%] w-10 h-10 flex justify-center items-center
-                        ${
-                          serviceForm.selectService === data.value
-                            ? "bg-[#FFA725]"
-                            : "border-4 border-solid border-[#F0E6DC]"
-                        }
-                      `}
+                  <span
+                    aria-hidden="true"
+                    className={`text-white text-xl rounded-full w-10 h-10 flex justify-center items-center
+                      ${
+                        selected
+                          ? "bg-[#FFA725]"
+                          : "border-4 border-solid border-[#F0E6DC]"
+                      }
+                    `}
                   >
-                    {serviceForm.selectService === data.value && <Check />}
-                  </div>
+                    {selected && <Check />}
+                  </span>
                 </div>
 
-                {/*Icone, título e texto*/}
-                <div className="pt-2 ">
-                  <Icon
-                    size={53}
-                    color={`${
-                      serviceForm.selectService === data.value
-                        ? "#FFA726"
-                        : "#8C7B6B"
-                    }`}
-                  />
+                <div className="pt-2">
+                  <Icon size={53} color={selected ? "#FFA726" : "#8C7B6B"} />
                   <h3
-                    className={`text-3xl font-semibold pt-3
-                      ${
-                        serviceForm.selectService === data.value
-                          ? "text-[#FFA726]"
-                          : "text-[#2D2D2D]"
-                      }`}
+                    className={`text-3xl font-semibold pt-3 ${
+                      selected ? "text-[#FFA726]" : "text-[#2D2D2D]"
+                    }`}
                   >
                     {data.titulo}
                   </h3>
-                  <p
-                    className={`text-sm text-[#8C7B6B] pt-2
-                    `}
-                  >
+                  <p className="text-sm text-[#8C7B6B] pt-2">
                     {data.descricao}
                   </p>
                 </div>
-                {/*Icone, título e texto*/}
               </label>
             )
           })}
         </div>
+
         {submitted && error?.service && (
-          <span className="text-[red] flex px-1 pt-2">{error?.service}</span>
+          <span
+            id="service-error"
+            className="text-red-600 flex px-1 pt-2"
+            role="alert"
+          >
+            {error.service}
+          </span>
         )}
       </fieldset>
 
-      {/*Botões de total de sessões por pacote*/}
       {serviceForm.selectService === "pacote" && (
-        <fieldset className="font-open-sans">
+        <fieldset className="font-open-sans mb-6">
           <legend className="font-semibold text-lg text-[#FFA726]">
             Total de sessões no pacote
           </legend>
 
-          <div className="flex gap-4 my-2">
+          <div className="flex flex-wrap gap-4 my-2">
             {totalNumberSession.map((item) => {
-              const isPlus = item.value === "custom"
-              {
-                /* console.log("array", item) */
-              }
-
+              const isSelected = serviceForm.selectPackage === item.value
               return (
-                <div key={item.value}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      handleChange("selectPackage", item.value)
-                    }}
-                    className={`rounded-lg 
-                ${serviceForm.selectPackage === item.value ? "bg-[#FBA731] text-white" : "  bg-[#D9D9D9] text-[#2D2D2D]"}
-                relative w-13 h-12
-                flex items-center justify-center
-                cursor-pointer`}
-                  >
-                    {isPlus && serviceForm.selectPackage === "custom" && (
-                      <input
-                        ref={inputRef}
-                        type="number"
-                        value={serviceForm.totalSessions ?? ""}
-                        onChange={(e) =>
-                          handleChange("totalSessions", e.target.valueAsNumber)
-                        }
-                        className="absolute w-13 h-12 bg-[#D9D9D9] text-[#2D2D2D] outline-[#FFA726] rounded-lg text-center"
-                      />
-                    )}
-                    {item.label}
-                  </button>
-                </div>
+                <button
+                  key={item.value}
+                  type="button"
+                  aria-pressed={isSelected}
+                  onClick={() => handleChange("selectPackage", item.value)}
+                  className={`rounded-lg relative w-13 h-12 flex items-center justify-center cursor-pointer transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FFA726]
+                    ${
+                      isSelected
+                        ? "bg-[#FBA731] text-white"
+                        : "bg-[#D9D9D9] text-[#2D2D2D]"
+                    }
+                  `}
+                >
+                  {item.label}
+                </button>
               )
             })}
           </div>
+
+          {serviceForm.selectPackage === "custom" && (
+            <div className="mt-3 flex flex-col gap-1">
+              <label
+                htmlFor="custom-total-sessions"
+                className="text-sm font-medium text-[#2D2D2D]"
+              >
+                Quantas sessões?
+              </label>
+              <input
+                ref={inputRef}
+                id="custom-total-sessions"
+                type="number"
+                min={1}
+                step={1}
+                inputMode="numeric"
+                value={serviceForm.totalSessions ?? ""}
+                onChange={(event) =>
+                  handleChange(
+                    "totalSessions",
+                    event.target.value === "" ? null : event.target.valueAsNumber
+                  )
+                }
+                aria-invalid={Boolean(submitted && error?.package)}
+                aria-describedby={
+                  submitted && error?.package ? "package-error" : undefined
+                }
+                className="w-40 rounded-md border-2 border-[#D0D7DE] px-3 py-2 text-[#2D2D2D] focus:border-[#FFA726] focus:outline-none"
+              />
+            </div>
+          )}
+
           {submitted && error?.package && (
-            <span className="text-[red] flex px-1 pt-2">{error?.package}</span>
+            <span
+              id="package-error"
+              className="text-red-600 flex px-1 pt-2"
+              role="alert"
+            >
+              {error.package}
+            </span>
           )}
         </fieldset>
       )}
-      {/*Botões de total de sessões por pacote*/}
 
-      {/*Input de preço da sessão*/}
       <div className="flex flex-col shrink-0">
         <label
           htmlFor="priceSession"
-          className=" text-lg text-right text-[#FFA726] font-medium w-full flex items-center gap-1"
+          className="text-lg text-[#FFA726] font-medium w-full flex items-center gap-1"
         >
           Preço da sessão
         </label>
 
-        <div className="relative w-32">
+        <div className="relative w-40">
           <NumericFormat
+            id="priceSession"
             value={serviceForm.priceSession}
             thousandSeparator="."
-            decimalSeparator=","
+            decimalSeparator={","}
             decimalScale={2}
             fixedDecimalScale
             prefix="R$ "
@@ -182,14 +191,6 @@ function TypeOfService({ form }: TypeOfServiceProps) {
             className="w-full rounded-md border-2 border-[#EAECF0] px-3 py-2 text-[#333] focus:border-[#FFA726] focus:outline-none"
           />
         </div>
-
-        {/* {errorPatient.addressNumber && ( */}
-        {/*   <> */}
-        {/*     <span className="flex  text-[red] pl-2 pt-1 "> */}
-        {/*       {errorPatient.addressNumber} */}
-        {/*     </span> */}
-        {/*   </> */}
-        {/* )} */}
       </div>
     </section>
   )

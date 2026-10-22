@@ -1,5 +1,10 @@
-import { PatientType } from "@/types"
 import { createClient } from "@/lib/supabase/client"
+import type {
+  PackageSelectType,
+  PatientType,
+  ServiceForm,
+  TypeServiceType,
+} from "@/types"
 
 export async function createPatient(patient: PatientType, photo?: File) {
   const supabase = createClient()
@@ -88,4 +93,121 @@ export async function getPatientById(id: string): Promise<PatientType | null> {
       referenceHouse: data.reference_house,
     },
   }
+}
+export async function getPatientServiceById(
+  patientId: string
+): Promise<{ treatmentId: string | null; serviceForm: ServiceForm }> {
+  const supabase = createClient()
+
+  const { data, error } = await supabase
+    .from("patient_treatments")
+    .select("id, treatment_type, planned_sessions, price_per_session")
+    .eq("patient_id", patientId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (error) throw new Error(error.message)
+
+  if (!data) {
+    return {
+      treatmentId: null,
+      serviceForm: {
+        selectService: null,
+        totalSessions: null,
+        selectPackage: null,
+        priceSession: "60",
+      },
+    }
+  }
+
+  const selectService: TypeServiceType | null =
+    data.treatment_type === "package"
+      ? "pacote"
+      : data.treatment_type === "single"
+        ? "sessoes"
+        : null
+
+  const totalSessions =
+    selectService === "pacote" ? data.planned_sessions : null
+
+  let selectPackage: PackageSelectType | null = null
+
+  if (totalSessions !== null) {
+    const savedPackage = String(totalSessions)
+    selectPackage = (["4", "6", "8", "10"] as const).includes(
+      savedPackage as "4" | "6" | "8" | "10"
+    )
+      ? (savedPackage as PackageSelectType)
+      : "custom"
+  }
+
+  return {
+    treatmentId: data.id,
+    serviceForm: {
+      selectService,
+      totalSessions,
+      selectPackage,
+      priceSession: String(data.price_per_session),
+    },
+  }
+}
+
+export async function savePatientTreatment(
+  patientId: string,
+  form: ServiceForm,
+  treatmentId?: string | null
+): Promise<string> {
+  if (!form.selectService) {
+    throw new Error("Selecione o tipo de atendimento.")
+  }
+
+  if (
+    form.selectService === "pacote" &&
+    (!Number.isInteger(form.totalSessions) || (form.totalSessions ?? 0) < 1)
+  ) {
+    throw new Error("Informe uma quantidade inteira de sessões maior que zero.")
+  }
+
+  const pricePerSession = Number(form.priceSession)
+  if (!Number.isFinite(pricePerSession) || pricePerSession < 0) {
+    throw new Error("Informe um preço válido para a sessão.")
+  }
+
+  const now = new Date().toISOString()
+  const treatment = {
+    patient_id: patientId,
+    treatment_type: form.selectService === "pacote" ? "package" : "single",
+    planned_sessions: form.selectService === "pacote" ? form.totalSessions : 1,
+    price_per_session: pricePerSession,
+    updated_at: now,
+  }
+
+  const supabase = createClient()
+
+  if (treatmentId) {
+    const { data, error } = await supabase
+      .from("patient_treatments")
+      .update(treatment)
+      .eq("id", treatmentId)
+      .eq("patient_id", patientId)
+      .select("id")
+      .single()
+
+    if (error) throw new Error(error.message)
+    return data.id
+  }
+
+  const { data, error } = await supabase
+    .from("patient_treatments")
+    .insert({
+      id: crypto.randomUUID(),
+      ...treatment,
+      created_at: now,
+    })
+    .select("id")
+    .single()
+
+  if (error) throw new Error(error.message)
+  return data.id
 }

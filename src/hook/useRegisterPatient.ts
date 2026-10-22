@@ -6,13 +6,19 @@ import { useFormProfile } from "@/hook/useFormProfile"
 import { scrollToFirstError } from "@/utils/form/scrollToFirstError"
 import { useFormTypeService } from "./useFormTypeService"
 import { useSchedulingSessions } from "./useSchedulingSessions"
-import { createPatient, getPatientById } from "@/services/patients/patientRepository"
+import {
+  createPatient,
+  getPatientById,
+  getPatientServiceById,
+  savePatientTreatment,
+} from "@/services/patients/patientRepository"
 import { toast } from "react-toastify"
+import { savePackageSchedule } from "@/services/patients/patientScheduleRepository"
 
 function useRegisterPatient() {
   const [steps, setStep] = useState<StepType>(InitialStep)
   const { step1, step2, step3 } = steps
-  const { isFormValid, hasValidPhoto } = useGlobalPatient()
+  const { isFormValid } = useGlobalPatient()
   const formProfile = useFormProfile()
   const formTypeService = useFormTypeService()
 
@@ -23,9 +29,14 @@ function useRegisterPatient() {
 
   const formRef = useRef<HTMLFormElement>(null)
   const [shouldScroll, setShouldScroll] = useState(false)
-  const [restoreStatus, setRestoreStatus] = useState<"checking" | "ready" | "error">("checking")
+  const [restoreStatus, setRestoreStatus] = useState<
+    "checking" | "ready" | "error"
+  >("checking")
   const patientCreated = useRef(false)
   const creatingPatient = useRef(false)
+  const savingService = useRef(false)
+  const savingSchedule = useRef(false)
+  const treatmentId = useRef<string | null>(null)
 
   const isNextActive = step2.active && formTypeService.validate(false)
 
@@ -63,8 +74,11 @@ function useRegisterPatient() {
         ? savedStep
         : "step2"
 
-    void getPatientById(patientId)
-      .then((patient) => {
+    void Promise.all([
+      getPatientById(patientId),
+      getPatientServiceById(patientId),
+    ])
+      .then(([patient, treatment]) => {
         if (cancelled) return
 
         if (!patient) {
@@ -77,6 +91,8 @@ function useRegisterPatient() {
         }
 
         formProfile.setPatient(patient)
+        treatmentId.current = treatment.treatmentId
+        formTypeService.setServiceForm(treatment.serviceForm)
         localStorage.setItem("formProfile", JSON.stringify(patient))
         setStep({
           step1: {
@@ -104,7 +120,7 @@ function useRegisterPatient() {
     return () => {
       cancelled = true
     }
-  }, [formProfile.setPatient])
+  }, [formProfile.setPatient, formTypeService.setServiceForm])
 
   useEffect(() => {
     const activeStep = (Object.keys(steps) as StepKey[]).find(
@@ -123,15 +139,7 @@ function useRegisterPatient() {
       if (restoreStatus !== "ready") return
 
       const hasErrorForm = formProfile.validateAllFields()
-      // const hasErrorImage = !hasValidPhoto
-      const hasErrorImage = false
-
-      if (hasErrorImage) {
-        document.dispatchEvent(new Event("validateImage"))
-      }
-
-      const hasErrorFormProfile = hasErrorForm || hasErrorImage
-      if (hasErrorFormProfile) {
+      if (hasErrorForm) {
         setShouldScroll(true)
         return
       }
@@ -180,20 +188,76 @@ function useRegisterPatient() {
 
       if (!isValid) return
 
-      setStep((prev) => {
-        // console.log("step dentro do setStep:", step)
-        // console.log("step === step1:", step === "step2")
-        if (step === "step2") {
-          const next = {
-            ...prev,
-            step2: { ...prev.step2, active: false, completed: true },
-            step3: { ...prev.step3, active: true },
-          }
-          // console.log("novo estado:", next) // ← o step2.active está true aqui?
-          return next
+      if (savingService.current) return
+      savingService.current = true
+
+      try {
+        const patientId = localStorage.getItem("createdPatientId")
+        if (!patientId) {
+          throw new Error(
+            "Não encontrei o paciente salvo para registrar o atendimento."
+          )
         }
-        return prev
-      })
+
+        treatmentId.current = await savePatientTreatment(
+          patientId,
+          formTypeService.serviceForm,
+          treatmentId.current
+        )
+        toast.success("Tipo de atendimento salvo com sucesso!")
+        setStep((prev) => ({
+          ...prev,
+          step2: { ...prev.step2, active: false, completed: true },
+          step3: { ...prev.step3, active: true },
+        }))
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? `Não foi possível salvar o tipo de atendimento: ${error.message}`
+            : "Não foi possível salvar o tipo de atendimento."
+        )
+      } finally {
+        savingService.current = false
+      }
+    }
+  }
+
+  async function handleSavePackageSchedule() {
+    if (savingSchedule.current) return
+    savingSchedule.current = true
+
+    try {
+      const patientId = localStorage.getItem("createdPatientId")
+      const plannedSessions = formTypeService.serviceForm.totalSessions
+
+      if (!patientId || !treatmentId.current) {
+        throw new Error("Não encontrei o paciente ou o pacote salvo.")
+      }
+
+      if (!plannedSessions) {
+        throw new Error("Não encontrei a quantidade de sessões do pacote.")
+      }
+
+      await savePackageSchedule(
+        patientId,
+        treatmentId.current,
+        formScheduling.schedulingForm,
+        plannedSessions
+      )
+
+      toast.success("Agenda do pacote salva com sucesso!")
+      setStep((prev) => ({
+        ...prev,
+        step3: { ...prev.step3, completed: true },
+      }))
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? `Não foi possível salvar a agenda: ${error.message}`
+          : "Não foi possível salvar a agenda."
+      )
+    } finally {
+      savingSchedule.current = false
     }
   }
 
@@ -247,6 +311,7 @@ function useRegisterPatient() {
     formScheduling,
     handlePrev,
     handleNext,
+    handleSavePackageSchedule,
     handleStepClick,
     isFormValid,
     isNextActive,

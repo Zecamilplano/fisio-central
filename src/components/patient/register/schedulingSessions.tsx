@@ -47,6 +47,7 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
     schedulingFormErrors,
     handleChange,
     updateSessionStatus,
+    updateSessionSchedule,
     handleDateChange,
     handleDateClear,
     handleClearSessions,
@@ -477,17 +478,43 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
                       {session.sessionNumber}
                     </span>
 
-                    <div className="flex flex-col">
-                      <time
-                        dateTime={session.fullDate}
-                        className="text-sm text-white font-semibold"
-                      >
-                        {session.fullDate}
-                      </time>
-
-                      <span className="text-xs text-white">
-                        {session.weekDay}
-                      </span>
+                    <div className="flex flex-col gap-1">
+                      <label className="sr-only" htmlFor={`session-date-${index}`}>
+                        Data da sessão {session.sessionNumber}
+                      </label>
+                      <input
+                        id={`session-date-${index}`}
+                        type="date"
+                        value={(() => {
+                          const [day, month, year] = session.fullDate.split("/")
+                          return year && month && day
+                            ? `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`
+                            : ""
+                        })()}
+                        onChange={(event) => {
+                          if (!event.target.value) return
+                          const [year, month, day] = event.target.value.split("-").map(Number)
+                          const date = new Date(year, month - 1, day)
+                          updateSessionSchedule(index, {
+                            fullDate: `${String(day).padStart(2, "0")}/${String(month).padStart(2, "0")}/${year}`,
+                            weekDay: date.toLocaleDateString("pt-BR", { weekday: "long" }),
+                          })
+                        }}
+                        className="w-36 rounded bg-white px-2 py-1 text-sm font-semibold text-[#2D2D2D]"
+                      />
+                      <label className="sr-only" htmlFor={`session-time-${index}`}>
+                        Horário da sessão {session.sessionNumber}
+                      </label>
+                      <input
+                        id={`session-time-${index}`}
+                        type="time"
+                        value={session.time}
+                        onChange={(event) =>
+                          updateSessionSchedule(index, { time: event.target.value })
+                        }
+                        className="w-28 rounded bg-white px-2 py-1 text-sm text-[#2D2D2D]"
+                      />
+                      <span className="text-xs text-white capitalize">{session.weekDay}</span>
                     </div>
                   </header>
 
