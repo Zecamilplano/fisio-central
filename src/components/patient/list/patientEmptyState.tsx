@@ -9,7 +9,7 @@ export function PatientEmptyState() {
         ou
       </p>
 
-      <Link href="/cadastrar-paciente" className="text-[#2563EB]">
+      <Link href="/cadastrar-pacientes" className="text-[#2563EB]">
         Adicione um novo paciente
       </Link>
     </section>

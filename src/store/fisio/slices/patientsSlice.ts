@@ -1,4 +1,3 @@
-import { listPatientData } from "@/data"
 import type { ListPatient } from "@/types"
 import type { StateCreator } from "zustand"
 import type { FisioStore } from "../fisioStore"
@@ -22,7 +21,7 @@ export const createPatientsSlice: StateCreator<
   [],
   PatientsSlice
 > = (set) => ({
-  patients: listPatientData,
+  patients: [],
   setListPatients: (patients) => set({ patients }),
   addPatient: (patient) =>
     set((state) => ({ patients: [...state.patients, patient] })),

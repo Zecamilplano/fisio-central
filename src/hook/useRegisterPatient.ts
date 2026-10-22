@@ -222,8 +222,8 @@ function useRegisterPatient() {
     }
   }
 
-  async function handleSavePackageSchedule() {
-    if (savingSchedule.current) return
+  async function handleSavePackageSchedule(): Promise<boolean> {
+    if (savingSchedule.current) return false
     savingSchedule.current = true
 
     try {
@@ -250,12 +250,14 @@ function useRegisterPatient() {
         ...prev,
         step3: { ...prev.step3, completed: true },
       }))
+      return true
     } catch (error) {
       toast.error(
         error instanceof Error
           ? `Não foi possível salvar a agenda: ${error.message}`
           : "Não foi possível salvar a agenda."
       )
+      return false
     } finally {
       savingSchedule.current = false
     }

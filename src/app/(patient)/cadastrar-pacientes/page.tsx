@@ -12,8 +12,10 @@ import { useRegisterPatient } from "@/hook/useRegisterPatient"
 import useImageInput from "@/hook/useImageInput"
 import { useEffect, useRef } from "react"
 import { signInDevUser } from "@/actions/devAuth"
+import { useRouter } from "next/navigation"
 
 function RegisterPatient() {
+  const router = useRouter()
   const {
     step1,
     step2,
@@ -32,6 +34,27 @@ function RegisterPatient() {
 
   const { selectService, totalSessions } = formTypeService.serviceForm
   const imageInput = useImageInput()
+
+  async function handleRegisterAndAdd() {
+    if (!(await handleSavePackageSchedule())) return
+    clearRegistrationDraft()
+    router.push("/listar-pacientes")
+  }
+
+  async function handleRegisterAndViewPatient() {
+    const patientId = localStorage.getItem("createdPatientId")
+    if (!patientId || !(await handleSavePackageSchedule())) return
+    clearRegistrationDraft()
+    router.push(`/listar-pacientes?patientId=${encodeURIComponent(patientId)}`)
+  }
+
+  function clearRegistrationDraft() {
+    localStorage.removeItem("createdPatientId")
+    localStorage.removeItem("patientRegistrationStep")
+    localStorage.removeItem("formProfile")
+    localStorage.removeItem("typeServiceForm")
+    localStorage.removeItem("schedulingForm")
+  }
 
   const devAuthStarted = useRef(false)
 
@@ -158,8 +181,8 @@ function RegisterPatient() {
                 <Button
                   variant="finish"
                   onPrev={() => handlePrev("step3", "step2")}
-                  onRegisterAdd={handleSavePackageSchedule}
-                  onRegisterViewPatient={handleSavePackageSchedule}
+                  onRegisterAdd={handleRegisterAndAdd}
+                  onRegisterViewPatient={handleRegisterAndViewPatient}
                   active={formScheduling.isSchedulingFormValid}
                 />
               </footer>

@@ -76,7 +76,7 @@ export function SubHeaderPatientList({ onSearchChange }: SubHeaderPatientList) {
       </form>
 
       <Link
-        href="/cadastrar-paciente"
+        href="/cadastrar-pacientes"
         className="flex w-full items-center justify-center rounded-4xl bg-[#FFA726] px-2 py-3 text-lg text-white md:text-2xl lg:w-75 lg:rounded-md"
       >
         Adicionar paciente
