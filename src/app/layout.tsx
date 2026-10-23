@@ -35,7 +35,7 @@ export default function RootLayout({
       >
         <Header />
         <main className=" bg-green-700 h-max">{children}</main>
-        <ToastContainer />
+        <ToastContainer style={{ zIndex: 10000 }} />
       </body>
     </html>
   )

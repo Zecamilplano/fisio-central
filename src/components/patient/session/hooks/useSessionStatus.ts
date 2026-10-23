@@ -2,7 +2,7 @@ import { StatusSessaoKey } from "@/data/optionsSessionsData"
 import { useFisioStore } from "@/store/fisio/fisioStore"
 import { ListPatient, PaidKey } from "@/types"
 import { toast } from "react-toastify"
-import { updateSingleTreatmentSessions } from "@/services/patients/patientScheduleRepository"
+import { updateTreatmentSessions } from "@/services/patients/patientScheduleRepository"
 
 type UseSessionStatusProps = {
   patient: ListPatient
@@ -42,7 +42,11 @@ export function useSessionStatus({
     selectedSessionItems.length > 0 &&
     selectedSessionItems.every((session) => session.paid === "realizado")
 
-  const allCancelled =
+  const allFinishCancelled =
+    selectedSessionItems.length > 0 &&
+    selectedSessionItems.every((session) => session.finish === "cancelado")
+
+  const allPaymentCancelled =
     selectedSessionItems.length > 0 &&
     selectedSessionItems.every((session) => session.paid === "cancelado")
 
@@ -51,57 +55,55 @@ export function useSessionStatus({
     selectedSessionItems.every((session) => session.paid === "pendente")
 
   async function changeFinishStatus(value: StatusSessaoKey) {
-    if (patient.typeService === "Sessão avulsa") {
-      try {
-        await updateSingleTreatmentSessions(selectedSessions, {
-          finish_status: value,
-        })
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Falha ao salvar o status da sessão.")
-        return
-      }
+    try {
+      await updateTreatmentSessions(selectedSessions, { finish_status: value })
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Falha ao salvar o status da sessão.")
+      return
     }
     changeSessionsFinishInStore(patient.id, selectedSessions, value)
-    toast.success("Status da sessão atualizado!")
+    toast.success("Status de realização salvo no servidor.", {
+      toastId: "session-finish-status-saved",
+    })
   }
 
   async function changePaymentStatus(value: PaidKey) {
-    if (patient.typeService === "Sessão avulsa") {
-      try {
-        await updateSingleTreatmentSessions(selectedSessions, {
-          paid_status: value,
-        })
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Falha ao salvar o pagamento.")
-        return
-      }
+    try {
+      await updateTreatmentSessions(selectedSessions, { paid_status: value })
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Falha ao salvar o pagamento.")
+      return
     }
     changeSessionsPaymentInStore(patient.id, selectedSessions, value)
-    toast.success("Status do pagamento atualizado!")
+    toast.success("Status de pagamento salvo no servidor.", {
+      toastId: "session-payment-status-saved",
+    })
   }
 
   async function changeSessionFinish(sessionId: string, value: StatusSessaoKey) {
-    if (patient.typeService === "Sessão avulsa") {
-      try {
-        await updateSingleTreatmentSessions([sessionId], { finish_status: value })
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Falha ao salvar o status da sessão.")
-        return
-      }
+    try {
+      await updateTreatmentSessions([sessionId], { finish_status: value })
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Falha ao salvar o status da sessão.")
+      return
     }
     changeSessionFinishInStore(patient.id, sessionId, value)
+    toast.success("Status de realização salvo no servidor.", {
+      toastId: "session-finish-status-saved",
+    })
   }
 
   async function changeSessionPayment(sessionId: string, value: PaidKey) {
-    if (patient.typeService === "Sessão avulsa") {
-      try {
-        await updateSingleTreatmentSessions([sessionId], { paid_status: value })
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Falha ao salvar o pagamento.")
-        return
-      }
+    try {
+      await updateTreatmentSessions([sessionId], { paid_status: value })
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Falha ao salvar o pagamento.")
+      return
     }
     changeSessionPaymentInStore(patient.id, sessionId, value)
+    toast.success("Status de pagamento salvo no servidor.", {
+      toastId: "session-payment-status-saved",
+    })
   }
 
   const selectedActions = {
@@ -125,12 +127,12 @@ export function useSessionStatus({
       finish: {
         allFinished,
         allPending,
-        allCancelled,
+        allCancelled: allFinishCancelled,
       },
       payment: {
         allPaid,
-        allPending,
-        allCancelled,
+        allPending: allUnpaid,
+        allCancelled: allPaymentCancelled,
         allUnpaid,
       },
     },

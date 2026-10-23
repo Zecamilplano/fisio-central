@@ -49,7 +49,12 @@ export default function EvolutionView({
     respiratoryRate,
     oxygenSaturation,
     observations,
-  ].every((value) => value.trim())
+  ].some((value) => value.trim())
+  const hasPainValues =
+    evolution.painBefore !== null || evolution.painAfter !== null
+  const exercises = evolution.exercises.filter(
+    (exercise) => exercise.name.trim() && exercise.details.trim()
+  )
 
   return (
     <div className="rounded-3xl bg-white p-5 shadow-2xl md:p-8">
@@ -106,12 +111,11 @@ export default function EvolutionView({
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         {/* Objetivos */}
-        <ContentSection title="Objetivo da sessão" icon={<Target size={20} />}>
-          <ListContent
-            items={evolution.goals}
-            emptyMessage="Nenhum objetivo registrado."
-          />
-        </ContentSection>
+        {evolution.goals.some((item) => item.trim()) && (
+          <ContentSection title="Objetivo da sessão" icon={<Target size={20} />}>
+            <ListContent items={evolution.goals} />
+          </ContentSection>
+        )}
 
         {/* Intercorrências */}
         <ContentSection
@@ -119,57 +123,43 @@ export default function EvolutionView({
           icon={<AlertTriangle size={20} />}
         >
           <div className="rounded-xl bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
-            {evolution.complications?.trim() ||
-              "Nenhuma intercorrência registrada."}
+            {evolution.complications?.trim() || "Sem intercorrência"}
           </div>
         </ContentSection>
 
         {/* Exercícios */}
-        <ContentSection
-          title="Exercícios realizados"
-          icon={<Dumbbell size={20} />}
-        >
-          <div className="overflow-hidden rounded-xl border border-slate-200">
-            <table className="w-full border-collapse text-sm">
-              <thead className="bg-emerald-50">
-                <tr>
-                  <th className="px-4 py-3 text-left font-semibold text-emerald-800">
-                    Exercício
-                  </th>
-
-                  <th className="px-4 py-3 text-left font-semibold text-emerald-800">
-                    Séries / Carga
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody className="divide-y divide-slate-200 text-slate-600">
-                {evolution.exercises.length > 0 ? (
-                  evolution.exercises.map((exercise) => (
-                    <tr key={exercise.id}>
-                      <td className="px-4 py-3">
-                        {exercise.name.trim() || "Não informado"}
-                      </td>
-
-                      <td className="px-4 py-3">
-                        {exercise.details.trim() || "Não informado"}
-                      </td>
-                    </tr>
-                  ))
-                ) : (
+        {exercises.length > 0 && (
+          <ContentSection
+            title="Exercícios realizados"
+            icon={<Dumbbell size={20} />}
+          >
+            <div className="overflow-hidden rounded-xl border border-slate-200">
+              <table className="w-full border-collapse text-sm">
+                <thead className="bg-emerald-50">
                   <tr>
-                    <td
-                      colSpan={2}
-                      className="px-4 py-5 text-center text-slate-400"
-                    >
-                      Nenhum exercício registrado.
-                    </td>
+                    <th className="px-4 py-3 text-left font-semibold text-emerald-800">
+                      Exercício
+                    </th>
+
+                    <th className="px-4 py-3 text-left font-semibold text-emerald-800">
+                      Séries / Carga
+                    </th>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </ContentSection>
+                </thead>
+
+                <tbody className="divide-y divide-slate-200 text-slate-600">
+                  {exercises.map((exercise) => (
+                    <tr key={exercise.id}>
+                      <td className="px-4 py-3">{exercise.name.trim()}</td>
+
+                      <td className="px-4 py-3">{exercise.details.trim()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </ContentSection>
+        )}
 
         {/* Sinais vitais */}
         {hasContentVitalSigns && (
@@ -179,112 +169,120 @@ export default function EvolutionView({
             optional
           >
             <div className="overflow-hidden rounded-xl border border-slate-200">
-              <VitalRow
-                label="Pressão arterial"
-                value={evolution.vitalSigns.bloodPressure}
-              />
+              {bloodPressure.trim() && (
+                <VitalRow label="Pressão arterial" value={bloodPressure} />
+              )}
 
-              <VitalRow
-                label="Frequência cardíaca"
-                value={evolution.vitalSigns.heartRate}
-              />
+              {heartRate.trim() && (
+                <VitalRow label="Frequência cardíaca" value={heartRate} />
+              )}
 
-              <VitalRow
-                label="Frequência respiratória"
-                value={evolution.vitalSigns.respiratoryRate}
-              />
+              {respiratoryRate.trim() && (
+                <VitalRow
+                  label="Frequência respiratória"
+                  value={respiratoryRate}
+                />
+              )}
 
-              <VitalRow
-                label="Saturação"
-                value={evolution.vitalSigns.oxygenSaturation}
-                last
-              />
+              {oxygenSaturation.trim() && (
+                <VitalRow
+                  label="Saturação"
+                  value={oxygenSaturation}
+                  last
+                />
+              )}
             </div>
 
-            <div className="mt-4 rounded-xl bg-slate-50 px-4 py-3">
-              <p className="mb-1 text-xs font-medium uppercase text-slate-400">
-                Observações
-              </p>
+            {observations.trim() && (
+              <div className="mt-4 rounded-xl bg-slate-50 px-4 py-3">
+                <p className="mb-1 text-xs font-medium uppercase text-slate-400">
+                  Observações
+                </p>
 
-              <p className="text-sm leading-6 text-slate-600">
-                {evolution.vitalSigns.observations}
-              </p>
-            </div>
+                <p className="text-sm leading-6 text-slate-600">
+                  {observations.trim()}
+                </p>
+              </div>
+            )}
           </ContentSection>
         )}
 
         {/* Condutas */}
-        <ContentSection title="Conduta" icon={<ClipboardList size={20} />}>
-          <ListContent
-            items={evolution.conducts}
-            emptyMessage="Nenhuma conduta registrada."
-          />
-        </ContentSection>
+        {evolution.conducts.some((item) => item.trim()) && (
+          <ContentSection title="Conduta" icon={<ClipboardList size={20} />}>
+            <ListContent items={evolution.conducts} />
+          </ContentSection>
+        )}
 
         {/* Orientações */}
-        <ContentSection
-          title="Orientações"
-          icon={<ArrowRightCircle size={20} />}
-        >
-          <ListContent
-            items={evolution.orientations}
-            emptyMessage="Nenhuma orientação registrada."
-          />
-        </ContentSection>
+        {evolution.orientations.some((item) => item.trim()) && (
+          <ContentSection
+            title="Orientações"
+            icon={<ArrowRightCircle size={20} />}
+          >
+            <ListContent items={evolution.orientations} />
+          </ContentSection>
+        )}
 
         {/* Evolução */}
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2">
-          <h3 className="mb-3 text-lg font-semibold text-emerald-700">
-            Evolução / Melhora
-          </h3>
+        {evolution.progress.trim() && (
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2">
+            <h3 className="mb-3 text-lg font-semibold text-emerald-700">
+              Evolução / Melhora
+            </h3>
 
-          <p className="whitespace-pre-line text-sm leading-7 text-slate-600">
-            {evolution.progress.trim() ||
-              "Nenhuma evolução registrada para esta sessão."}
-          </p>
-        </section>
+            <p className="whitespace-pre-line text-sm leading-7 text-slate-600">
+              {evolution.progress.trim()}
+            </p>
+          </section>
+        )}
 
         {/* Escala de dor */}
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h3 className="mb-4 text-lg font-semibold text-emerald-700">
-            Escala de dor (EVA)
-          </h3>
+        {hasPainValues && (
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h3 className="mb-4 text-lg font-semibold text-emerald-700">
+              Escala de dor (EVA)
+            </h3>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <PainValue
-              label="Antes da sessão"
-              value={evolution.painBefore}
-              variant="before"
-            />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {evolution.painBefore !== null && (
+                <PainValue
+                  label="Antes da sessão"
+                  value={evolution.painBefore}
+                  variant="before"
+                />
+              )}
 
-            <PainValue
-              label="Depois da sessão"
-              value={evolution.painAfter}
-              variant="after"
-            />
-          </div>
-
-          <div className="mt-5">
-            <div className="h-2 rounded-full bg-linear-to-r from-emerald-500 via-amber-400 to-red-500" />
-
-            <div className="mt-2 flex justify-between text-xs text-slate-400">
-              <span>0 — Sem dor</span>
-              <span>10 — Pior dor</span>
+              {evolution.painAfter !== null && (
+                <PainValue
+                  label="Depois da sessão"
+                  value={evolution.painAfter}
+                  variant="after"
+                />
+              )}
             </div>
-          </div>
-        </section>
+
+            <div className="mt-5">
+              <div className="h-2 rounded-full bg-linear-to-r from-emerald-500 via-amber-400 to-red-500" />
+
+              <div className="mt-2 flex justify-between text-xs text-slate-400">
+                <span>0 — Sem dor</span>
+                <span>10 — Pior dor</span>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Próximas condutas */}
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h3 className="mb-4 text-lg font-semibold text-emerald-700">
-            Próxima sessão / Conduta
-          </h3>
+        {evolution.nextConducts.some((item) => item.trim()) && (
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h3 className="mb-4 text-lg font-semibold text-emerald-700">
+              Próxima sessão / Conduta
+            </h3>
 
-          <ListContent
-            items={evolution.nextConducts}
-            emptyMessage="Nenhuma próxima conduta registrada."
-          />
-        </section>
+            <ListContent items={evolution.nextConducts} />
+          </section>
+        )}
 
         {/* Profissional */}
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2">
@@ -348,15 +346,10 @@ function ContentSection({
 
 type ListContentProps = {
   items: string[]
-  emptyMessage: string
 }
 
-function ListContent({ items, emptyMessage }: ListContentProps) {
+function ListContent({ items }: ListContentProps) {
   const validItems = items.filter((item) => item.trim())
-
-  if (validItems.length === 0) {
-    return <p className="text-sm text-slate-400">{emptyMessage}</p>
-  }
 
   return (
     <ul className="text-wrap list-disc space-y-2 pl-5 text-sm leading-6 text-slate-600">

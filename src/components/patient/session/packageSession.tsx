@@ -53,7 +53,10 @@ export function PackageSession({
   const visibleSession =
     patient.typeService === "Pacote" && currentPackage
       ? [...patient.session]
-          .filter((session) => session.packageId === currentPackage.id)
+          .filter(
+            (session) =>
+              session.packageId === currentPackage.id || !session.packageId
+          )
           .sort(
             (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
           )

@@ -22,6 +22,7 @@ function EvolutionForm({
   mode = "create",
   initialData,
   onSave,
+  onUnchanged,
   onCancel,
   patient,
   session,
@@ -30,6 +31,7 @@ function EvolutionForm({
   const {
     form,
     errors,
+    isSaving,
     temporaryWarning,
     showWarning,
 
@@ -53,7 +55,9 @@ function EvolutionForm({
     updatePainAfter,
   } = useEvolutionForm({
     initialData,
+    mode,
     onSave,
+    onUnchanged,
   })
 
   return (
@@ -262,7 +266,11 @@ function EvolutionForm({
         </div>
       </div>
 
-      <EvolutionFormFooter mode={mode} onCancel={onCancel} />
+        <EvolutionFormFooter
+          mode={mode}
+          isSaving={isSaving}
+          onCancel={onCancel}
+        />
     </form>
   )
 }

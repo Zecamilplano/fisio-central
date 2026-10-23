@@ -68,7 +68,8 @@ export type EvolutionFormProps = {
   defaultTime: string
 
   onCancel: () => void
-  onSave: (data: EvolutionSaveData) => void
+  onSave: (data: EvolutionSaveData) => void | Promise<void>
+  onUnchanged: () => void
 }
 
 // Use evolution form
@@ -83,7 +84,7 @@ export type ExerciseField = "name" | "details"
 
 export type UseEvolutionFormParams = Pick<
   EvolutionFormProps,
-  "initialData" | "onSave"
+  "initialData" | "mode" | "onSave" | "onUnchanged"
 >
 
 export type WarningField =

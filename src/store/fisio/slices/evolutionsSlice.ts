@@ -7,6 +7,7 @@ type SessionId = Session["id"]
 
 export type EvolutionsSlice = {
   evolutions: Record<SessionId, EvolutionSaveData>
+  setEvolutions: (evolutions: Record<SessionId, EvolutionSaveData>) => void
   saveEvolution: (sessionId: SessionId, evolution: EvolutionSaveData) => void
   updateEvolution: (sessionId: SessionId, evolution: EvolutionSaveData) => void
   removeEvolution: (sessionId: SessionId) => void
@@ -19,6 +20,7 @@ export const createEvolutionsSlice: StateCreator<
   EvolutionsSlice
 > = (set) => ({
   evolutions: {},
+  setEvolutions: (evolutions) => set({ evolutions }),
   saveEvolution: (sessionId, evolution) =>
     set((state) => ({
       evolutions: { ...state.evolutions, [sessionId]: evolution },

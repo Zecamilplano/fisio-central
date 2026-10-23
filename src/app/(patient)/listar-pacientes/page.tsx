@@ -7,12 +7,14 @@ import {
 } from "@/components/patient/list"
 import { useFisioStore } from "@/store/fisio/fisioStore"
 import { getPatientsForList } from "@/services/patients/patientListRepository"
+import { getSessionEvolutions } from "@/services/patients/sessionEvolutionRepository"
 import { useEffect, useState } from "react"
 import { toast } from "react-toastify"
 
 function ListPatient() {
   const listPatient = useFisioStore((state) => state.patients)
   const setListPatients = useFisioStore((state) => state.setListPatients)
+  const setEvolutions = useFisioStore((state) => state.setEvolutions)
 
   const [currentPackageIndex, setCurrentPackageIndex] = useState(0)
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(
@@ -24,10 +26,11 @@ function ListPatient() {
   useEffect(() => {
     let cancelled = false
 
-    void getPatientsForList()
-      .then((patients) => {
+    void Promise.all([getPatientsForList(), getSessionEvolutions()])
+      .then(([patients, evolutions]) => {
         if (cancelled) return
         setListPatients(patients)
+        setEvolutions(evolutions)
         const requestedPatientId = new URLSearchParams(
           window.location.search
         ).get("patientId")
@@ -54,7 +57,7 @@ function ListPatient() {
     return () => {
       cancelled = true
     }
-  }, [setListPatients])
+  }, [setEvolutions, setListPatients])
 
   const findPatient =
     search.length > 1

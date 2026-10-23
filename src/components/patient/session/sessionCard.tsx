@@ -23,6 +23,8 @@ import { EvolutionFormData, EvolutionSaveData } from "../evolution"
 import EvolutionForm from "../evolution/evolutionForm"
 import { cn } from "tailwind-variants"
 import { useFisioStore } from "@/store/fisio/fisioStore"
+import { saveSessionEvolution } from "@/services/patients/sessionEvolutionRepository"
+import { toast } from "react-toastify"
 
 type SessionCardProps = {
   patient: Pick<ListPatient, "firstName" | "surName" | "typeService">
@@ -79,6 +81,13 @@ export function SessionCard({
       return
     }
 
+    if (session.finish !== "realizado") {
+      toast.error(
+        "Só é possível registrar uma evolução depois que a sessão for realizada."
+      )
+      return
+    }
+
     setEvolutionMode("create")
   }
 
@@ -117,7 +126,7 @@ export function SessionCard({
             ? "translate-x-40 scale-95 opacity-0"
             : "translate-x-0 scale-100 opacity-100"
         }
-        ${isOpen ? "col-span-2" : ""}
+        ${isOpen ? "lg:col-span-2" : ""}
       `}
       >
         <article className="flex items-center justify-between">
@@ -297,9 +306,23 @@ export function SessionCard({
 
               setEvolutionMode(null)
             }}
-            onSave={(data) => {
-              saveEvolution(session.id, data)
+            onUnchanged={() => {
               setEvolutionMode("view")
+              toast.info("Não houve alterações para salvar.")
+            }}
+            onSave={async (data) => {
+              try {
+                await saveSessionEvolution(session.id, data)
+                saveEvolution(session.id, data)
+                setEvolutionMode("view")
+                toast.success("Evolução salva no servidor.")
+              } catch (error) {
+                toast.error(
+                  error instanceof Error
+                    ? `Não foi possível salvar a evolução: ${error.message}`
+                    : "Não foi possível salvar a evolução."
+                )
+              }
             }}
           />
         )}

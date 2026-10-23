@@ -54,7 +54,6 @@ function usePackageSession({
     currentPackageSessions,
     getNextPackageDate: sessionScheduling.getNextPackageDate,
     getFirstPackageDate: sessionScheduling.getFirstPackageDate,
-    closeAddSessionModal,
   })
 
   const [openSessionId, setOpenSessionId] = useState<string | null>(null)
@@ -108,10 +107,16 @@ function usePackageSession({
       sessionScheduling.handleChangeDate(sessionId, String(value))
       return
     }
+
+    if (field === "time") {
+      sessionScheduling.handleChangeTime(sessionId, String(value))
+      return
+    }
   }
 
   function createReplacementDeletedSession(
-    sessions: ListPatient["session"]
+    sessions: ListPatient["session"],
+    treatmentId?: string
   ): ListPatient["session"][number] {
     const lastSession = sessions[sessions.length - 1]
 
@@ -126,7 +131,7 @@ function usePackageSession({
 
     return {
       id: crypto.randomUUID(),
-      packageId: lastSession.packageId,
+      ...(treatmentId ? { packageId: treatmentId } : {}),
       number: sessions.length + 1,
       date: format(nextDate, "yyyy-MM-dd"),
       finish: "pendente",

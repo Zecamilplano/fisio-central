@@ -47,7 +47,7 @@ export function CurrentPackageCard({
     .sort((a, b) => a.date.localeCompare(b.date))[0]
 
   const nextSessionFormated = nextSession
-    ? format(new Date(nextSession.date), "EEEE, dd/MM/yyyy", { locale: ptBR })
+    ? format(parseISO(nextSession.date), "EEEE, dd/MM/yyyy", { locale: ptBR })
     : "Nenhuma"
 
   const isFirstPackage = currentPackageIndex === 0

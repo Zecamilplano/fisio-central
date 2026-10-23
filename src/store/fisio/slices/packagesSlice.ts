@@ -4,6 +4,11 @@ import type { FisioStore } from "../fisioStore"
 import type { PatientId } from "./patientsSlice"
 
 export type PackagesSlice = {
+  increasePackageSessionCount: (
+    patientId: PatientId,
+    packageId: string,
+    count?: number
+  ) => void
   startNextPackage: (
     patientId: PatientId,
     treatmentPackage: TreatmentPackage,
@@ -18,6 +23,24 @@ export const createPackagesSlice: StateCreator<
   [],
   PackagesSlice
 > = (set) => ({
+  increasePackageSessionCount: (patientId, packageId, count = 1) =>
+    set((state) => ({
+      patients: state.patients.map((patient) =>
+        patient.id === patientId && patient.typeService === "Pacote"
+          ? {
+              ...patient,
+              packages: patient.packages.map((treatmentPackage) =>
+                treatmentPackage.id === packageId
+                  ? {
+                      ...treatmentPackage,
+                      totalSessions: treatmentPackage.totalSessions + count,
+                    }
+                  : treatmentPackage
+              ),
+            }
+          : patient
+      ),
+    })),
   startNextPackage: (
     patientId,
     treatmentPackage,

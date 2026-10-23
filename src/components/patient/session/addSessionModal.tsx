@@ -10,14 +10,14 @@ type AddSessionModalProps = {
   currentPackage?: TreatmentPackage | null
   suggestedPackageStartDate: Date
   onClose: () => void
-  onContinueCurrentPackage: () => void
+  onContinueCurrentPackage: () => void | Promise<boolean>
   onCreateSeparateSession: (selectedDate: Date) => void | Promise<boolean>
   onCreateNextPackage: (data: {
     startDate: Date
     totalSessions: number
     valueSession: number
     fixedWeekDays: DayOfWeek[]
-  }) => void
+  }) => void | Promise<boolean>
 }
 
 export function AddSessionModal({
@@ -43,17 +43,55 @@ export function AddSessionModal({
   const [packageWeekDays, setPackageWeekDays] = useState<DayOfWeek[]>([])
 
   const [packageStartDate, setPackageStartDate] = useState(new Date())
+  const [isSaving, setIsSaving] = useState(false)
 
   function handleClose() {
+    if (isSaving) return
     setMode("options")
     setSelectedDate(new Date())
     onClose()
   }
 
+  function handleSaveComplete() {
+    setIsSaving(false)
+    setMode("options")
+    setSelectedDate(new Date())
+    onClose()
+  }
+
+  async function handleContinueCurrentPackage() {
+    setIsSaving(true)
+    try {
+      const created = await onContinueCurrentPackage()
+      if (created !== false) handleSaveComplete()
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   async function handleConfirmSeparateSession() {
-    const created = await onCreateSeparateSession(selectedDate)
-    if (created === false) return
-    handleClose()
+    setIsSaving(true)
+    try {
+      const created = await onCreateSeparateSession(selectedDate)
+      if (created !== false) handleSaveComplete()
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  async function handleCreateNextPackage() {
+    setIsSaving(true)
+    try {
+      const created = await onCreateNextPackage({
+        startDate: packageStartDate,
+        totalSessions: packageTotalSessions,
+        valueSession: packageValueSession,
+        fixedWeekDays: packageWeekDays,
+      })
+      if (created !== false) handleSaveComplete()
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   useEffect(() => {
@@ -121,10 +159,12 @@ export function AddSessionModal({
             <>
               {!packageIsComplete && (
                 <button
-                  onClick={onContinueCurrentPackage}
+                  type="button"
+                  onClick={handleContinueCurrentPackage}
+                  disabled={isSaving}
                   className="rounded-lg border border-[#EAECF0] px-4 py-3 text-left text-sm font-medium text-[#344054] hover:bg-[#F9FAFB]"
                 >
-                  Continuar no pacote atual
+                  {isSaving ? "Salvando..." : "Continuar no pacote atual"}
                 </button>
               )}
 
@@ -151,10 +191,12 @@ export function AddSessionModal({
               <DatePicker date={selectedDate} setDate={setSelectedDate} />
 
               <button
+                type="button"
                 onClick={handleConfirmSeparateSession}
+                disabled={isSaving}
                 className="mt-3 w-full rounded-lg bg-[#FDB022] px-4 py-2 text-sm font-medium text-white hover:bg-[#F79009]"
               >
-                Confirmar sessão avulsa
+                {isSaving ? "Salvando..." : "Confirmar sessão avulsa"}
               </button>
             </div>
           )}
@@ -240,24 +282,21 @@ export function AddSessionModal({
               </div>
 
               <button
-                onClick={() =>
-                  onCreateNextPackage({
-                    startDate: packageStartDate,
-                    totalSessions: packageTotalSessions,
-                    valueSession: packageValueSession,
-                    fixedWeekDays: packageWeekDays,
-                  })
-                }
+                type="button"
+                onClick={handleCreateNextPackage}
+                disabled={isSaving}
                 className="w-full rounded-lg bg-[#FDB022] px-4 py-2 text-sm font-medium text-white"
               >
-                Criar pacote
+                {isSaving ? "Salvando..." : "Criar pacote"}
               </button>
             </div>
           )}
         </div>
 
         <button
+          type="button"
           onClick={handleClose}
+          disabled={isSaving}
           className="mt-5 w-full rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200"
         >
           Cancelar

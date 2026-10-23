@@ -1,8 +1,12 @@
 import type { ListPatient, Session } from "@/types"
 import { useFisioStore } from "@/store/fisio/fisioStore"
 import { useState } from "react"
-import { deleteSingleTreatmentSessions } from "@/services/patients/patientScheduleRepository"
-import { addSingleTreatmentSession } from "@/services/patients/patientScheduleRepository"
+import { parseISO } from "date-fns"
+import {
+  addSingleTreatmentSession,
+  addTreatmentSession,
+  deleteTreatmentSessions,
+} from "@/services/patients/patientScheduleRepository"
 import { toast } from "react-toastify"
 
 type UseSessionDeletionProps = {
@@ -10,7 +14,10 @@ type UseSessionDeletionProps = {
   selectedSessions: string[]
   selectedSessionItems: Session[]
   clearSelection: () => void
-  createReplacementDeletedSession: (sessions: Session[]) => Session
+  createReplacementDeletedSession: (
+    sessions: Session[],
+    treatmentId?: string
+  ) => Session
 }
 
 export function useSessionDeletion({
@@ -50,6 +57,13 @@ export function useSessionDeletion({
   }
 
   function openDeleteModal(sessionId: string, sessionNumber: number) {
+    if (patient.session.length <= 1) {
+      toast.error(
+        "Esta sessão não pode ser excluída porque é a única sessão do paciente."
+      )
+      return
+    }
+
     const session = patient.session.find((item) => item.id === sessionId)
 
     if (session?.finish === "realizado") {
@@ -69,6 +83,13 @@ export function useSessionDeletion({
 
   function openSelectedDeleteModal() {
     if (selectedSessionItems.length === 0) return
+
+    if (patient.session.length <= 1) {
+      toast.error(
+        "Esta sessão não pode ser excluída porque é a única sessão do paciente."
+      )
+      return
+    }
 
     const hasFinishedSession = selectedSessionItems.some(
       (session) => session.finish === "realizado"
@@ -94,6 +115,14 @@ export function useSessionDeletion({
 
     if (sessionsToDelete.length === 0) return
 
+    if (patient.session.length <= 1) {
+      toast.error(
+        "Esta sessão não pode ser excluída porque é a única sessão do paciente."
+      )
+      closeDeleteModal()
+      return
+    }
+
     const hasFinishedSession = patient.session.some(
       (session) =>
         sessionsToDelete.includes(session.id) && session.finish === "realizado"
@@ -112,42 +141,58 @@ export function useSessionDeletion({
 
     setTimeout(() => {
       void (async () => {
-        if (patient.typeService === "Sessão avulsa") {
-          try {
-            await deleteSingleTreatmentSessions(sessionsToDelete)
-          } catch (error) {
-            toast.error(
-              error instanceof Error
-                ? `Não foi possível excluir a sessão: ${error.message}`
-                : "Não foi possível excluir a sessão."
-            )
-            setDeletingSessionId(null)
-            return
-          }
+        try {
+          await deleteTreatmentSessions(sessionsToDelete)
+        } catch (error) {
+          toast.error(
+            error instanceof Error
+              ? `Não foi possível excluir a sessão: ${error.message}`
+              : "Não foi possível excluir a sessão."
+          )
+          setDeletingSessionId(null)
+          return
         }
 
-      deleteSessions(patient.id, sessionsToDelete)
+        deleteSessions(patient.id, sessionsToDelete)
 
-      if (shouldCreateReplacement) {
-        let sessions = patient.session
-          .filter((session) => !sessionsToDelete.includes(session.id))
-          .map((session, index) => ({ ...session, number: index + 1 }))
+        if (shouldCreateReplacement) {
+          const removedSessions = patient.session.filter((session) =>
+            sessionsToDelete.includes(session.id)
+          )
+          const remainingSessions = patient.session.filter(
+            (session) => !sessionsToDelete.includes(session.id)
+          )
+          const replacementSessions = [...remainingSessions]
 
-        for (let index = 0; index < amountDeleted; index++) {
-          let replacementSession = createReplacementDeletedSession(sessions)
-          if (patient.typeService === "Sessão avulsa") {
+          for (const removedSession of removedSessions) {
+            const treatmentSessions = replacementSessions.filter(
+              (session) => session.packageId === removedSession.packageId
+            )
+            const replacementSession = createReplacementDeletedSession(
+              treatmentSessions.length ? treatmentSessions : [removedSession],
+              removedSession.packageId
+            )
+
             try {
-              const saved = await addSingleTreatmentSession(
-                patient.id,
-                new Date(replacementSession.date)
-              )
-              replacementSession = {
+              const saved = removedSession.packageId
+                ? await addTreatmentSession(
+                    removedSession.packageId,
+                    parseISO(replacementSession.date),
+                    replacementSession.time ?? "16:00"
+                  )
+                : await addSingleTreatmentSession(
+                    patient.id,
+                    parseISO(replacementSession.date)
+                  )
+
+              const savedReplacement = {
                 ...replacementSession,
                 id: saved.id,
                 number: saved.number,
                 date: saved.date,
-                time: "16:00",
               }
+              replacementSessions.push(savedReplacement)
+              addSession(patient.id, savedReplacement)
             } catch (error) {
               toast.error(
                 error instanceof Error
@@ -158,21 +203,18 @@ export function useSessionDeletion({
               return
             }
           }
-          sessions = [...sessions, replacementSession]
-          addSession(patient.id, replacementSession)
         }
-      }
 
-      clearSelection()
+        clearSelection()
 
-      toast.success(
-        shouldCreateReplacement
-          ? `${amountDeleted} sessão(ões) excluída(s) e ${amountDeleted} nova(s) adicionada(s) ao final da agenda.`
-          : `${amountDeleted} sessão(ões) excluída(s) com sucesso.`
-      )
+        toast.success(
+          shouldCreateReplacement
+            ? `${amountDeleted} sessão(ões) excluída(s) e ${amountDeleted} nova(s) adicionada(s) ao final da agenda.`
+            : `${amountDeleted} sessão(ões) excluída(s) com sucesso.`
+        )
 
-      setDeletingSessionId(null)
-      closeDeleteModal()
+        setDeletingSessionId(null)
+        closeDeleteModal()
       })()
     }, 300)
   }

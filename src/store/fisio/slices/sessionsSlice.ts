@@ -28,6 +28,11 @@ export type SessionsSlice = {
     sessionId: SessionId,
     status: PaidKey
   ) => void
+  changeSessionTime: (
+    patientId: PatientId,
+    sessionId: SessionId,
+    time: string
+  ) => void
   changeSessionsFinish: (
     patientId: PatientId,
     sessionIds: SessionId[],
@@ -108,6 +113,15 @@ export const createSessionsSlice: StateCreator<
           ...session,
           paid: status,
         })
+      ),
+    })),
+  changeSessionTime: (patientId, sessionId, time) =>
+    set((state) => ({
+      patients: updateSessions(
+        state.patients,
+        patientId,
+        [sessionId],
+        (session) => ({ ...session, time })
       ),
     })),
   changeSessionsFinish: (patientId, sessionIds, status) =>
@@ -231,15 +245,33 @@ export const createSessionsSlice: StateCreator<
       return {
         patients: state.patients.map((patient) =>
           patient.id === patientId
-            ? {
-                ...patient,
-                session: patient.session
-                  .filter((session) => !deletedSessionIds.has(session.id))
-                  .map((session, index) => ({
-                    ...session,
-                    number: index + 1,
-                  })),
-              }
+            ? (() => {
+                const remainingSessions = patient.session.filter(
+                  (session) => !deletedSessionIds.has(session.id)
+                )
+                const sessionsByTreatment = new Map<string, Session[]>()
+
+                for (const session of remainingSessions) {
+                  const treatmentKey = session.packageId ?? "single-treatment"
+                  const treatmentSessions =
+                    sessionsByTreatment.get(treatmentKey) ?? []
+                  treatmentSessions.push(session)
+                  sessionsByTreatment.set(treatmentKey, treatmentSessions)
+                }
+
+                const renumberedSessions = [
+                  ...sessionsByTreatment.values(),
+                ].flatMap((treatmentSessions) =>
+                  [...treatmentSessions]
+                    .sort((a, b) => a.number - b.number)
+                    .map((session, index) => ({
+                      ...session,
+                      number: index + 1,
+                    }))
+                )
+
+                return { ...patient, session: renumberedSessions }
+              })()
             : patient
         ),
       }

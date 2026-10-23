@@ -66,6 +66,8 @@ export function PatientSidebar({
                         fill
                         alt={`Foto de perfil de ${patientName}`}
                         className="rounded-full object-cover"
+                        unoptimized
+                        loading="lazy"
                       />
                     ) : (
                       <p className="text-sm font-semibold text-white uppercase">

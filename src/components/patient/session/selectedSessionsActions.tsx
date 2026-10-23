@@ -50,7 +50,7 @@ export function SelectedSessionsActions({
     "bg-white text-slate-700 border-slate-300 hover:bg-slate-100"
 
   return (
-    <section className="sticky bottom-4 z-20 mt-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-lg">
+    <section className="sticky bottom-4 z-20 mb-4 mt-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-lg">
       <div className="flex flex-col gap-4">
         <header className="flex items-start justify-between gap-3">
           <div>
@@ -75,8 +75,8 @@ export function SelectedSessionsActions({
           </button>
         </header>
 
-        <div className="grid grid-cols-[1fr_1fr_auto] gap-3">
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+          <div className="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-3">
             <p className="mb-2 text-xs font-semibold uppercase text-slate-500">
               Realização
             </p>
@@ -116,7 +116,7 @@ export function SelectedSessionsActions({
             </div>
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <div className="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-3">
             <p className="mb-2 text-xs font-semibold uppercase text-slate-500">
               Pagamento
             </p>
@@ -160,7 +160,7 @@ export function SelectedSessionsActions({
             </div>
           </div>
 
-          <div className="">
+          <div className="flex justify-end sm:col-span-2 lg:col-span-1">
             <button
               type="button"
               onClick={actions.delete}

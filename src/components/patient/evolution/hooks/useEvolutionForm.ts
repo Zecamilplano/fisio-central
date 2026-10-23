@@ -22,12 +22,15 @@ import { normalizeText } from "@/utils/text/normalizeText"
 
 export function useEvolutionForm({
   initialData,
+  mode,
   onSave,
+  onUnchanged,
 }: UseEvolutionFormParams) {
   const [form, setForm] = useState<EvolutionFormData>(() =>
     initialData ? structuredClone(initialData) : createEmptyEvolution()
   )
   const [errors, setErrors] = useState<EvolutionFormErrors>({})
+  const [isSaving, setIsSaving] = useState(false)
 
   const [temporaryWarning, setTemporaryError] =
     useState<TemporaryWarning | null>(null)
@@ -119,7 +122,7 @@ export function useEvolutionForm({
     return newErrors
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
     const newErrors = validateForm()
@@ -128,41 +131,26 @@ export function useEvolutionForm({
 
     if (Object.keys(newErrors).length > 0) return
 
-    const goals = form.goals.map((item) => item.trim()).filter(Boolean)
-    const conducts = form.conducts.map((item) => item.trim()).filter(Boolean)
-    const orientations = form.orientations
-      .map((item) => item.trim())
-      .filter(Boolean)
-    const nextConducts = form.nextConducts
-      .map((item) => item.trim())
-      .filter(Boolean)
-    const exercises = form.exercises
-      .filter((exercise) => exercise.name.trim() && exercise.details.trim())
-      .map((exercise) => ({
-        ...exercise,
-        name: exercise.name.trim(),
-        details: exercise.details.trim(),
-      }))
-    const vitalSigns = Object.fromEntries(
-      Object.entries(form.vitalSigns).filter(([, value]) => value.trim())
-    )
+    const normalizedForm = normalizeEvolutionData(form)
 
-    const normalizedForm: EvolutionSaveData = {
-      ...(goals.length > 0 && { goals }),
-      ...(conducts.length > 0 && { conducts }),
-      ...(orientations.length > 0 && { orientations }),
-      ...(nextConducts.length > 0 && { nextConducts }),
-      ...(exercises.length > 0 && { exercises }),
-      ...(Object.keys(vitalSigns).length > 0 && { vitalSigns }),
-      ...(form.complications?.trim() && {
-        complications: form.complications.trim(),
-      }),
-      ...(form.progress.trim() && { progress: form.progress.trim() }),
-      ...(form.painBefore !== null && { painBefore: form.painBefore }),
-      ...(form.painAfter !== null && { painAfter: form.painAfter }),
+    if (
+      mode === "edit" &&
+      initialData &&
+      hasSameEvolutionContent(
+        normalizedForm,
+        normalizeEvolutionData(initialData)
+      )
+    ) {
+      onUnchanged()
+      return
     }
 
-    onSave(normalizedForm)
+    setIsSaving(true)
+    try {
+      await onSave(normalizedForm)
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const STRING_LIST_MAX_LENGTH = 150
@@ -439,6 +427,7 @@ export function useEvolutionForm({
   return {
     form,
     errors,
+    isSaving,
     temporaryWarning,
     showWarning,
 
@@ -461,4 +450,57 @@ export function useEvolutionForm({
     updatePainBefore,
     updatePainAfter,
   }
+}
+
+function normalizeEvolutionData(data: EvolutionFormData): EvolutionSaveData {
+  const goals = data.goals.map((item) => item.trim()).filter(Boolean)
+  const conducts = data.conducts.map((item) => item.trim()).filter(Boolean)
+  const orientations = data.orientations
+    .map((item) => item.trim())
+    .filter(Boolean)
+  const nextConducts = data.nextConducts
+    .map((item) => item.trim())
+    .filter(Boolean)
+  const exercises = data.exercises
+    .filter((exercise) => exercise.name.trim() && exercise.details.trim())
+    .map((exercise) => ({
+      ...exercise,
+      name: exercise.name.trim(),
+      details: exercise.details.trim(),
+    }))
+  const vitalSigns = Object.fromEntries(
+    Object.entries(data.vitalSigns).filter(([, value]) => value.trim())
+  )
+
+  return {
+    ...(goals.length > 0 && { goals }),
+    ...(conducts.length > 0 && { conducts }),
+    ...(orientations.length > 0 && { orientations }),
+    ...(nextConducts.length > 0 && { nextConducts }),
+    ...(exercises.length > 0 && { exercises }),
+    ...(Object.keys(vitalSigns).length > 0 && { vitalSigns }),
+    ...(data.complications?.trim() && {
+      complications: data.complications.trim(),
+    }),
+    ...(data.progress.trim() && { progress: data.progress.trim() }),
+    ...(data.painBefore !== null && { painBefore: data.painBefore }),
+    ...(data.painAfter !== null && { painAfter: data.painAfter }),
+  }
+}
+
+function hasSameEvolutionContent(
+  current: EvolutionSaveData,
+  original: EvolutionSaveData
+): boolean {
+  const withoutExerciseIds = (data: EvolutionSaveData) => ({
+    ...data,
+    ...(data.exercises && {
+      exercises: data.exercises.map(({ name, details }) => ({ name, details })),
+    }),
+  })
+
+  return (
+    JSON.stringify(withoutExerciseIds(current)) ===
+    JSON.stringify(withoutExerciseIds(original))
+  )
 }

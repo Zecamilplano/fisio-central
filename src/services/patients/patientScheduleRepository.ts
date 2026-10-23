@@ -187,12 +187,24 @@ export async function addSingleTreatmentSession(
     .limit(1)
     .maybeSingle()
   if (treatmentError) throw new Error(treatmentError.message)
-  if (!treatment) throw new Error("Não encontrei o atendimento avulso deste paciente.")
+  if (!treatment) {
+    throw new Error("Não encontrei o atendimento avulso deste paciente.")
+  }
+
+  return addTreatmentSession(treatment.id, date)
+}
+
+export async function addTreatmentSession(
+  treatmentId: string,
+  date: Date,
+  time = "16:00"
+): Promise<{ id: string; number: number; date: string }> {
+  const supabase = createClient()
 
   const { data: existing, error: sessionsError } = await supabase
     .from("treatment_sessions")
     .select("session_number")
-    .eq("treatment_id", treatment.id)
+    .eq("treatment_id", treatmentId)
     .order("session_number", { ascending: false })
     .limit(1)
   if (sessionsError) throw new Error(sessionsError.message)
@@ -203,12 +215,13 @@ export async function addSingleTreatmentSession(
   const { data, error } = await supabase
     .from("treatment_sessions")
     .insert({
-      treatment_id: treatment.id,
+      treatment_id: treatmentId,
       session_number: number,
       session_date: sessionDate,
-      session_time: "16:00",
+      session_time: time,
       finish_status: "pendente",
       paid_status: "pendente",
+      updated_at: new Date().toISOString(),
     })
     .select("id")
     .single()
@@ -216,12 +229,230 @@ export async function addSingleTreatmentSession(
   return { id: data.id, number, date: sessionDate }
 }
 
-export async function updateSingleTreatmentSessions(
+export async function addPackageSession(
+  treatmentId: string,
+  date: Date,
+  time = "16:00"
+): Promise<{
+  id: string
+  number: number
+  date: string
+  plannedSessions: number
+}> {
+  const supabase = createClient()
+  const { data: treatment, error: treatmentError } = await supabase
+    .from("patient_treatments")
+    .select("planned_sessions, treatment_type")
+    .eq("id", treatmentId)
+    .single()
+  if (treatmentError) throw new Error(treatmentError.message)
+  if (treatment.treatment_type !== "package") {
+    throw new Error("O atendimento selecionado não é um pacote.")
+  }
+
+  const saved = await addTreatmentSession(treatmentId, date, time)
+  const plannedSessions = treatment.planned_sessions + 1
+  const { data: updatedTreatment, error: updateError } = await supabase
+    .from("patient_treatments")
+    .update({
+      planned_sessions: plannedSessions,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", treatmentId)
+    .select("planned_sessions")
+    .single()
+  if (updateError) {
+    const { error: rollbackError } = await supabase
+      .from("treatment_sessions")
+      .delete()
+      .eq("id", saved.id)
+    if (rollbackError) {
+      throw new Error(
+        `${updateError.message} Não foi possível desfazer a sessão: ${rollbackError.message}`
+      )
+    }
+    throw new Error(updateError.message)
+  }
+
+  return { ...saved, plannedSessions: updatedTreatment.planned_sessions }
+}
+
+export async function addStandaloneSessionToPatient(
+  patientId: string,
+  date: Date,
+  pricePerSession: number,
+  time = "16:00"
+): Promise<{ id: string; number: number; date: string }> {
+  const supabase = createClient()
+  const { data: treatment, error: treatmentError } = await supabase
+    .from("patient_treatments")
+    .select("id")
+    .eq("patient_id", patientId)
+    .eq("treatment_type", "single")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (treatmentError) throw new Error(treatmentError.message)
+
+  let treatmentId = treatment?.id
+  let createdTreatmentRow = false
+  if (!treatmentId) {
+    const { data: newTreatment, error: createError } = await supabase
+      .from("patient_treatments")
+      .insert({
+        patient_id: patientId,
+        treatment_type: "single",
+        price_per_session: pricePerSession,
+        planned_sessions: 1,
+        status: "in_progress",
+      })
+      .select("id")
+      .single()
+    if (createError) throw new Error(createError.message)
+    treatmentId = newTreatment.id
+    createdTreatmentRow = true
+  }
+
+  try {
+    return await addTreatmentSession(treatmentId, date, time)
+  } catch (error) {
+    if (createdTreatmentRow) {
+      const { error: cleanupError } = await supabase
+        .from("patient_treatments")
+        .delete()
+        .eq("id", treatmentId)
+      if (cleanupError) {
+        const originalMessage =
+          error instanceof Error
+            ? error.message
+            : "Falha ao adicionar a sessão."
+        throw new Error(
+          `${originalMessage} Não foi possível remover o atendimento vazio: ${cleanupError.message}`
+        )
+      }
+    }
+    throw error
+  }
+}
+
+export async function createNextPackageTreatment(data: {
+  patientId: string
+  previousTreatmentId: string
+  startDate: Date
+  pricePerSession: number
+  totalSessions: number
+  sessions: Array<{ date: Date; time: string }>
+}): Promise<{ id: string; sessions: Array<{ id: string; number: number; date: string; time: string }> }> {
+  if (!Number.isInteger(data.totalSessions) || data.totalSessions < 1) {
+    throw new Error("Informe uma quantidade válida de sessões para o pacote.")
+  }
+  if (data.sessions.length !== data.totalSessions) {
+    throw new Error("A agenda precisa conter todas as sessões do pacote.")
+  }
+  const normalizedSessions = data.sessions.map((session) => {
+    const sessionDate = toDateOnly(session.date)
+    if (!sessionDate || !session.time.trim()) {
+      throw new Error("Informe data e horário para todas as sessões do pacote.")
+    }
+    return { ...session, date: sessionDate }
+  })
+
+  const supabase = createClient()
+  const { data: treatment, error: createError } = await supabase
+    .from("patient_treatments")
+    .insert({
+      patient_id: data.patientId,
+      treatment_type: "package",
+      price_per_session: data.pricePerSession,
+      planned_sessions: data.totalSessions,
+      package_start_date: toDateOnly(data.startDate),
+      status: "in_progress",
+    })
+    .select("id")
+    .single()
+  if (createError) throw new Error(createError.message)
+
+  const treatmentId = treatment.id
+  const sessionRows = normalizedSessions.map((session, index) => ({
+    treatment_id: treatmentId,
+    session_number: index + 1,
+    session_date: session.date,
+    session_time: session.time,
+    finish_status: "pendente",
+    paid_status: "pendente",
+  }))
+
+  const { data: savedSessions, error: sessionsError } = await supabase
+    .from("treatment_sessions")
+    .insert(sessionRows)
+    .select("id, session_number, session_date, session_time")
+  if (sessionsError || savedSessions?.length !== data.totalSessions) {
+    const { error: cleanupError } = await supabase
+      .from("patient_treatments")
+      .delete()
+      .eq("id", treatmentId)
+    if (cleanupError) {
+      const originalMessage =
+        sessionsError?.message ?? "O pacote não gravou todas as sessões."
+      throw new Error(
+        `${originalMessage} Falha ao remover o pacote incompleto: ${cleanupError.message}`
+      )
+    }
+    throw new Error(sessionsError?.message ?? "O pacote não gravou todas as sessões.")
+  }
+
+  const { error: previousTreatmentError } = await supabase
+    .from("patient_treatments")
+    .update({ status: "completed", updated_at: new Date().toISOString() })
+    .eq("id", data.previousTreatmentId)
+    .eq("patient_id", data.patientId)
+    .select("id")
+    .single()
+  if (previousTreatmentError) {
+    const sessionIds = (savedSessions ?? []).map((session) => session.id)
+    if (sessionIds.length > 0) {
+      const { error: sessionCleanupError } = await supabase
+        .from("treatment_sessions")
+        .delete()
+        .in("id", sessionIds)
+      if (sessionCleanupError) {
+        throw new Error(
+          `${previousTreatmentError.message} Falha ao remover as novas sessões: ${sessionCleanupError.message}`
+        )
+      }
+    }
+    const { error: treatmentCleanupError } = await supabase
+      .from("patient_treatments")
+      .delete()
+      .eq("id", treatmentId)
+    if (treatmentCleanupError) {
+      throw new Error(
+        `${previousTreatmentError.message} Falha ao remover o pacote incompleto: ${treatmentCleanupError.message}`
+      )
+    }
+    throw new Error(previousTreatmentError.message)
+  }
+
+  return {
+    id: treatmentId,
+    sessions: (savedSessions ?? [])
+      .sort((a, b) => a.session_number - b.session_number)
+      .map((session) => ({
+        id: session.id,
+        number: session.session_number,
+        date: session.session_date,
+        time: session.session_time,
+      })),
+  }
+}
+
+export async function updateTreatmentSessions(
   sessionIds: string[],
   fields: {
     finish_status?: StatusSessaoKey
     paid_status?: PaidKey
     session_date?: string
+    session_time?: string
   }
 ): Promise<void> {
   if (sessionIds.length === 0) return
@@ -233,14 +464,88 @@ export async function updateSingleTreatmentSessions(
   if (error) throw new Error(error.message)
 }
 
-export async function deleteSingleTreatmentSessions(
+export async function updateTreatmentSessionSchedule(
+  updates: Array<{ id: string; session_date: string }>
+): Promise<void> {
+  const supabase = createClient()
+  const results = await Promise.all(
+    updates.map(({ id, session_date }) =>
+      supabase
+        .from("treatment_sessions")
+        .update({ session_date, updated_at: new Date().toISOString() })
+        .eq("id", id)
+    )
+  )
+  const error = results.find((result) => result.error)?.error
+  if (error) throw new Error(error.message)
+}
+
+export async function deleteTreatmentSessions(
   sessionIds: string[]
 ): Promise<void> {
   if (sessionIds.length === 0) return
   const supabase = createClient()
+
+  const { data: evolutions, error: evolutionsError } = await supabase
+    .from("treatment_session_evolutions")
+    .select("session_id")
+    .in("session_id", sessionIds)
+  if (evolutionsError) throw new Error(evolutionsError.message)
+  if (evolutions?.length) {
+    throw new Error(
+      "Esta sessão tem uma evolução clínica e não pode ser excluída."
+    )
+  }
+
+  const { data: sessions, error: lookupError } = await supabase
+    .from("treatment_sessions")
+    .select("id, treatment_id, session_number")
+    .in("id", sessionIds)
+  if (lookupError) throw new Error(lookupError.message)
+
   const { error } = await supabase
     .from("treatment_sessions")
     .delete()
     .in("id", sessionIds)
   if (error) throw new Error(error.message)
+
+  const treatmentIds = [
+    ...new Set((sessions ?? []).map((session) => session.treatment_id)),
+  ]
+  for (const treatmentId of treatmentIds) {
+    const { data: remaining, error: remainingError } = await supabase
+      .from("treatment_sessions")
+      .select("id, session_number")
+      .eq("treatment_id", treatmentId)
+      .order("session_number", { ascending: true })
+    if (remainingError) throw new Error(remainingError.message)
+
+    const rows = remaining ?? []
+    const offset =
+      Math.max(0, ...rows.map((row) => row.session_number)) + rows.length + 1
+    const staged = await Promise.all(
+      rows.map((row, index) =>
+        supabase
+          .from("treatment_sessions")
+          .update({ session_number: offset + index })
+          .eq("id", row.id)
+      )
+    )
+    const stageError = staged.find((result) => result.error)?.error
+    if (stageError) throw new Error(stageError.message)
+
+    const renumbered = await Promise.all(
+      rows.map((row, index) =>
+        supabase
+          .from("treatment_sessions")
+          .update({
+            session_number: index + 1,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", row.id)
+      )
+    )
+    const renumberError = renumbered.find((result) => result.error)?.error
+    if (renumberError) throw new Error(renumberError.message)
+  }
 }

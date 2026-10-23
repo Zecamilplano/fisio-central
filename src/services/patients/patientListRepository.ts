@@ -68,7 +68,11 @@ const weekdayByNumber: Partial<Record<number, DayOfWeek>> = {
   6: "Sábado",
 }
 
-function toSessionRows(rows: TreatmentSessionRow[], treatmentId: string): Session[] {
+function toSessionRows(
+  rows: TreatmentSessionRow[],
+  treatmentId: string,
+  belongsToPackage = true
+): Session[] {
   return rows
     .filter((session) => session.treatment_id === treatmentId)
     .sort(
@@ -79,7 +83,7 @@ function toSessionRows(rows: TreatmentSessionRow[], treatmentId: string): Sessio
     .map((session) => ({
       id: session.id,
       number: session.session_number,
-      packageId: treatmentId,
+      ...(belongsToPackage ? { packageId: treatmentId } : {}),
       date: session.session_date,
       time: session.session_time,
       finish: toFinishStatus(session.finish_status),
@@ -188,16 +192,17 @@ export async function getPatientsForList(): Promise<ListPatient[]> {
       referenceHouse: patient.reference_house ?? "",
     }
 
-    if (latestTreatment.treatment_type === "package") {
-      const packageTreatments = patientTreatments.filter(
-        (treatment) => treatment.treatment_type === "package"
-      )
+    const packageTreatments = patientTreatments.filter(
+      (treatment) => treatment.treatment_type === "package"
+    )
+
+    if (packageTreatments.length > 0) {
       const currentTreatment =
         [...packageTreatments]
           .reverse()
           .find((treatment) =>
             ["active", "in_progress"].includes(treatment.status)
-          ) ?? latestTreatment
+          ) ?? packageTreatments.at(-1)!
       const packages = packageTreatments.map((treatment) => {
         const packageSessions = toSessionRows(sessions, treatment.id)
         const startDate =
@@ -219,9 +224,14 @@ export async function getPatientsForList(): Promise<ListPatient[]> {
           current: treatment.id === currentTreatment.id,
         }
       })
-      const packageSessions = packageTreatments.flatMap((treatment) =>
-        toSessionRows(sessions, treatment.id)
-      )
+      const packageSessions = [
+        ...packageTreatments.flatMap((treatment) =>
+          toSessionRows(sessions, treatment.id)
+        ),
+        ...patientTreatments
+          .filter((treatment) => treatment.treatment_type === "single")
+          .flatMap((treatment) => toSessionRows(sessions, treatment.id, false)),
+      ]
       const patientStartDate =
         profile?.initial_start_date ??
         packages[0]?.startDate.toISOString() ??
@@ -242,7 +252,7 @@ export async function getPatientsForList(): Promise<ListPatient[]> {
       ]
     }
 
-    const singleSessions = toSessionRows(sessions, latestTreatment.id)
+    const singleSessions = toSessionRows(sessions, latestTreatment.id, false)
     const startDate =
       singleSessions[0]?.date ?? latestTreatment.created_at.slice(0, 10)
 

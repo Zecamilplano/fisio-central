@@ -2,11 +2,13 @@ import { Save } from "lucide-react"
 
 type EvolutionFormFooterProps = {
   mode: "create" | "edit"
+  isSaving: boolean
   onCancel: () => void
 }
 
 export default function EvolutionFormFooter({
   mode,
+  isSaving,
   onCancel,
 }: EvolutionFormFooterProps) {
   return (
@@ -14,6 +16,7 @@ export default function EvolutionFormFooter({
       <button
         type="button"
         onClick={onCancel}
+        disabled={isSaving}
         className="cursor-pointer rounded-xl border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
       >
         Cancelar
@@ -21,11 +24,16 @@ export default function EvolutionFormFooter({
 
       <button
         type="submit"
+        disabled={isSaving}
         className="flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800"
       >
         <Save size={18} />
 
-        {mode === "create" ? "Salvar evolução" : "Salvar alterações"}
+        {isSaving
+          ? "Salvando..."
+          : mode === "create"
+            ? "Salvar evolução"
+            : "Salvar alterações"}
       </button>
     </footer>
   )

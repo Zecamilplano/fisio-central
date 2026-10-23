@@ -1,7 +1,12 @@
 import type { DayOfWeek, ListPatient, Session, TreatmentPackage } from "@/types"
 import { useFisioStore } from "@/store/fisio/fisioStore"
 import { parseISO } from "date-fns"
-import { addSingleTreatmentSession } from "@/services/patients/patientScheduleRepository"
+import {
+  addPackageSession,
+  addSingleTreatmentSession,
+  addStandaloneSessionToPatient,
+  createNextPackageTreatment,
+} from "@/services/patients/patientScheduleRepository"
 import { toast } from "react-toastify"
 
 type UseSessionCreationProps = {
@@ -10,7 +15,6 @@ type UseSessionCreationProps = {
   currentPackageSessions: Session[]
   getNextPackageDate: (lastDate: Date, fixedWeekDays: DayOfWeek[]) => Date
   getFirstPackageDate: (startDate: Date, fixedWeekDays: DayOfWeek[]) => Date
-  closeAddSessionModal: () => void
 }
 
 export function useSessionCreation({
@@ -19,29 +23,12 @@ export function useSessionCreation({
   currentPackageSessions,
   getNextPackageDate,
   getFirstPackageDate,
-  closeAddSessionModal,
 }: UseSessionCreationProps) {
   const addSession = useFisioStore((state) => state.addSession)
+  const increasePackageSessionCount = useFisioStore(
+    (state) => state.increasePackageSessionCount
+  )
   const startNextPackage = useFisioStore((state) => state.startNextPackage)
-  function createSessionNumber(sessions: Session[]) {
-    return sessions.length + 1
-  }
-
-  function createBaseSession(
-    sessions: Session[],
-    date: Date,
-    packageId?: string
-  ): Session {
-    return {
-      id: crypto.randomUUID(),
-      number: createSessionNumber(sessions),
-      packageId,
-      date: date.toISOString(),
-      finish: "pendente",
-      paid: "pendente",
-    }
-  }
-
   async function addSeparateSession(selectedDate: Date): Promise<boolean> {
     if (patient.typeService === "Sessão avulsa") {
       try {
@@ -54,7 +41,7 @@ export function useSessionCreation({
           finish: "pendente",
           paid: "pendente",
         })
-        toast.success("Sessão adicionada ao atendimento.")
+        toast.success("Sessão avulsa salva no servidor.")
         return true
       } catch (error) {
         toast.error(
@@ -66,14 +53,39 @@ export function useSessionCreation({
       }
     }
 
-    const newSession = createBaseSession(patient.session, selectedDate)
-    addSession(patient.id, newSession)
-    return true
+    try {
+      const saved = await addStandaloneSessionToPatient(
+        patient.id,
+        selectedDate,
+        currentPackage?.valueSession ?? 0,
+        currentPackage?.defaultTime ?? "16:00"
+      )
+      addSession(patient.id, {
+        id: saved.id,
+        number: saved.number,
+        date: saved.date,
+        time: currentPackage?.defaultTime ?? "16:00",
+        finish: "pendente",
+        paid: "pendente",
+      })
+      toast.success("Sessão avulsa adicionada ao atendimento.")
+      return true
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? `Não foi possível adicionar a sessão: ${error.message}`
+          : "Não foi possível adicionar a sessão."
+      )
+      return false
+    }
   }
 
-  function addSessionToCurrentPackage() {
-    if (patient.typeService !== "Pacote") return
-    if (!currentPackage) return
+  async function addSessionToCurrentPackage(): Promise<boolean> {
+    if (patient.typeService !== "Pacote" || !currentPackage) return false
+    if (currentPackage.fixedWeekDays.length === 0) {
+      toast.error("Não há dias da semana definidos para este pacote.")
+      return false
+    }
 
     const lastPackageSession = currentPackageSessions.at(-1)
 
@@ -83,15 +95,36 @@ export function useSessionCreation({
 
     const nextDate = getNextPackageDate(lastDate, currentPackage.fixedWeekDays)
 
-    const newSession = createBaseSession(
-      patient.session,
-      nextDate,
-      currentPackage.id
-    )
-
-    addSession(patient.id, newSession)
-
-    closeAddSessionModal()
+    try {
+      const saved = await addPackageSession(
+        currentPackage.id,
+        nextDate,
+        currentPackage.defaultTime
+      )
+      increasePackageSessionCount(
+        patient.id,
+        currentPackage.id,
+        saved.plannedSessions - currentPackage.totalSessions
+      )
+      addSession(patient.id, {
+        id: saved.id,
+        number: saved.number,
+        packageId: currentPackage.id,
+        date: saved.date,
+        time: currentPackage.defaultTime,
+        finish: "pendente",
+        paid: "pendente",
+      })
+      toast.success("Sessão adicionada ao pacote e salva no servidor.")
+      return true
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? `Não foi possível adicionar a sessão: ${error.message}`
+          : "Não foi possível adicionar a sessão."
+      )
+      return false
+    }
   }
 
   function createPackageSessions(data: {
@@ -99,7 +132,6 @@ export function useSessionCreation({
     startDate: Date
     totalSessions: number
     fixedWeekDays: DayOfWeek[]
-    currentSessions: Session[]
   }) {
     const sessions: Session[] = []
     let currentDate = getFirstPackageDate(data.startDate, data.fixedWeekDays)
@@ -135,44 +167,83 @@ export function useSessionCreation({
     return lastSession ? parseISO(lastSession.date) : new Date()
   }
 
-  function createNextPackage(data: {
+  async function createNextPackage(data: {
     startDate: Date
     totalSessions: number
     valueSession: number
     fixedWeekDays: DayOfWeek[]
-  }) {
-    if (patient.typeService !== "Pacote") return
-    if (!currentPackage) return
+  }): Promise<boolean> {
+    if (patient.typeService !== "Pacote" || !currentPackage) return false
+    if (!Number.isInteger(data.totalSessions) || data.totalSessions < 1) {
+      toast.error("Informe uma quantidade válida de sessões.")
+      return false
+    }
+    if (data.fixedWeekDays.length === 0) {
+      toast.error("Selecione ao menos um dia da semana para o pacote.")
+      return false
+    }
+    if (!Number.isFinite(data.valueSession) || data.valueSession < 0) {
+      toast.error("Informe um valor válido para a sessão.")
+      return false
+    }
 
     const newPackageId = crypto.randomUUID()
-
-    const newPackage = {
-      id: newPackageId,
-      startDate: data.startDate,
-      totalSessions: data.totalSessions,
-      migratedSessions: 0,
-      valueSession: data.valueSession,
-      fixedWeekDays: data.fixedWeekDays,
-      defaultTime: "16:00",
-      current: true,
-    }
 
     const newPackageSessions = createPackageSessions({
       packageId: newPackageId,
       startDate: data.startDate,
       totalSessions: data.totalSessions,
       fixedWeekDays: data.fixedWeekDays,
-      currentSessions: patient.session,
     })
 
-    startNextPackage(
-      patient.id,
-      newPackage,
-      newPackageSessions,
-      getLastPackageSessionDate(currentPackage.id)
-    )
+    try {
+      const savedPackage = await createNextPackageTreatment({
+        patientId: patient.id,
+        previousTreatmentId: currentPackage.id,
+        startDate: data.startDate,
+        pricePerSession: data.valueSession,
+        totalSessions: data.totalSessions,
+        sessions: newPackageSessions.map((session) => ({
+          date: parseISO(session.date),
+          time: "16:00",
+        })),
+      })
 
-    closeAddSessionModal()
+      const newPackage = {
+        id: savedPackage.id,
+        startDate: data.startDate,
+        totalSessions: data.totalSessions,
+        migratedSessions: 0,
+        valueSession: data.valueSession,
+        fixedWeekDays: data.fixedWeekDays,
+        defaultTime: "16:00",
+        current: true,
+      }
+      const persistedSessions = newPackageSessions.map((session, index) => ({
+        ...session,
+        id: savedPackage.sessions[index].id,
+        packageId: savedPackage.id,
+        number: savedPackage.sessions[index].number,
+        date: savedPackage.sessions[index].date,
+        time: savedPackage.sessions[index].time,
+      }))
+
+      startNextPackage(
+        patient.id,
+        newPackage,
+        persistedSessions,
+        getLastPackageSessionDate(currentPackage.id)
+      )
+      toast.success("Novo pacote e sessões salvos no servidor.")
+      return true
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? `Não foi possível criar o pacote: ${error.message}`
+          : "Não foi possível criar o pacote."
+      )
+      return false
+    }
   }
 
   return {
