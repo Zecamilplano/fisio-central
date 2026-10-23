@@ -27,11 +27,27 @@ function useFormTypeService() {
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(serviceForm))
+      const hasDraft =
+        serviceForm.selectService !== null ||
+        serviceForm.totalSessions !== null ||
+        serviceForm.selectPackage !== null ||
+        serviceForm.priceSession !== serviceFormData.priceSession
+
+      if (hasDraft) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(serviceForm))
+      } else {
+        localStorage.removeItem(STORAGE_KEY)
+      }
     } catch {
       console.error("Erro ao salvar no localStorage.")
     }
   }, [serviceForm])
+
+  function resetForm() {
+    setServiceForm(serviceFormData)
+    setError(null)
+    setSubmitted(false)
+  }
 
   useEffect(() => {
     if (isCustom) {
@@ -106,6 +122,7 @@ function useFormTypeService() {
     validateFormTypeService,
     submitted,
     setSubmitted,
+    resetForm,
     inputRef,
     validate,
   }

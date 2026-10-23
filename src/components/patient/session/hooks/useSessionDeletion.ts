@@ -1,6 +1,8 @@
 import type { ListPatient, Session } from "@/types"
 import { useFisioStore } from "@/store/fisio/fisioStore"
 import { useState } from "react"
+import { deleteSingleTreatmentSessions } from "@/services/patients/patientScheduleRepository"
+import { addSingleTreatmentSession } from "@/services/patients/patientScheduleRepository"
 import { toast } from "react-toastify"
 
 type UseSessionDeletionProps = {
@@ -109,6 +111,21 @@ export function useSessionDeletion({
     setDeletingSessionId(sessionsToDelete[0])
 
     setTimeout(() => {
+      void (async () => {
+        if (patient.typeService === "Sessão avulsa") {
+          try {
+            await deleteSingleTreatmentSessions(sessionsToDelete)
+          } catch (error) {
+            toast.error(
+              error instanceof Error
+                ? `Não foi possível excluir a sessão: ${error.message}`
+                : "Não foi possível excluir a sessão."
+            )
+            setDeletingSessionId(null)
+            return
+          }
+        }
+
       deleteSessions(patient.id, sessionsToDelete)
 
       if (shouldCreateReplacement) {
@@ -117,7 +134,30 @@ export function useSessionDeletion({
           .map((session, index) => ({ ...session, number: index + 1 }))
 
         for (let index = 0; index < amountDeleted; index++) {
-          const replacementSession = createReplacementDeletedSession(sessions)
+          let replacementSession = createReplacementDeletedSession(sessions)
+          if (patient.typeService === "Sessão avulsa") {
+            try {
+              const saved = await addSingleTreatmentSession(
+                patient.id,
+                new Date(replacementSession.date)
+              )
+              replacementSession = {
+                ...replacementSession,
+                id: saved.id,
+                number: saved.number,
+                date: saved.date,
+                time: "16:00",
+              }
+            } catch (error) {
+              toast.error(
+                error instanceof Error
+                  ? `Não foi possível criar a sessão substituta: ${error.message}`
+                  : "Não foi possível criar a sessão substituta."
+              )
+              setDeletingSessionId(null)
+              return
+            }
+          }
           sessions = [...sessions, replacementSession]
           addSession(patient.id, replacementSession)
         }
@@ -133,6 +173,7 @@ export function useSessionDeletion({
 
       setDeletingSessionId(null)
       closeDeleteModal()
+      })()
     }, 300)
   }
 

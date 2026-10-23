@@ -127,7 +127,9 @@ function useRegisterPatient() {
       (step) => steps[step].active
     )
 
-    if (activeStep) {
+    if (!patientCreated.current) {
+      localStorage.removeItem("patientRegistrationStep")
+    } else if (activeStep) {
       localStorage.setItem("patientRegistrationStep", activeStep)
     }
   }, [steps])
@@ -234,7 +236,10 @@ function useRegisterPatient() {
         throw new Error("Não encontrei o paciente ou o pacote salvo.")
       }
 
-      if (!plannedSessions) {
+      if (
+        formTypeService.serviceForm.selectService === "pacote" &&
+        !plannedSessions
+      ) {
         throw new Error("Não encontrei a quantidade de sessões do pacote.")
       }
 
@@ -242,7 +247,7 @@ function useRegisterPatient() {
         patientId,
         treatmentId.current,
         formScheduling.schedulingForm,
-        plannedSessions
+        plannedSessions ?? 1
       )
 
       toast.success("Agenda do pacote salva com sucesso!")
@@ -261,6 +266,20 @@ function useRegisterPatient() {
     } finally {
       savingSchedule.current = false
     }
+  }
+
+  function resetRegistration() {
+    patientCreated.current = false
+    creatingPatient.current = false
+    savingService.current = false
+    savingSchedule.current = false
+    treatmentId.current = null
+    setShouldScroll(false)
+    setRestoreStatus("ready")
+    formProfile.resetPatient()
+    formTypeService.resetForm()
+    formScheduling.resetScheduling()
+    setStep(InitialStep)
   }
 
   useEffect(() => {
@@ -314,6 +333,7 @@ function useRegisterPatient() {
     handlePrev,
     handleNext,
     handleSavePackageSchedule,
+    resetRegistration,
     handleStepClick,
     isFormValid,
     isNextActive,

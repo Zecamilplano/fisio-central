@@ -1,6 +1,8 @@
 import { useFisioStore } from "@/store/fisio/fisioStore"
 import { DayOfWeek, ListPatient } from "@/types"
 import { addDays, getDay } from "date-fns"
+import { updateSingleTreatmentSessions } from "@/services/patients/patientScheduleRepository"
+import { toast } from "react-toastify"
 
 const weekDayMap = {
   Domingo: 0,
@@ -56,7 +58,17 @@ export function useSessionScheduling({ patient }: UseSessionSchedulingProps) {
     return firstDate
   }
 
-  function handleChangeDate(sessionId: string, value: string) {
+  async function handleChangeDate(sessionId: string, value: string) {
+    if (patient.typeService === "Sessão avulsa") {
+      try {
+        await updateSingleTreatmentSessions([sessionId], {
+          session_date: value.slice(0, 10),
+        })
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Falha ao salvar a data da sessão.")
+        return
+      }
+    }
     rescheduleSession(patient.id, sessionId, value)
   }
 

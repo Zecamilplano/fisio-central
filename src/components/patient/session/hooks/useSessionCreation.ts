@@ -1,6 +1,8 @@
 import type { DayOfWeek, ListPatient, Session, TreatmentPackage } from "@/types"
 import { useFisioStore } from "@/store/fisio/fisioStore"
 import { parseISO } from "date-fns"
+import { addSingleTreatmentSession } from "@/services/patients/patientScheduleRepository"
+import { toast } from "react-toastify"
 
 type UseSessionCreationProps = {
   patient: ListPatient
@@ -40,12 +42,33 @@ export function useSessionCreation({
     }
   }
 
-  function addSeparateSession(selectedDate: Date) {
+  async function addSeparateSession(selectedDate: Date): Promise<boolean> {
+    if (patient.typeService === "Sessão avulsa") {
+      try {
+        const saved = await addSingleTreatmentSession(patient.id, selectedDate)
+        addSession(patient.id, {
+          id: saved.id,
+          number: saved.number,
+          date: saved.date,
+          time: "16:00",
+          finish: "pendente",
+          paid: "pendente",
+        })
+        toast.success("Sessão adicionada ao atendimento.")
+        return true
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? `Não foi possível adicionar a sessão: ${error.message}`
+            : "Não foi possível adicionar a sessão."
+        )
+        return false
+      }
+    }
+
     const newSession = createBaseSession(patient.session, selectedDate)
-
     addSession(patient.id, newSession)
-
-    closeAddSessionModal()
+    return true
   }
 
   function addSessionToCurrentPackage() {

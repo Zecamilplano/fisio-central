@@ -50,6 +50,7 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
     updateSessionSchedule,
     handleDateChange,
     handleDateClear,
+    updateSingleSession,
     handleClearSessions,
   } = form
 
@@ -626,8 +627,9 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
           )}
 
           {schedulingForm.singleSession && (
-            <div className="flex items-center justify-between px-4 py-3 bg-[#FBA731] rounded-xl border border-amber-100">
-              <div>
+            <div className="flex flex-col gap-4 px-4 py-3 bg-[#FBA731] rounded-xl border border-amber-100">
+              <div className="flex items-center justify-between">
+                <div>
                 <p className="text-xs text-white">Dia selecionado</p>
                 <p className="text-sm font-medium text-white capitalize">
                   {new Date(
@@ -638,13 +640,51 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
                     month: "long",
                   })}
                 </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleDateClear}
+                  aria-label="Remover data da sessão"
+                  className="text-xs text-white underline cursor-pointer"
+                >
+                  <Trash size={24} color="white" />
+                </button>
               </div>
-              <button
-                onClick={handleDateClear}
-                className="text-xs text-white underline cursor-pointer"
-              >
-                <Trash size={24} color="white" />
-              </button>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <label className="flex flex-col gap-1 text-sm text-white">
+                  Horário
+                  <input
+                    type="time"
+                    value={schedulingForm.singleSession.time}
+                    onChange={(event) => updateSingleSession({ time: event.target.value })}
+                    className="rounded-md border border-white/60 bg-white px-2 py-1.5 text-[#333]"
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-sm text-white">
+                  Sessão
+                  <select
+                    value={schedulingForm.singleSession.finish}
+                    onChange={(event) => updateSingleSession({ finish: event.target.value as "pendente" | "realizado" | "cancelado" })}
+                    className="rounded-md border border-white/60 bg-white px-2 py-1.5 text-[#333]"
+                  >
+                    <option value="pendente">Pendente</option>
+                    <option value="realizado">Realizada</option>
+                    <option value="cancelado">Cancelada</option>
+                  </select>
+                </label>
+                <label className="flex flex-col gap-1 text-sm text-white">
+                  Pagamento
+                  <select
+                    value={schedulingForm.singleSession.paid}
+                    onChange={(event) => updateSingleSession({ paid: event.target.value as "pendente" | "realizado" | "cancelado" })}
+                    className="rounded-md border border-white/60 bg-white px-2 py-1.5 text-[#333]"
+                  >
+                    <option value="pendente">Pendente</option>
+                    <option value="realizado">Pago</option>
+                    <option value="cancelado">Cancelado</option>
+                  </select>
+                </label>
+              </div>
             </div>
           )}
         </div>

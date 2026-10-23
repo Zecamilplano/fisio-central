@@ -11,7 +11,7 @@ type AddSessionModalProps = {
   suggestedPackageStartDate: Date
   onClose: () => void
   onContinueCurrentPackage: () => void
-  onCreateSeparateSession: (selectedDate: Date) => void
+  onCreateSeparateSession: (selectedDate: Date) => void | Promise<boolean>
   onCreateNextPackage: (data: {
     startDate: Date
     totalSessions: number
@@ -50,8 +50,9 @@ export function AddSessionModal({
     onClose()
   }
 
-  function handleConfirmSeparateSession() {
-    onCreateSeparateSession(selectedDate)
+  async function handleConfirmSeparateSession() {
+    const created = await onCreateSeparateSession(selectedDate)
+    if (created === false) return
     handleClose()
   }
 

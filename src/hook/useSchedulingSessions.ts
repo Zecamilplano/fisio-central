@@ -122,15 +122,37 @@ export function useSchedulingSessions(
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(schedulingForm))
+      const hasDraft =
+        schedulingForm.serviceType !== null ||
+        schedulingForm.totalSessions !== null ||
+        schedulingForm.initialDateSession !== null ||
+        schedulingForm.package.startDate !== null ||
+        schedulingForm.package.sessions.length > 0 ||
+        schedulingForm.singleSession !== null
+
+      if (hasDraft) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(schedulingForm))
+      } else {
+        localStorage.removeItem(STORAGE_KEY)
+      }
     } catch {
       console.error("Erro ao salvar no localStorage.")
     }
   }, [schedulingForm])
 
+  function resetScheduling() {
+    setSchedulingForm(buildInitialSchedulingForm(0))
+    setSchedulingFormErrors(initialErrors)
+    setIsHalfPaymentModalOpen(false)
+  }
+
   function validateSchedulingForm(form: SchedulingForm): boolean {
     if (form.serviceType === "sessoes") {
-      return form.singleSession !== null && form.singleSession.fullDate !== null
+      return (
+        form.singleSession !== null &&
+        form.singleSession.fullDate !== null &&
+        form.singleSession.time.trim() !== ""
+      )
     }
 
     if (form.serviceType === "pacote") {
@@ -326,6 +348,18 @@ export function useSchedulingSessions(
     }))
   }
 
+  function updateSingleSession(
+    fields: Partial<
+      Pick<NonNullable<SchedulingForm["singleSession"]>, "time" | "finish" | "paid">
+    >
+  ) {
+    setSchedulingForm((prev) =>
+      prev.singleSession
+        ? { ...prev, singleSession: { ...prev.singleSession, ...fields } }
+        : prev
+    )
+  }
+
   function handlePaymentType(paymentType: PaymentType) {
     if (paymentType === "metade") {
       setSchedulingForm((prev) => ({
@@ -417,6 +451,7 @@ export function useSchedulingSessions(
     updateSessionSchedule,
     handleAddSessions,
     handleDateChange,
+    updateSingleSession,
   }
 
   function handleChange(field: keyof typeof handlers, value?: any) {
@@ -453,6 +488,8 @@ export function useSchedulingSessions(
     updateSessionSchedule,
     handleDateChange,
     handleDateClear,
+    updateSingleSession,
     handleValidateSingleSession,
+    resetScheduling,
   }
 }

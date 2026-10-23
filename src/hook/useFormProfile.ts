@@ -146,6 +146,29 @@ function useFormProfile() {
     return hasError
   }
 
+  function resetPatient() {
+    Object.values(debounceRef.current).forEach(clearTimeout)
+    debounceRef.current = {}
+
+    const emptyPatient: PatientType = {
+      firstName: "",
+      surName: "",
+      address: {
+        telephone: "",
+        street: "",
+        addressNumber: null,
+        noNumber: false,
+        neighborhood: "Centro",
+        referenceHouse: "",
+      },
+    }
+
+    setPatient(emptyPatient)
+    setErrorPatient({})
+    setPatientGlobal(emptyPatient)
+    localStorage.removeItem("formProfile")
+  }
+
   useEffect(() => {
     const data = localStorage.getItem("formProfile")
 
@@ -188,6 +211,7 @@ function useFormProfile() {
     setPatient,
     errorPatient,
     setErrorPatient,
+    resetPatient,
     handleChange,
     handleErrors,
     validateAllFields,

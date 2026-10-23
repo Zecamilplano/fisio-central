@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/client"
 import type { SchedulingForm } from "@/types"
+import type { PaidKey } from "@/types"
+import type { StatusSessaoKey } from "@/data/optionsSessionsData"
 
 function toDateOnly(value: Date | string | null): string | null {
   if (!value) return null
@@ -32,8 +34,57 @@ export async function savePackageSchedule(
   form: SchedulingForm,
   plannedSessions: number
 ): Promise<void> {
+  if (form.serviceType === "sessoes") {
+    const session = form.singleSession
+    if (!session || !session.fullDate || !session.time.trim()) {
+      throw new Error("Informe a data e o horário da sessão avulsa.")
+    }
+
+    const now = new Date().toISOString()
+    const supabase = createClient()
+    const { error: profileError } = await supabase
+      .from("patient_treatment_profiles")
+      .upsert(
+        {
+          patient_id: patientId,
+          initial_start_date: toDateOnly(form.initialDateSession),
+          sessions_before_current_package: form.totalSessions ?? 0,
+          updated_at: now,
+        },
+        { onConflict: "patient_id" }
+      )
+    if (profileError) throw new Error(profileError.message)
+
+    const { data: treatment, error: treatmentError } = await supabase
+      .from("patient_treatments")
+      .update({ updated_at: now })
+      .eq("id", treatmentId)
+      .eq("patient_id", patientId)
+      .select("id")
+      .single()
+    if (treatmentError) throw new Error(treatmentError.message)
+    if (!treatment) throw new Error("Não encontrei o atendimento deste paciente.")
+
+    const { error: sessionError } = await supabase
+      .from("treatment_sessions")
+      .upsert(
+        {
+          treatment_id: treatmentId,
+          session_number: 1,
+          session_date: toDateOnly(session.fullDate),
+          session_time: session.time,
+          finish_status: session.finish,
+          paid_status: session.paid,
+          updated_at: now,
+        },
+        { onConflict: "treatment_id,session_number" }
+      )
+    if (sessionError) throw new Error(sessionError.message)
+    return
+  }
+
   if (form.serviceType !== "pacote") {
-    throw new Error("O salvamento da sessão avulsa será implementado depois.")
+    throw new Error("Selecione um tipo de atendimento válido.")
   }
 
   if (!form.package.startDate) {
@@ -120,4 +171,76 @@ export async function savePackageSchedule(
 
     if (deleteError) throw new Error(deleteError.message)
   }
+}
+
+export async function addSingleTreatmentSession(
+  patientId: string,
+  date: Date
+): Promise<{ id: string; number: number; date: string }> {
+  const supabase = createClient()
+  const { data: treatment, error: treatmentError } = await supabase
+    .from("patient_treatments")
+    .select("id")
+    .eq("patient_id", patientId)
+    .eq("treatment_type", "single")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (treatmentError) throw new Error(treatmentError.message)
+  if (!treatment) throw new Error("Não encontrei o atendimento avulso deste paciente.")
+
+  const { data: existing, error: sessionsError } = await supabase
+    .from("treatment_sessions")
+    .select("session_number")
+    .eq("treatment_id", treatment.id)
+    .order("session_number", { ascending: false })
+    .limit(1)
+  if (sessionsError) throw new Error(sessionsError.message)
+
+  const number = (existing?.[0]?.session_number ?? 0) + 1
+  const sessionDate = toDateOnly(date)
+  if (!sessionDate) throw new Error("Informe uma data válida para a sessão.")
+  const { data, error } = await supabase
+    .from("treatment_sessions")
+    .insert({
+      treatment_id: treatment.id,
+      session_number: number,
+      session_date: sessionDate,
+      session_time: "16:00",
+      finish_status: "pendente",
+      paid_status: "pendente",
+    })
+    .select("id")
+    .single()
+  if (error) throw new Error(error.message)
+  return { id: data.id, number, date: sessionDate }
+}
+
+export async function updateSingleTreatmentSessions(
+  sessionIds: string[],
+  fields: {
+    finish_status?: StatusSessaoKey
+    paid_status?: PaidKey
+    session_date?: string
+  }
+): Promise<void> {
+  if (sessionIds.length === 0) return
+  const supabase = createClient()
+  const { error } = await supabase
+    .from("treatment_sessions")
+    .update({ ...fields, updated_at: new Date().toISOString() })
+    .in("id", sessionIds)
+  if (error) throw new Error(error.message)
+}
+
+export async function deleteSingleTreatmentSessions(
+  sessionIds: string[]
+): Promise<void> {
+  if (sessionIds.length === 0) return
+  const supabase = createClient()
+  const { error } = await supabase
+    .from("treatment_sessions")
+    .delete()
+    .in("id", sessionIds)
+  if (error) throw new Error(error.message)
 }

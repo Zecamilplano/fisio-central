@@ -27,6 +27,7 @@ function RegisterPatient() {
     handlePrev,
     handleNext,
     handleSavePackageSchedule,
+    resetRegistration,
     handleStepClick,
     isFormValid,
     isNextActive,
@@ -38,13 +39,16 @@ function RegisterPatient() {
   async function handleRegisterAndAdd() {
     if (!(await handleSavePackageSchedule())) return
     clearRegistrationDraft()
-    router.push("/listar-pacientes")
+    imageInput.removeImage()
+    resetRegistration()
   }
 
   async function handleRegisterAndViewPatient() {
     const patientId = localStorage.getItem("createdPatientId")
     if (!patientId || !(await handleSavePackageSchedule())) return
     clearRegistrationDraft()
+    imageInput.removeImage()
+    resetRegistration()
     router.push(`/listar-pacientes?patientId=${encodeURIComponent(patientId)}`)
   }
 
