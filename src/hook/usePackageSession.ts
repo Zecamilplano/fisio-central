@@ -59,6 +59,9 @@ function usePackageSession({
   const [openSessionId, setOpenSessionId] = useState<string | null>(null)
 
   const [isAddSessionModalOpen, setIsAddSessionModalOpen] = useState(false)
+  const [addSessionModalMode, setAddSessionModalMode] = useState<
+    "options" | "next-package"
+  >("options")
 
   const completedCurrentPackageSessions = currentPackageSessions.filter(
     (session) => session.finish === "realizado"
@@ -140,11 +143,18 @@ function usePackageSession({
   }
 
   function openAddSessionModal() {
+    setAddSessionModalMode("options")
+    setIsAddSessionModalOpen(true)
+  }
+
+  function openNewPackageModal() {
+    setAddSessionModalMode("next-package")
     setIsAddSessionModalOpen(true)
   }
 
   function closeAddSessionModal() {
     setIsAddSessionModalOpen(false)
+    setAddSessionModalMode("options")
   }
 
   useEffect(() => {
@@ -158,6 +168,7 @@ function usePackageSession({
       openSessionId,
       currentPackage,
       isAddSessionModalOpen,
+      addSessionModalMode,
       packageIsComplete,
       suggestedPackageStartDate,
     },
@@ -177,6 +188,7 @@ function usePackageSession({
       openDeleteModal: sessionDeletion.deleteActions.openDeleteModal,
       addSeparateSession: sessionCreation.addSeparateSession,
       openAddSessionModal,
+      openNewPackageModal,
       closeAddSessionModal,
       addSessionToCurrentPackage: sessionCreation.addSessionToCurrentPackage,
       createNextPackage: sessionCreation.createNextPackage,

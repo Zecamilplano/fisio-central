@@ -85,7 +85,7 @@ function toSessionRows(
       number: session.session_number,
       ...(belongsToPackage ? { packageId: treatmentId } : {}),
       date: session.session_date,
-      time: session.session_time,
+      time: session.session_time.slice(0, 5),
       finish: toFinishStatus(session.finish_status),
       paid: toPaidStatus(session.paid_status),
     }))
@@ -222,6 +222,7 @@ export async function getPatientsForList(): Promise<ListPatient[]> {
           fixedWeekDays: getFixedWeekDays(packageSessions),
           defaultTime: packageSessions[0]?.time ?? "08:00",
           current: treatment.id === currentTreatment.id,
+          completed: treatment.status === "completed",
         }
       })
       const packageSessions = [
@@ -246,6 +247,9 @@ export async function getPatientsForList(): Promise<ListPatient[]> {
           address,
           typeService: "Pacote",
           startDate: toLocalDate(patientStartDate),
+          initialStartDate: profile?.initial_start_date
+            ? toLocalDate(profile.initial_start_date)
+            : null,
           packages,
           session: packageSessions,
         },

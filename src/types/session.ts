@@ -40,6 +40,7 @@ export type SessionController = {
   toggleSession: (sessionId: string) => void
 
   openDeleteModal: (sessionId: string, sessionNumber: number) => void
+  openNewPackageModal: () => void
 
   changeSession: (
     sessionId: string,

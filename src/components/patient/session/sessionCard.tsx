@@ -69,7 +69,12 @@ export function SessionCard({
     .replace("-feira", "")
     .replace(/^./, (letter) => letter.toUpperCase())
 
+  const currentTime = session.time?.slice(0, 5)
   const timeOptions = createTimeOptions()
+  if (currentTime && !timeOptions.includes(currentTime)) {
+    timeOptions.push(currentTime)
+    timeOptions.sort()
+  }
 
   const hasCustomTime = session.time && session.time !== defaultTime
   const hasRescheduledDate =

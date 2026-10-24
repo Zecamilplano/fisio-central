@@ -198,7 +198,12 @@ export async function addTreatmentSession(
   treatmentId: string,
   date: Date,
   time = "16:00"
-): Promise<{ id: string; number: number; date: string }> {
+): Promise<{
+  id: string
+  number: number
+  date: string
+  plannedSessions?: number
+}> {
   const supabase = createClient()
 
   const { data: existing, error: sessionsError } = await supabase
@@ -226,7 +231,49 @@ export async function addTreatmentSession(
     .select("id")
     .single()
   if (error) throw new Error(error.message)
-  return { id: data.id, number, date: sessionDate }
+
+  try {
+    const plannedSessions = await syncPackagePlannedSessions(treatmentId)
+    return { id: data.id, number, date: sessionDate, plannedSessions }
+  } catch (syncError) {
+    const { error: rollbackError } = await supabase
+      .from("treatment_sessions")
+      .delete()
+      .eq("id", data.id)
+    if (rollbackError) {
+      throw new Error(
+        `${syncError instanceof Error ? syncError.message : "Falha ao atualizar o pacote."} Não foi possível desfazer a sessão: ${rollbackError.message}`
+      )
+    }
+    throw syncError
+  }
+}
+
+async function syncPackagePlannedSessions(
+  treatmentId: string
+): Promise<number | undefined> {
+  const supabase = createClient()
+  const { data: treatment, error: treatmentError } = await supabase
+    .from("patient_treatments")
+    .select("treatment_type")
+    .eq("id", treatmentId)
+    .single()
+  if (treatmentError) throw new Error(treatmentError.message)
+  if (treatment.treatment_type !== "package") return undefined
+
+  const { count, error: sessionsError } = await supabase
+    .from("treatment_sessions")
+    .select("id", { count: "exact", head: true })
+    .eq("treatment_id", treatmentId)
+  if (sessionsError) throw new Error(sessionsError.message)
+
+  const plannedSessions = Math.max(count ?? 0, 1)
+  const { error: updateError } = await supabase
+    .from("patient_treatments")
+    .update({ planned_sessions: plannedSessions, updated_at: new Date().toISOString() })
+    .eq("id", treatmentId)
+  if (updateError) throw new Error(updateError.message)
+  return plannedSessions
 }
 
 export async function addPackageSession(
@@ -251,30 +298,10 @@ export async function addPackageSession(
   }
 
   const saved = await addTreatmentSession(treatmentId, date, time)
-  const plannedSessions = treatment.planned_sessions + 1
-  const { data: updatedTreatment, error: updateError } = await supabase
-    .from("patient_treatments")
-    .update({
-      planned_sessions: plannedSessions,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", treatmentId)
-    .select("planned_sessions")
-    .single()
-  if (updateError) {
-    const { error: rollbackError } = await supabase
-      .from("treatment_sessions")
-      .delete()
-      .eq("id", saved.id)
-    if (rollbackError) {
-      throw new Error(
-        `${updateError.message} Não foi possível desfazer a sessão: ${rollbackError.message}`
-      )
-    }
-    throw new Error(updateError.message)
+  return {
+    ...saved,
+    plannedSessions: saved.plannedSessions ?? treatment.planned_sessions,
   }
-
-  return { ...saved, plannedSessions: updatedTreatment.planned_sessions }
 }
 
 export async function addStandaloneSessionToPatient(
@@ -441,7 +468,7 @@ export async function createNextPackageTreatment(data: {
         id: session.id,
         number: session.session_number,
         date: session.session_date,
-        time: session.session_time,
+        time: session.session_time.slice(0, 5),
       })),
   }
 }
@@ -547,5 +574,7 @@ export async function deleteTreatmentSessions(
     )
     const renumberError = renumbered.find((result) => result.error)?.error
     if (renumberError) throw new Error(renumberError.message)
+
+    await syncPackagePlannedSessions(treatmentId)
   }
 }

@@ -46,6 +46,17 @@ export function PatientDetails({
     toggleSession: packageSession.sessionActions.handleToggleSession,
 
     openDeleteModal: packageSession.sessionActions.openDeleteModal,
+    openNewPackageModal: () => {
+      if (patient.typeService === "Pacote") {
+        const activePackageIndex = patient.packages.findIndex(
+          (item) => item.current
+        )
+        if (activePackageIndex >= 0) {
+          setCurrentPackageIndex(activePackageIndex)
+        }
+      }
+      packageSession.sessionActions.openNewPackageModal()
+    },
     changeSession: packageSession.sessionActions.handleChange,
   }
 

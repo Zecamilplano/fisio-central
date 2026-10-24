@@ -17,6 +17,7 @@ export type TreatmentPackage = {
   fixedWeekDays: DayOfWeek[]
   defaultTime: string
   current: boolean
+  completed?: boolean
 }
 
 export type UsePackageSession = {
@@ -35,6 +36,7 @@ type PackagePatient = PatientType & {
   typeService: "Pacote"
 
   startDate: Date
+  initialStartDate?: Date | null
   packages: TreatmentPackage[]
 
   session: Session[]

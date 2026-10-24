@@ -1,10 +1,22 @@
 import { DatePicker } from "@/components/ui/datePicker"
 import { daysOfWeek } from "@/data"
 import { DayOfWeek, TreatmentPackage } from "@/types"
+import { addDays } from "date-fns"
 import { useEffect, useState } from "react"
+
+const weekDayNumber: Record<DayOfWeek, number> = {
+  Domingo: 0,
+  Segunda: 1,
+  Terça: 2,
+  Quarta: 3,
+  Quinta: 4,
+  Sexta: 5,
+  Sábado: 6,
+}
 
 type AddSessionModalProps = {
   isOpen: boolean
+  initialMode?: "options" | "next-package"
   patientType: "Pacote" | "Sessão avulsa"
   packageIsComplete?: boolean
   currentPackage?: TreatmentPackage | null
@@ -22,6 +34,7 @@ type AddSessionModalProps = {
 
 export function AddSessionModal({
   isOpen,
+  initialMode = "options",
   patientType,
   packageIsComplete,
   currentPackage,
@@ -44,6 +57,23 @@ export function AddSessionModal({
 
   const [packageStartDate, setPackageStartDate] = useState(new Date())
   const [isSaving, setIsSaving] = useState(false)
+
+  useEffect(() => {
+    if (!packageWeekDays.length) return
+
+    let alignedDate = packageStartDate
+    while (
+      !packageWeekDays.some(
+        (day) => weekDayNumber[day] === alignedDate.getDay()
+      )
+    ) {
+      alignedDate = addDays(alignedDate, 1)
+    }
+
+    if (alignedDate.getTime() !== packageStartDate.getTime()) {
+      setPackageStartDate(alignedDate)
+    }
+  }, [packageStartDate, packageWeekDays])
 
   function handleClose() {
     if (isSaving) return
@@ -97,9 +127,11 @@ export function AddSessionModal({
   useEffect(() => {
     if (!isOpen) return
 
-    setMode(patientType === "Sessão avulsa" ? "separate-session" : "options")
+    setMode(
+      patientType === "Sessão avulsa" ? "separate-session" : initialMode
+    )
     setSelectedDate(new Date())
-  }, [isOpen, patientType])
+  }, [isOpen, patientType, initialMode])
 
   useEffect(() => {
     if (!isOpen) return
@@ -145,11 +177,13 @@ export function AddSessionModal({
         className="mx-4 w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg"
       >
         <h3 className="text-lg font-semibold text-[#344054]">
-          Adicionar sessão
+          {mode === "next-package" ? "Novo pacote" : "Adicionar sessão"}
         </h3>
 
         <p className="mt-1 text-sm text-slate-500">
-          {patientType === "Sessão avulsa"
+          {mode === "next-package"
+            ? "Configure as sessões do próximo pacote."
+            : patientType === "Sessão avulsa"
             ? "Escolha a data da nova sessão."
             : "Escolha como deseja adicionar a nova sessão."}
         </p>
@@ -277,7 +311,7 @@ export function AddSessionModal({
 
                 <DatePicker
                   date={packageStartDate}
-                  setDate={setPackageStartDate}
+                  setDate={(date) => setPackageStartDate(date)}
                 />
               </div>
 

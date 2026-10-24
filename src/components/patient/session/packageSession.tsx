@@ -27,6 +27,7 @@ export function PackageSession({
     openSessionId,
     currentPackage,
     isAddSessionModalOpen,
+    addSessionModalMode,
     packageIsComplete,
     suggestedPackageStartDate,
   } = sessionState
@@ -82,6 +83,7 @@ export function PackageSession({
           + Adicionar sessão
         </button>
         <AddSessionModal
+          initialMode={addSessionModalMode}
           suggestedPackageStartDate={suggestedPackageStartDate}
           isOpen={isAddSessionModalOpen}
           patientType={patient.typeService}

@@ -125,7 +125,7 @@ export function SessionOptions({
                 }}
               />
               <select
-                value={session.time ?? defaultTime}
+                value={(session.time ?? defaultTime).slice(0, 5)}
                 onChange={(e) =>
                   onChangeSession(session.id, "time", e.target.value)
                 }

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { SessionCard } from "../session/sessionCard"
 import { SelectedSessionsActions } from "../session/selectedSessionsActions"
 import { cn } from "tailwind-variants"
-import { format } from "date-fns"
+import { format, parseISO } from "date-fns"
 import { getInitialLetters } from "@/utils/patient/getInitialLetters"
 
 type PackageHistoryModalProps = {
@@ -22,16 +22,28 @@ export function PackageHistoryModal({
   const sessions = patient.session
   const patientName = `${patient.firstName} ${patient.surName}`.trim()
 
-  // console.log("packages: ", packages)
-  // console.log("quantidade: ", packages.length)
-
   const [openPackageId, setOpenPackageId] = useState<string | null>(
     packages[0]?.id ?? null
   )
-  const [isPackageListOpen, setIsPackageListOpen] = useState(true)
+  const [isPackageListOpen] = useState(true)
 
-  const firstPackage = packages[0]
-  const treatmentStartDate = firstPackage?.startDate
+  const completedSessions = sessions
+    .filter((session) => session.finish === "realizado")
+    .sort((a, b) => a.date.localeCompare(b.date))
+  const earliestPackageStart = [...patient.packages].sort(
+    (a, b) => a.startDate.getTime() - b.startDate.getTime()
+  )[0]?.startDate
+  const treatmentStartDate =
+    patient.initialStartDate ??
+    (completedSessions[0]
+      ? parseISO(completedSessions[0].date)
+      : earliestPackageStart)
+  const sessionsCompletedBeforeTrackedPackages = Math.max(
+    0,
+    ...patient.packages.map((pkg) => pkg.migratedSessions)
+  )
+  const completedSessionCount =
+    sessionsCompletedBeforeTrackedPackages + completedSessions.length
   const currentPackage = packages.find((pkg) => pkg.current)
   const treatmentIsActive = Boolean(currentPackage)
 
@@ -82,7 +94,7 @@ export function PackageHistoryModal({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-700"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-700 cursor-pointer"
             aria-label="Fechar histórico de pacotes"
           >
             <X size={16} />
@@ -114,6 +126,13 @@ export function PackageHistoryModal({
                       ? "Pacote atual em andamento"
                       : "Tratamento encerrado"}
                   </p>
+
+                  <p className="mt-1 text-xs text-slate-500">
+                    {completedSessionCount}{" "}
+                    {completedSessionCount === 1
+                      ? "sessão realizada"
+                      : "sessões realizadas"}
+                  </p>
                 </div>
               </div>
 
@@ -138,6 +157,13 @@ export function PackageHistoryModal({
                 const packageSession = sessions.filter(
                   (session) => session.packageId === pkg.id
                 )
+                const packageIsCompleted =
+                  pkg.completed ??
+                  (!pkg.current &&
+                    packageSession.length > 0 &&
+                    packageSession.every(
+                      (session) => session.finish === "realizado"
+                    ))
 
                 const isPackageOpen = openPackageId === pkg.id
 
@@ -191,6 +217,11 @@ export function PackageHistoryModal({
                             {pkg.current && (
                               <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
                                 Atual
+                              </span>
+                            )}
+                            {packageIsCompleted && (
+                              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                                Concluído
                               </span>
                             )}
                           </div>
@@ -259,14 +290,18 @@ export function PackageHistoryModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md border border-slate-300 px-5 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
+            className="rounded-md border border-slate-300 px-5 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 cursor-pointer"
           >
             Fechar
           </button>
 
           <button
             type="button"
-            className="rounded-md bg-emerald-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
+            onClick={() => {
+              onClose()
+              sessionController.openNewPackageModal()
+            }}
+            className="rounded-md bg-emerald-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 cursor-pointer"
           >
             + Novo Pacote
           </button>
