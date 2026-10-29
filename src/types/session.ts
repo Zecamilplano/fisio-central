@@ -3,6 +3,7 @@ import {
   SelectedSessionsActionHandlers,
   SelectedSessionsStatus,
 } from "@/components/patient/session/selectedSessionsActions"
+import type { DayOfWeek } from "./listPatientType"
 import { StatusSessaoKey } from "@/data/optionsSessionsData"
 
 export type PaidKey = "pendente" | "realizado" | "cancelado"
@@ -13,6 +14,8 @@ export type Session = {
   id: string
   number: number
   packageId?: string
+  originPackageId?: string
+  isExtra?: boolean
   date: string
   originalDate?: string
   time?: string
@@ -47,4 +50,9 @@ export type SessionController = {
     field: SessionChangeField,
     value: SessionChangeValue
   ) => void
+  changePackageWeekDays: (
+    packageId: string,
+    days: DayOfWeek[],
+    showSuccessToast?: boolean
+  ) => Promise<boolean>
 }

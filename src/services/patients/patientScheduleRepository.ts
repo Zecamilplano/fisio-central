@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/client"
-import type { SchedulingForm } from "@/types"
-import type { PaidKey } from "@/types"
+import type { DayOfWeek, PaidKey, SchedulingForm } from "@/types"
 import type { StatusSessaoKey } from "@/data/optionsSessionsData"
 
 function toDateOnly(value: Date | string | null): string | null {
@@ -34,6 +33,14 @@ export async function savePackageSchedule(
   form: SchedulingForm,
   plannedSessions: number
 ): Promise<void> {
+  const sessionsBeforeCurrentPackage = Number(form.totalSessions ?? 0)
+  if (
+    !Number.isSafeInteger(sessionsBeforeCurrentPackage) ||
+    sessionsBeforeCurrentPackage < 0
+  ) {
+    throw new Error("Informe um número inteiro válido para as sessões já realizadas.")
+  }
+
   if (form.serviceType === "sessoes") {
     const session = form.singleSession
     if (!session || !session.fullDate || !session.time.trim()) {
@@ -48,7 +55,7 @@ export async function savePackageSchedule(
         {
           patient_id: patientId,
           initial_start_date: toDateOnly(form.initialDateSession),
-          sessions_before_current_package: form.totalSessions ?? 0,
+          sessions_before_current_package: sessionsBeforeCurrentPackage,
           updated_at: now,
         },
         { onConflict: "patient_id" }
@@ -109,7 +116,7 @@ export async function savePackageSchedule(
       {
         patient_id: patientId,
         initial_start_date: toDateOnly(form.initialDateSession),
-        sessions_before_current_package: form.totalSessions ?? 0,
+        sessions_before_current_package: sessionsBeforeCurrentPackage,
         updated_at: now,
       },
       { onConflict: "patient_id" }
@@ -119,7 +126,13 @@ export async function savePackageSchedule(
 
   const { data: treatment, error: treatmentError } = await supabase
     .from("patient_treatments")
-    .update({ package_start_date: packageStartDate, updated_at: now })
+    .update({
+      package_start_date: packageStartDate,
+      fixed_week_days: Object.entries(form.package.selectedDays)
+        .filter(([, selected]) => selected)
+        .map(([day]) => day as DayOfWeek),
+      updated_at: now,
+    })
     .eq("id", treatmentId)
     .eq("patient_id", patientId)
     .select("id")
@@ -175,7 +188,8 @@ export async function savePackageSchedule(
 
 export async function addSingleTreatmentSession(
   patientId: string,
-  date: Date
+  date: Date,
+  originPackageId?: string
 ): Promise<{ id: string; number: number; date: string }> {
   const supabase = createClient()
   const { data: treatment, error: treatmentError } = await supabase
@@ -191,19 +205,15 @@ export async function addSingleTreatmentSession(
     throw new Error("Não encontrei o atendimento avulso deste paciente.")
   }
 
-  return addTreatmentSession(treatment.id, date)
+  return addTreatmentSession(treatment.id, date, "16:00", originPackageId)
 }
 
 export async function addTreatmentSession(
   treatmentId: string,
   date: Date,
-  time = "16:00"
-): Promise<{
-  id: string
-  number: number
-  date: string
-  plannedSessions?: number
-}> {
+  time = "16:00",
+  originPackageId?: string
+): Promise<{ id: string; number: number; date: string }> {
   const supabase = createClient()
 
   const { data: existing, error: sessionsError } = await supabase
@@ -221,6 +231,8 @@ export async function addTreatmentSession(
     .from("treatment_sessions")
     .insert({
       treatment_id: treatmentId,
+      is_extra: Boolean(originPackageId),
+      origin_package_id: originPackageId ?? null,
       session_number: number,
       session_date: sessionDate,
       session_time: time,
@@ -231,61 +243,14 @@ export async function addTreatmentSession(
     .select("id")
     .single()
   if (error) throw new Error(error.message)
-
-  try {
-    const plannedSessions = await syncPackagePlannedSessions(treatmentId)
-    return { id: data.id, number, date: sessionDate, plannedSessions }
-  } catch (syncError) {
-    const { error: rollbackError } = await supabase
-      .from("treatment_sessions")
-      .delete()
-      .eq("id", data.id)
-    if (rollbackError) {
-      throw new Error(
-        `${syncError instanceof Error ? syncError.message : "Falha ao atualizar o pacote."} Não foi possível desfazer a sessão: ${rollbackError.message}`
-      )
-    }
-    throw syncError
-  }
-}
-
-async function syncPackagePlannedSessions(
-  treatmentId: string
-): Promise<number | undefined> {
-  const supabase = createClient()
-  const { data: treatment, error: treatmentError } = await supabase
-    .from("patient_treatments")
-    .select("treatment_type")
-    .eq("id", treatmentId)
-    .single()
-  if (treatmentError) throw new Error(treatmentError.message)
-  if (treatment.treatment_type !== "package") return undefined
-
-  const { count, error: sessionsError } = await supabase
-    .from("treatment_sessions")
-    .select("id", { count: "exact", head: true })
-    .eq("treatment_id", treatmentId)
-  if (sessionsError) throw new Error(sessionsError.message)
-
-  const plannedSessions = Math.max(count ?? 0, 1)
-  const { error: updateError } = await supabase
-    .from("patient_treatments")
-    .update({ planned_sessions: plannedSessions, updated_at: new Date().toISOString() })
-    .eq("id", treatmentId)
-  if (updateError) throw new Error(updateError.message)
-  return plannedSessions
+  return { id: data.id, number, date: sessionDate }
 }
 
 export async function addPackageSession(
   treatmentId: string,
   date: Date,
   time = "16:00"
-): Promise<{
-  id: string
-  number: number
-  date: string
-  plannedSessions: number
-}> {
+): Promise<{ id: string; number: number; date: string }> {
   const supabase = createClient()
   const { data: treatment, error: treatmentError } = await supabase
     .from("patient_treatments")
@@ -297,18 +262,24 @@ export async function addPackageSession(
     throw new Error("O atendimento selecionado não é um pacote.")
   }
 
-  const saved = await addTreatmentSession(treatmentId, date, time)
-  return {
-    ...saved,
-    plannedSessions: saved.plannedSessions ?? treatment.planned_sessions,
+  const { count, error: sessionsError } = await supabase
+    .from("treatment_sessions")
+    .select("id", { count: "exact", head: true })
+    .eq("treatment_id", treatmentId)
+  if (sessionsError) throw new Error(sessionsError.message)
+  if ((count ?? 0) >= treatment.planned_sessions) {
+    throw new Error("Este pacote não tem sessões excluídas para repor.")
   }
+
+  return addTreatmentSession(treatmentId, date, time)
 }
 
 export async function addStandaloneSessionToPatient(
   patientId: string,
   date: Date,
   pricePerSession: number,
-  time = "16:00"
+  time = "16:00",
+  originPackageId?: string
 ): Promise<{ id: string; number: number; date: string }> {
   const supabase = createClient()
   const { data: treatment, error: treatmentError } = await supabase
@@ -341,7 +312,7 @@ export async function addStandaloneSessionToPatient(
   }
 
   try {
-    return await addTreatmentSession(treatmentId, date, time)
+    return await addTreatmentSession(treatmentId, date, time, originPackageId)
   } catch (error) {
     if (createdTreatmentRow) {
       const { error: cleanupError } = await supabase
@@ -368,8 +339,25 @@ export async function createNextPackageTreatment(data: {
   startDate: Date
   pricePerSession: number
   totalSessions: number
+  fixedWeekDays: DayOfWeek[]
   sessions: Array<{ date: Date; time: string }>
 }): Promise<{ id: string; sessions: Array<{ id: string; number: number; date: string; time: string }> }> {
+  const supabase = createClient()
+  const { data: pendingExtraSession, error: pendingExtraError } = await supabase
+    .from("treatment_sessions")
+    .select("id")
+    .eq("origin_package_id", data.previousTreatmentId)
+    .eq("is_extra", true)
+    .neq("finish_status", "realizado")
+    .limit(1)
+    .maybeSingle()
+  if (pendingExtraError) throw new Error(pendingExtraError.message)
+  if (pendingExtraSession) {
+    throw new Error(
+      "Conclua a sessão avulsa extra antes de seguir com o próximo pacote."
+    )
+  }
+
   if (!Number.isInteger(data.totalSessions) || data.totalSessions < 1) {
     throw new Error("Informe uma quantidade válida de sessões para o pacote.")
   }
@@ -384,7 +372,6 @@ export async function createNextPackageTreatment(data: {
     return { ...session, date: sessionDate }
   })
 
-  const supabase = createClient()
   const { data: treatment, error: createError } = await supabase
     .from("patient_treatments")
     .insert({
@@ -392,6 +379,7 @@ export async function createNextPackageTreatment(data: {
       treatment_type: "package",
       price_per_session: data.pricePerSession,
       planned_sessions: data.totalSessions,
+      fixed_week_days: data.fixedWeekDays,
       package_start_date: toDateOnly(data.startDate),
       status: "in_progress",
     })
@@ -495,16 +483,81 @@ export async function updateTreatmentSessionSchedule(
   updates: Array<{ id: string; session_date: string }>
 ): Promise<void> {
   const supabase = createClient()
-  const results = await Promise.all(
-    updates.map(({ id, session_date }) =>
-      supabase
-        .from("treatment_sessions")
-        .update({ session_date, updated_at: new Date().toISOString() })
-        .eq("id", id)
-    )
-  )
-  const error = results.find((result) => result.error)?.error
+  for (const { id, session_date } of updates) {
+    const { data, error } = await supabase
+      .from("treatment_sessions")
+      .update({ session_date, updated_at: new Date().toISOString() })
+      .eq("id", id)
+      .eq("finish_status", "pendente")
+      .select("id")
+      .maybeSingle()
+    if (error) throw new Error(error.message)
+    if (!data) {
+      throw new Error("Uma das sessões não está mais pendente e não foi alterada.")
+    }
+  }
+}
+
+export async function updatePendingTreatmentSessionTime(
+  sessionId: string,
+  session_time: string
+): Promise<void> {
+  const supabase = createClient()
+  const { data, error } = await supabase
+    .from("treatment_sessions")
+    .update({ session_time, updated_at: new Date().toISOString() })
+    .eq("id", sessionId)
+    .eq("finish_status", "pendente")
+    .select("id")
+    .maybeSingle()
   if (error) throw new Error(error.message)
+  if (!data) throw new Error("Esta sessão não está mais pendente.")
+}
+
+export async function updateTreatmentPackageWeekDays(
+  treatmentId: string,
+  fixedWeekDays: DayOfWeek[]
+): Promise<void> {
+  const allowedDays: DayOfWeek[] = [
+    "Segunda",
+    "Terça",
+    "Quarta",
+    "Quinta",
+    "Sexta",
+    "Sábado",
+  ]
+  if (
+    fixedWeekDays.length === 0 ||
+    fixedWeekDays.some((day) => !allowedDays.includes(day)) ||
+    new Set(fixedWeekDays).size !== fixedWeekDays.length
+  ) {
+    throw new Error("Selecione dias da semana válidos para o pacote.")
+  }
+  const supabase = createClient()
+  const { data: pendingSession, error: pendingSessionError } = await supabase
+    .from("treatment_sessions")
+    .select("id")
+    .eq("treatment_id", treatmentId)
+    .eq("finish_status", "pendente")
+    .limit(1)
+    .maybeSingle()
+  if (pendingSessionError) throw new Error(pendingSessionError.message)
+  if (!pendingSession) {
+    throw new Error("Os dias só podem ser alterados enquanto houver sessões pendentes.")
+  }
+
+  const { data, error } = await supabase
+    .from("patient_treatments")
+    .update({
+      fixed_week_days: fixedWeekDays,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", treatmentId)
+    .eq("treatment_type", "package")
+    .select("id")
+    .maybeSingle()
+  if (error) throw new Error(error.message)
+  if (!data) throw new Error("Não encontrei o pacote para atualizar os dias.")
 }
 
 export async function deleteTreatmentSessions(
@@ -574,7 +627,5 @@ export async function deleteTreatmentSessions(
     )
     const renumberError = renumbered.find((result) => result.error)?.error
     if (renumberError) throw new Error(renumberError.message)
-
-    await syncPackagePlannedSessions(treatmentId)
   }
 }

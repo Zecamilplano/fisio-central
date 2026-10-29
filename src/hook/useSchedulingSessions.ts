@@ -428,10 +428,10 @@ export function useSchedulingSessions(
         ...prev,
         initialDateSession: date ?? null,
       })),
-    totalSessions: (sessions: number) =>
+    totalSessions: (sessions: number | string) =>
       setSchedulingForm((prev) => ({
         ...prev,
-        totalSessions: sessions ?? null,
+        totalSessions: sessions === "" ? null : Number(sessions),
       })),
     "package.startDate": (startDate: Date) =>
       setSchedulingForm((prev) => ({

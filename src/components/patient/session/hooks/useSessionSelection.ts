@@ -1,10 +1,14 @@
 import { useState } from "react"
 
-export function useSessionSelection(sessionIds: string[]) {
+export function useSessionSelection(
+  sessionIds: string[],
+  selectAllSessionIds: string[] = sessionIds
+) {
   const [selectedSessions, setSelectedSessions] = useState<string[]>([])
 
   const allSessionsSelected =
-    sessionIds.length > 0 && selectedSessions.length === sessionIds.length
+    selectAllSessionIds.length > 0 &&
+    selectAllSessionIds.every((sessionId) => selectedSessions.includes(sessionId))
 
   function handleSelectSession(sessionId: string) {
     setSelectedSessions((prev) =>
@@ -19,7 +23,7 @@ export function useSessionSelection(sessionIds: string[]) {
   }
 
   function selectAllSessions() {
-    setSelectedSessions(sessionIds)
+    setSelectedSessions(selectAllSessionIds)
   }
 
   function handleSelectAllSessions() {

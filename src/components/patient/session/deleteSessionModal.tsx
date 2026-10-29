@@ -4,6 +4,7 @@ type DeleteSessionModalProps = {
   isOpen: boolean
   sessionNumber: number | null
   createReplacementSession: boolean
+  showReplacementOption: boolean
   isDeletingAllSessions?: boolean
   selectedCount?: number
   setCreateReplacementSession: (value: boolean) => void
@@ -15,6 +16,7 @@ export function DeleteSessionModal({
   isOpen,
   sessionNumber,
   createReplacementSession,
+  showReplacementOption,
   isDeletingAllSessions = false,
   selectedCount = 1,
   setCreateReplacementSession,
@@ -103,34 +105,36 @@ export function DeleteSessionModal({
           </p>
         </div>
 
-        <fieldset className="mb-6">
-          <legend className="sr-only">Opções ao excluir sessões</legend>
+        {showReplacementOption && (
+          <fieldset className="mb-6">
+            <legend className="sr-only">Opções ao excluir sessões</legend>
 
-          <label
-            htmlFor="replacement-session"
-            className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 p-3 transition-colors hover:bg-slate-50"
-          >
-            <input
-              id="replacement-session"
-              type="checkbox"
-              checked={createReplacementSession}
-              onChange={(e) => setCreateReplacementSession(e.target.checked)}
-              className="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
-            />
+            <label
+              htmlFor="replacement-session"
+              className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 p-3 transition-colors hover:bg-slate-50"
+            >
+              <input
+                id="replacement-session"
+                type="checkbox"
+                checked={createReplacementSession}
+                onChange={(e) => setCreateReplacementSession(e.target.checked)}
+                className="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+              />
 
-            <div>
-              <span className="block text-sm font-medium text-slate-800">
-                Adicionar sessão(s) ao final da agenda
-              </span>
+              <div>
+                <span className="block text-sm font-medium text-slate-800">
+                  Adicionar sessão(s) ao final da agenda
+                </span>
 
-              <p className="mt-1 text-xs text-slate-500">
-                Será criada automaticamente uma nova sessão para cada sessão
-                removida, respeitando os dias de atendimento configurados para
-                este paciente.
-              </p>
-            </div>
-          </label>
-        </fieldset>
+                <p className="mt-1 text-xs text-slate-500">
+                  Será criada automaticamente uma nova sessão para cada sessão
+                  removida, respeitando os dias de atendimento configurados para
+                  este paciente.
+                </p>
+              </div>
+            </label>
+          </fieldset>
+        )}
 
         <div className="flex gap-3">
           <button

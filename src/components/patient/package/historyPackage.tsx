@@ -154,14 +154,32 @@ export function PackageHistoryModal({
               {packages.map((pkg, index) => {
                 const packageNumber =
                   patient.packages.findIndex((item) => item.id === pkg.id) + 1
-                const packageSession = sessions.filter(
+                const packageSessions = sessions.filter(
                   (session) => session.packageId === pkg.id
                 )
+                const extraSessions = sessions.filter(
+                  (session) =>
+                    session.originPackageId === pkg.id && session.isExtra
+                )
+                const displayedSessions = [
+                  ...packageSessions.sort((a, b) =>
+                    a.date.localeCompare(b.date)
+                  ),
+                  ...extraSessions.sort((a, b) =>
+                    a.date.localeCompare(b.date)
+                  ),
+                ]
+                const packageSessionIds = displayedSessions.map(
+                  (session) => session.id
+                )
+                const allPackageSessionsSelected =
+                  packageSessionIds.length > 0 &&
+                  packageSessionIds.every((id) => selectedSessions.includes(id))
                 const packageIsCompleted =
-                  pkg.completed ??
+                  pkg.completed === true ||
                   (!pkg.current &&
-                    packageSession.length > 0 &&
-                    packageSession.every(
+                    packageSessions.length > 0 &&
+                    packageSessions.every(
                       (session) => session.finish === "realizado"
                     ))
 
@@ -229,8 +247,19 @@ export function PackageHistoryModal({
                           <p className="mt-0.5 text-xs text-slate-500">
                             {format(pkg.startDate, "dd/MM/yyyy")}
                             {" • "}
-                            {packageSession.length}{" "}
-                            {packageSession.length === 1 ? "sessão" : "sessões"}
+                            {packageSessions.length}{" "}
+                            {packageSessions.length === 1
+                              ? "sessão do pacote"
+                              : "sessões do pacote"}
+                            {extraSessions.length > 0 && (
+                              <>
+                                {" • "}
+                                {extraSessions.length}{" "}
+                                {extraSessions.length === 1
+                                  ? "avulsa extra"
+                                  : "avulsas extras"}
+                              </>
+                            )}
                           </p>
                         </div>
                       </div>
@@ -246,15 +275,32 @@ export function PackageHistoryModal({
 
                     {isPackageOpen && (
                       <div className="border-t border-slate-200 px-3 py-3">
+                        {displayedSessions.length > 0 && (
+                          <label className="mb-3 flex w-fit cursor-pointer items-center gap-2 text-sm font-medium text-slate-600 select-none">
+                            <input
+                              type="checkbox"
+                              checked={allPackageSessionsSelected}
+                              onChange={() => {
+                                selectedAction.clear()
+                                if (!allPackageSessionsSelected) {
+                                  packageSessionIds.forEach(selectSession)
+                                }
+                              }}
+                              className="h-4 w-4 accent-[#FDB022]"
+                            />
+                            Selecionar todas deste pacote
+                          </label>
+                        )}
+
                         <SelectedSessionsActions
                           selectedCount={selectedSessions.length}
                           status={selectedStatus}
                           actions={selectedAction}
                         />
 
-                        {packageSession.length > 0 ? (
+                        {displayedSessions.length > 0 ? (
                           <ol className="flex flex-col gap-3">
-                            {packageSession.map((session) => (
+                            {displayedSessions.map((session) => (
                               <SessionCard
                                 key={`${session.id}-${session.date}`}
                                 patient={patient}

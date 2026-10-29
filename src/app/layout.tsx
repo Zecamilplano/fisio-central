@@ -31,10 +31,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${montserrat.variable} ${opensans.variable} antialiased h-screen flex flex-col`}
+        className={`${montserrat.variable} ${opensans.variable} antialiased flex h-dvh flex-col bg-green-700`}
       >
         <Header />
-        <main className=" bg-green-700 h-max">{children}</main>
+        <main className="h-full bg-green-700">{children}</main>
         <ToastContainer style={{ zIndex: 10000 }} />
       </body>
     </html>

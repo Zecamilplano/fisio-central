@@ -1,21 +1,10 @@
 import type { StatusSessaoKey } from "@/data/optionsSessionsData"
-import type { DayOfWeek, ListPatient, PaidKey, Session } from "@/types"
-import { addDays, format, getDay, parseISO } from "date-fns"
+import type { ListPatient, PaidKey, Session } from "@/types"
 import type { StateCreator } from "zustand"
 import type { FisioStore } from "../fisioStore"
 import type { PatientId } from "./patientsSlice"
 
 type SessionId = ListPatient["session"][number]["id"]
-
-const weekDayMap = {
-  Domingo: 0,
-  Segunda: 1,
-  Terça: 2,
-  Quarta: 3,
-  Quinta: 4,
-  Sexta: 5,
-  Sábado: 6,
-} as const
 
 export type SessionsSlice = {
   changeSessionFinish: (
@@ -43,24 +32,12 @@ export type SessionsSlice = {
     sessionIds: SessionId[],
     status: PaidKey
   ) => void
-  rescheduleSession: (
+  rescheduleSessions: (
     patientId: PatientId,
-    sessionId: SessionId,
-    date: string
+    updates: Array<{ id: SessionId; date: string }>
   ) => void
   addSession: (patientId: PatientId, session: Session) => void
   deleteSessions: (patientId: PatientId, sessionIds: SessionId[]) => void
-}
-
-function getNextPackageDate(lastDate: Date, fixedWeekDays: DayOfWeek[]) {
-  const allowedDays: number[] = fixedWeekDays.map((day) => weekDayMap[day])
-  let nextDate = addDays(lastDate, 1)
-
-  while (!allowedDays.includes(getDay(nextDate))) {
-    nextDate = addDays(nextDate, 1)
-  }
-
-  return nextDate
 }
 
 function updateSessions(
@@ -148,88 +125,31 @@ export const createSessionsSlice: StateCreator<
         })
       ),
     })),
-  rescheduleSession: (patientId, sessionId, date) =>
-    set((state) => ({
-      patients: state.patients.map((patient) => {
-        if (patient.id !== patientId) return patient
-
-        const changedSession = patient.session.find(
-          (session) => session.id === sessionId
-        )
-
-        if (!changedSession) return patient
-
-        if (!changedSession.packageId) {
-          return {
-            ...patient,
-            session: patient.session.map((session) =>
-              session.id === sessionId
-                ? {
-                    ...session,
-                    originalDate: session.originalDate ?? session.date,
-                    date,
-                  }
-                : session
-            ),
-          }
-        }
-
-        if (patient.typeService !== "Pacote") return patient
-
-        const treatmentPackage = patient.packages.find(
-          (item) => item.id === changedSession.packageId
-        )
-        if (!treatmentPackage) return patient
-
-        const packageSessions = patient.session
-          .filter((session) => session.packageId === changedSession.packageId)
-          .sort((a, b) => a.number - b.number)
-        const changedIndex = packageSessions.findIndex(
-          (session) => session.id === sessionId
-        )
-        if (changedIndex === -1) return patient
-
-        const updatedPackageSessions = packageSessions.slice(0, changedIndex)
-        let previousDate = parseISO(date)
-
-        updatedPackageSessions.push({
-          ...packageSessions[changedIndex],
-          originalDate:
-            packageSessions[changedIndex].originalDate ??
-            packageSessions[changedIndex].date,
-          date,
-        })
-
-        for (
-          let index = changedIndex + 1;
-          index < packageSessions.length;
-          index++
-        ) {
-          const session = packageSessions[index]
-          const nextDate = getNextPackageDate(
-            previousDate,
-            treatmentPackage.fixedWeekDays
-          )
-
-          updatedPackageSessions.push({
-            ...session,
-            originalDate: session.originalDate ?? session.date,
-            date: format(nextDate, "yyyy-MM-dd"),
-          })
-          previousDate = nextDate
-        }
-
-        return {
-          ...patient,
-          session: [
-            ...patient.session.filter(
-              (session) => session.packageId !== changedSession.packageId
-            ),
-            ...updatedPackageSessions,
-          ],
-        }
-      }),
-    })),
+  rescheduleSessions: (patientId, updates) =>
+    set((state) => {
+      const updatesById = new Map(
+        updates.map((update): [string, string] => [update.id, update.date])
+      )
+      return {
+        patients: state.patients.map((patient) =>
+          patient.id === patientId
+            ? {
+                ...patient,
+                session: patient.session.map((session) => {
+                  const date = updatesById.get(session.id)
+                  return date
+                    ? {
+                        ...session,
+                        originalDate: session.originalDate ?? session.date,
+                        date,
+                      }
+                    : session
+                }),
+              }
+            : patient
+        ),
+      }
+    }),
   addSession: (patientId, session) =>
     set((state) => ({
       patients: state.patients.map((patient) =>

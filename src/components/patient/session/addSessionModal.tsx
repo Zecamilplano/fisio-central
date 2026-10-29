@@ -19,10 +19,13 @@ type AddSessionModalProps = {
   initialMode?: "options" | "next-package"
   patientType: "Pacote" | "Sessão avulsa"
   packageIsComplete?: boolean
+  canContinueToNextPackage?: boolean
+  hasPendingExtraSessions?: boolean
+  missingPackageSessions?: number
   currentPackage?: TreatmentPackage | null
   suggestedPackageStartDate: Date
   onClose: () => void
-  onContinueCurrentPackage: () => void | Promise<boolean>
+  onRestoreMissingPackageSession: () => void | Promise<boolean>
   onCreateSeparateSession: (selectedDate: Date) => void | Promise<boolean>
   onCreateNextPackage: (data: {
     startDate: Date
@@ -37,10 +40,13 @@ export function AddSessionModal({
   initialMode = "options",
   patientType,
   packageIsComplete,
+  canContinueToNextPackage,
+  hasPendingExtraSessions,
+  missingPackageSessions = 0,
   currentPackage,
   suggestedPackageStartDate,
   onClose,
-  onContinueCurrentPackage,
+  onRestoreMissingPackageSession,
   onCreateSeparateSession,
   onCreateNextPackage,
 }: AddSessionModalProps) {
@@ -89,10 +95,10 @@ export function AddSessionModal({
     onClose()
   }
 
-  async function handleContinueCurrentPackage() {
+  async function handleRestoreMissingPackageSession() {
     setIsSaving(true)
     try {
-      const created = await onContinueCurrentPackage()
+      const created = await onRestoreMissingPackageSession()
       if (created !== false) handleSaveComplete()
     } finally {
       setIsSaving(false)
@@ -184,25 +190,34 @@ export function AddSessionModal({
           {mode === "next-package"
             ? "Configure as sessões do próximo pacote."
             : patientType === "Sessão avulsa"
-            ? "Escolha a data da nova sessão."
-            : "Escolha como deseja adicionar a nova sessão."}
+              ? "Escolha a data da nova sessão."
+              : missingPackageSessions > 0
+                ? "Reponha uma sessão excluída do pacote ou adicione uma sessão extra fora dele."
+                : "Adicione uma sessão avulsa extra, separada do pacote atual."}
         </p>
 
         <div className="mt-5 flex flex-col gap-3">
           {mode === "options" && patientType === "Pacote" && (
             <>
-              {!packageIsComplete && (
+              {!packageIsComplete && missingPackageSessions > 0 && (
                 <button
                   type="button"
-                  onClick={handleContinueCurrentPackage}
+                  onClick={handleRestoreMissingPackageSession}
                   disabled={isSaving}
                   className="rounded-lg border border-[#EAECF0] px-4 py-3 text-left text-sm font-medium text-[#344054] hover:bg-[#F9FAFB]"
                 >
-                  {isSaving ? "Salvando..." : "Continuar no pacote atual"}
+                  {isSaving
+                    ? "Salvando..."
+                    : "Repor sessão excluída no pacote atual"}
+                  <span className="mt-1 block text-xs font-normal text-slate-500">
+                    {missingPackageSessions === 1
+                      ? "Há 1 sessão do pacote sem cadastro. Esta ação repõe essa sessão."
+                      : `Há ${missingPackageSessions} sessões do pacote sem cadastro. Esta ação repõe uma por vez.`}
+                  </span>
                 </button>
               )}
 
-              {packageIsComplete && (
+              {packageIsComplete && canContinueToNextPackage && (
                 <button
                   onClick={() => setMode("next-package")}
                   className="rounded-lg border border-[#EAECF0] px-4 py-3 text-left text-sm font-medium text-[#344054] hover:bg-[#F9FAFB]"
@@ -211,17 +226,31 @@ export function AddSessionModal({
                 </button>
               )}
 
+              {packageIsComplete && hasPendingExtraSessions && (
+                <p className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                  Conclua a sessão avulsa extra para seguir com o próximo
+                  pacote.
+                </p>
+              )}
+
               <button
                 onClick={() => setMode("separate-session")}
                 className="rounded-lg border border-[#EAECF0] px-4 py-3 text-left text-sm font-medium text-[#344054] hover:bg-[#F9FAFB]"
               >
-                Criar sessão avulsa
+                {patientType === "Pacote"
+                  ? "Adicionar sessão avulsa extra · fora do pacote"
+                  : "Criar sessão avulsa"}
               </button>
             </>
           )}
 
           {mode === "separate-session" && (
             <div className="rounded-xl ">
+              {patientType === "Pacote" && (
+                <p className="mb-3 text-sm text-slate-500">
+                  Esta sessão será avulsa e ficará fora do pacote atual.
+                </p>
+              )}
               <DatePicker date={selectedDate} setDate={setSelectedDate} />
 
               <button
@@ -230,7 +259,11 @@ export function AddSessionModal({
                 disabled={isSaving}
                 className="mt-3 w-full rounded-lg bg-[#FDB022] px-4 py-2 text-sm font-medium text-white hover:bg-[#F79009]"
               >
-                {isSaving ? "Salvando..." : "Confirmar sessão avulsa"}
+                {isSaving
+                  ? "Salvando..."
+                  : patientType === "Pacote"
+                    ? "Confirmar sessão avulsa extra"
+                    : "Confirmar sessão avulsa"}
               </button>
             </div>
           )}

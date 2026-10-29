@@ -15,8 +15,24 @@ function usePackageSession({
   patient,
   currentPackageIndex,
 }: UsePackageSession) {
+  const currentPackage =
+    patient.typeService === "Pacote"
+      ? patient.packages[currentPackageIndex]
+      : null
+
+  const visibleSessions =
+    patient.typeService === "Pacote" && currentPackage
+      ? patient.session.filter(
+          (session) =>
+            session.packageId === currentPackage.id ||
+            session.originPackageId === currentPackage.id ||
+            (!session.packageId && !session.originPackageId)
+        )
+      : patient.session
+
   const sessionSelection = useSessionSelection(
-    patient.session.map((session) => session.id)
+    patient.session.map((session) => session.id),
+    visibleSessions.map((session) => session.id)
   )
 
   const sessionStatus = useSessionStatus({
@@ -35,11 +51,6 @@ function usePackageSession({
   const sessionScheduling = useSessionScheduling({
     patient,
   })
-
-  const currentPackage =
-    patient.typeService === "Pacote"
-      ? patient.packages[currentPackageIndex]
-      : null
 
   const currentPackageSessions =
     patient.typeService === "Pacote" && currentPackage
@@ -71,13 +82,34 @@ function usePackageSession({
     patient.typeService === "Pacote" && currentPackage
       ? completedCurrentPackageSessions >= currentPackage.totalSessions
       : false
+  const hasPendingExtraSessions = currentPackage
+    ? patient.session.some(
+        (session) =>
+          session.originPackageId === currentPackage.id &&
+          session.isExtra &&
+          session.finish !== "realizado"
+      )
+    : false
+  const missingPackageSessions = currentPackage
+    ? Math.max(0, currentPackage.totalSessions - currentPackageSessions.length)
+    : 0
 
   const selectedStatus = sessionStatus.selectedStatus
 
+  const packageTimelineSessions = currentPackage
+    ? patient.session
+        .filter(
+          (session) =>
+            session.packageId === currentPackage.id ||
+            (session.originPackageId === currentPackage.id && session.isExtra)
+        )
+        .sort((a, b) => a.date.localeCompare(b.date))
+    : []
+
   const suggestedPackageStartDate =
-    currentPackage && currentPackageSessions.length > 0
+    currentPackage && packageTimelineSessions.length > 0
       ? sessionScheduling.getNextPackageDate(
-          parseISO(currentPackageSessions.at(-1)!.date),
+          parseISO(packageTimelineSessions.at(-1)!.date),
           currentPackage.fixedWeekDays
         )
       : new Date()
@@ -167,9 +199,12 @@ function usePackageSession({
     sessionState: {
       openSessionId,
       currentPackage,
+      missingPackageSessions,
       isAddSessionModalOpen,
       addSessionModalMode,
       packageIsComplete,
+      canContinueToNextPackage: packageIsComplete && !hasPendingExtraSessions,
+      hasPendingExtraSessions,
       suggestedPackageStartDate,
     },
 
@@ -185,12 +220,15 @@ function usePackageSession({
       setOpenSessionId,
       handleToggleSession,
       handleChange,
+      changePackageWeekDays: sessionScheduling.handleChangePackageDays,
+      applyGlobalSchedule: sessionScheduling.handleChangeGlobalSchedule,
       openDeleteModal: sessionDeletion.deleteActions.openDeleteModal,
       addSeparateSession: sessionCreation.addSeparateSession,
       openAddSessionModal,
       openNewPackageModal,
       closeAddSessionModal,
-      addSessionToCurrentPackage: sessionCreation.addSessionToCurrentPackage,
+      restoreMissingPackageSession:
+        sessionCreation.restoreMissingPackageSession,
       createNextPackage: sessionCreation.createNextPackage,
     },
 

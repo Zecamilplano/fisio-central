@@ -27,7 +27,7 @@ function SubHeaderFormRegister({
                 {...img.dragEvents}
                 htmlFor="photo"
                 aria-label="Adicionar foto de perfil, opcional"
-                className="group bg-[#FFE0B2] hover:bg-[#FFCC80] active:bg-[#FFB74D] w-22.5 h-22.5 rounded-[50%] flex justify-center items-center cursor-pointer mt-6"
+                className={`group mt-6 flex h-22.5 w-22.5 cursor-pointer items-center justify-center rounded-[50%] bg-[#FFE0B2] hover:bg-[#FFCC80] active:bg-[#FFB74D] ${img.isDragging ? "opacity-50" : "opacity-100"} ${img.error ? "ring-2 ring-red-500" : ""}`}
               >
                 <UserRoundPlus
                   size={38}
@@ -39,8 +39,9 @@ function SubHeaderFormRegister({
                 type="file"
                 id="photo"
                 name="photo"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp"
                 onChange={(e) => img.handleFileChange(e)}
+                disabled={img.isCompressing}
                 hidden
               />
             </>
@@ -65,7 +66,7 @@ function SubHeaderFormRegister({
                     e.stopPropagation()
                     img.removeImage()
                   }}
-                  className="flex gap-2 bg-[#FBBF24] text-[#78350F] hover:opacity-80 active:opacity-60 px-3 py-3 w-full h-full mt-3 rounded-lg"
+                  className="mt-3 flex items-center justify-center gap-2 rounded-lg bg-[#FBBF24] px-3 py-2 text-sm font-medium text-[#78350F] hover:opacity-80 active:opacity-60"
                 >
                   <X /> <span>Remover foto</span>
                 </button>
@@ -73,7 +74,26 @@ function SubHeaderFormRegister({
             ))
           ))}{" "}
         {icon === "person" && (
-          <p className="mt-2 text-sm text-[#8C7B6B]">Foto opcional</p>
+          <div className="mt-2 text-center">
+            <p className="text-sm text-[#8C7B6B]">
+              JPG, PNG ou WEBP. Fotos acima de 5 MB serão comprimidas.
+            </p>
+            {img?.isCompressing && (
+              <p role="status" className="mt-1 text-sm text-slate-500">
+                Comprimindo foto...
+              </p>
+            )}
+            {img?.compressionMessage && !img.error && (
+              <p className="mt-1 text-sm text-emerald-700">
+                {img.compressionMessage}
+              </p>
+            )}
+            {img?.error && (
+              <p role="alert" className="mt-1 text-sm text-red-600">
+                {img.error}
+              </p>
+            )}
+          </div>
         )}
       </div>
 

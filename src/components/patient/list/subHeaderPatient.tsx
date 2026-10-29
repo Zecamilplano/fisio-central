@@ -54,6 +54,7 @@ export function SubHeaderPatientList({ onSearchChange }: SubHeaderPatientList) {
         <input
           type="text"
           ref={searchInputRef}
+          data-patient-search
           value={search}
           onChange={handleChange}
           placeholder="Procurar por pacientes"

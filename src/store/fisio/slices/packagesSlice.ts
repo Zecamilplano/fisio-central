@@ -1,13 +1,13 @@
-import type { Session, TreatmentPackage } from "@/types"
+import type { DayOfWeek, Session, TreatmentPackage } from "@/types"
 import type { StateCreator } from "zustand"
 import type { FisioStore } from "../fisioStore"
 import type { PatientId } from "./patientsSlice"
 
 export type PackagesSlice = {
-  increasePackageSessionCount: (
+  updatePackageWeekDays: (
     patientId: PatientId,
     packageId: string,
-    count?: number
+    days: DayOfWeek[]
   ) => void
   startNextPackage: (
     patientId: PatientId,
@@ -23,7 +23,7 @@ export const createPackagesSlice: StateCreator<
   [],
   PackagesSlice
 > = (set) => ({
-  increasePackageSessionCount: (patientId, packageId, count = 1) =>
+  updatePackageWeekDays: (patientId, packageId, days) =>
     set((state) => ({
       patients: state.patients.map((patient) =>
         patient.id === patientId && patient.typeService === "Pacote"
@@ -31,10 +31,7 @@ export const createPackagesSlice: StateCreator<
               ...patient,
               packages: patient.packages.map((treatmentPackage) =>
                 treatmentPackage.id === packageId
-                  ? {
-                      ...treatmentPackage,
-                      totalSessions: treatmentPackage.totalSessions + count,
-                    }
+                  ? { ...treatmentPackage, fixedWeekDays: days }
                   : treatmentPackage
               ),
             }

@@ -82,7 +82,7 @@ export function CurrentPackageCard({
       className="my-6 rounded-md bg-white p-4 px-3"
     >
       <header className="mb-5">
-        <div className="mb-4 grid grid-cols-3 items-center">
+        <div className="mb-4 grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-4 sm:grid-cols-[1fr_auto_1fr] sm:gap-y-0">
           <h3
             id="current-package-title"
             className="font-semibold text-[#101828]"
@@ -90,16 +90,21 @@ export function CurrentPackageCard({
             Pacote atual
           </h3>
 
-          <div className="flex items-center justify-center gap-4">
+          <span className="text-right text-sm font-medium text-[#667085] sm:col-start-3 sm:row-start-1">
+            {packageProgress.completedSessions} / {currentPackage.totalSessions} sessões
+          </span>
+
+          <div className="col-span-2 flex min-w-0 items-center justify-between gap-2 sm:col-span-1 sm:col-start-2 sm:row-start-1 sm:justify-center sm:gap-4">
             <button
               onClick={handlePreviousPackage}
               disabled={isFirstPackage}
-              className="rounded-lg border border-[#D0D5DD] bg-white px-3 py-2 hover:bg-[#F9FAFB] opacity-40 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer "
+              aria-label="Ver pacote anterior"
+              className="shrink-0 rounded-lg border border-[#D0D5DD] bg-white px-3 py-2 hover:bg-[#F9FAFB] opacity-40 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer "
             >
               <ChevronLeft size={18} />
             </button>
 
-            <strong className="block text-lg text-[#101828]">
+            <strong className="min-w-0 text-center text-base leading-snug text-[#101828] sm:whitespace-nowrap sm:text-lg">
               {format(currentPackage.startDate, "dd MMM yyyy", {
                 locale: ptBR,
               })}
@@ -121,15 +126,12 @@ export function CurrentPackageCard({
             <button
               onClick={handleNextPackage}
               disabled={isLastPackage}
-              className="rounded-lg border border-[#D0D5DD] bg-white px-3 py-2 hover:bg-[#F9FAFB] disabled:opacity-40 cursor-pointer"
+              aria-label="Ver próximo pacote"
+              className="shrink-0 rounded-lg border border-[#D0D5DD] bg-white px-3 py-2 hover:bg-[#F9FAFB] disabled:opacity-40 cursor-pointer"
             >
               <ChevronRight size={18} />
             </button>
           </div>
-
-          <span className="text-right text-sm font-medium text-[#667085]">
-            {packageProgress.completedSessions} / {currentPackage.totalSessions}
-          </span>
         </div>
 
         <div className="h-2 overflow-hidden rounded-full bg-[#EAECF0]">

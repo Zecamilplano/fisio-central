@@ -9,9 +9,10 @@ import { CalendarDays } from "lucide-react"
 type Props = {
   date: Date
   setDate: (date: Date) => void
+  disabled?: boolean
 }
 
-export function DatePicker({ date, setDate }: Props) {
+export function DatePicker({ date, setDate, disabled = false }: Props) {
   const [open, setOpen] = useState(false)
   const [coords, setCoords] = useState({ top: 0, left: 0 })
   const buttonRef = useRef<HTMLButtonElement>(null)
@@ -37,6 +38,10 @@ export function DatePicker({ date, setDate }: Props) {
   }, [open])
 
   useEffect(() => {
+    if (disabled) setOpen(false)
+  }, [disabled])
+
+  useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (!buttonRef.current?.contains(e.target as Node)) {
         const calendarEl = document.getElementById("datepicker-portal")
@@ -54,8 +59,9 @@ export function DatePicker({ date, setDate }: Props) {
       <button
         ref={buttonRef}
         type="button"
+        disabled={disabled}
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-700"
+        className="flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-700 disabled:cursor-not-allowed disabled:opacity-50"
       >
         <CalendarDays className="h-4 w-4" />
 

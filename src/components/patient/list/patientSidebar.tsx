@@ -1,6 +1,7 @@
 import Image from "next/image"
 import type { ListPatient } from "@/types"
 import { getInitialLetters } from "@/utils/patient/getInitialLetters"
+import { format, parseISO } from "date-fns"
 
 type PatientSidebarProps = {
   patients: ListPatient[]
@@ -35,8 +36,10 @@ export function PatientSidebar({
   search,
   onSelectPatient,
 }: PatientSidebarProps) {
+  const today = format(new Date(), "yyyy-MM-dd")
+
   return (
-    <aside className="flex max-h-96 w-90 shrink-0 overflow-x-hidden overflow-y-auto rounded-l-md bg-white lg:ml-2 lg:max-h-255 lg:w-80">
+    <aside className="h-full min-h-0 w-full shrink-0 overflow-x-hidden overflow-y-auto rounded-md bg-white lg:ml-2 lg:rounded-l-md lg:rounded-r-none lg:border-r lg:border-slate-200">
       {patients.length === 0 && (
         <p className="w-full h-full flex justify-center items-center text-sm font-semibold text-slate-700">
           Nenhum paciente encontrado
@@ -48,12 +51,33 @@ export function PatientSidebar({
           {patients.map((patient) => {
             const patientName = `${patient.firstName} ${patient.surName}`.trim()
             const initialLetters = getInitialLetters(patientName)
+            const nextPendingSession = patient.session
+              .filter(
+                (session) =>
+                  session.finish === "pendente" &&
+                  session.date.slice(0, 10) >= today
+              )
+              .sort(
+                (a, b) =>
+                  a.date.localeCompare(b.date) ||
+                  (a.time ?? "").localeCompare(b.time ?? "")
+              )[0]
+            const nextSessionLabel = nextPendingSession
+              ? ` · Próxima: ${format(parseISO(nextPendingSession.date), "dd/MM")}${
+                  nextPendingSession.time
+                    ? ` às ${nextPendingSession.time.slice(0, 5)}`
+                    : ""
+                }`
+              : ""
 
             return (
               <li key={patient.id} className="font-open-sans w-full">
                 <button
                   onClick={() => onSelectPatient(patient.id)}
-                  className={`flex w-full items-center gap-3 p-3 transition-all duration-200 hover:bg-[#F5F7FA] ${
+                  type="button"
+                  data-patient-id={patient.id}
+                  aria-pressed={selectedPatientId === patient.id}
+                  className={`flex min-w-0 w-full items-center gap-3 p-3 transition-all duration-200 hover:bg-[#F5F7FA] focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-500 ${
                     selectedPatientId === patient.id
                       ? "bg-[#E8F0FF]"
                       : "bg-white"
@@ -76,8 +100,13 @@ export function PatientSidebar({
                     )}
                   </div>
 
-                  <span className="text-left text-sm wrap-break-words text-[#1B4332] md:text-base">
-                    <p>{highlightSearch(patientName, search)}</p>
+                  <span className="min-w-0 flex-1 text-left">
+                    <span className="block truncate text-sm text-[#1B4332] md:text-base">
+                      {highlightSearch(patientName, search)}
+                    </span>
+                    <span className="mt-0.5 block truncate text-xs text-slate-500">
+                      {patient.typeService}{nextSessionLabel}
+                    </span>
                   </span>
                 </button>
               </li>
@@ -85,7 +114,6 @@ export function PatientSidebar({
           })}
         </ol>
       )}
-      <div className="h-full w-0.5  bg-[#E0E0E0]" />
     </aside>
   )
 }

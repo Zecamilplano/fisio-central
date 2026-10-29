@@ -25,9 +25,6 @@ export function useSessionCreation({
   getFirstPackageDate,
 }: UseSessionCreationProps) {
   const addSession = useFisioStore((state) => state.addSession)
-  const increasePackageSessionCount = useFisioStore(
-    (state) => state.increasePackageSessionCount
-  )
   const startNextPackage = useFisioStore((state) => state.startNextPackage)
   async function addSeparateSession(selectedDate: Date): Promise<boolean> {
     if (patient.typeService === "Sessão avulsa") {
@@ -58,17 +55,22 @@ export function useSessionCreation({
         patient.id,
         selectedDate,
         currentPackage?.valueSession ?? 0,
-        currentPackage?.defaultTime ?? "16:00"
+        currentPackage?.defaultTime ?? "16:00",
+        currentPackage?.id
       )
       addSession(patient.id, {
         id: saved.id,
         number: saved.number,
+        ...(currentPackage ? { originPackageId: currentPackage.id } : {}),
+        isExtra: Boolean(currentPackage),
         date: saved.date,
         time: currentPackage?.defaultTime ?? "16:00",
         finish: "pendente",
         paid: "pendente",
       })
-      toast.success("Sessão avulsa adicionada ao atendimento.")
+      toast.success(
+        "Sessão avulsa extra adicionada fora do pacote e salva no servidor."
+      )
       return true
     } catch (error) {
       toast.error(
@@ -80,7 +82,7 @@ export function useSessionCreation({
     }
   }
 
-  async function addSessionToCurrentPackage(): Promise<boolean> {
+  async function restoreMissingPackageSession(): Promise<boolean> {
     if (patient.typeService !== "Pacote" || !currentPackage) return false
     if (currentPackage.fixedWeekDays.length === 0) {
       toast.error("Não há dias da semana definidos para este pacote.")
@@ -93,18 +95,18 @@ export function useSessionCreation({
       ? parseISO(lastPackageSession.date)
       : currentPackage.startDate
 
-    const nextDate = getNextPackageDate(lastDate, currentPackage.fixedWeekDays)
+    const nextDate = lastPackageSession
+      ? getNextPackageDate(lastDate, currentPackage.fixedWeekDays)
+      : getFirstPackageDate(
+          currentPackage.startDate,
+          currentPackage.fixedWeekDays
+        )
 
     try {
       const saved = await addPackageSession(
         currentPackage.id,
         nextDate,
         currentPackage.defaultTime
-      )
-      increasePackageSessionCount(
-        patient.id,
-        currentPackage.id,
-        saved.plannedSessions - currentPackage.totalSessions
       )
       addSession(patient.id, {
         id: saved.id,
@@ -115,7 +117,7 @@ export function useSessionCreation({
         finish: "pendente",
         paid: "pendente",
       })
-      toast.success("Sessão adicionada ao pacote e salva no servidor.")
+      toast.success("Sessão reposta no pacote e salva no servidor.")
       return true
     } catch (error) {
       toast.error(
@@ -159,10 +161,14 @@ export function useSessionCreation({
 
   function getLastPackageSessionDate(packageId: string) {
     const packageSessions = patient.session.filter(
-      (session) => session.packageId === packageId
+      (session) =>
+        session.packageId === packageId ||
+        (session.originPackageId === packageId && session.isExtra)
     )
 
-    const lastSession = packageSessions.at(-1)
+    const lastSession = packageSessions.sort((a, b) =>
+      a.date.localeCompare(b.date)
+    ).at(-1)
 
     return lastSession ? parseISO(lastSession.date) : new Date()
   }
@@ -174,6 +180,18 @@ export function useSessionCreation({
     fixedWeekDays: DayOfWeek[]
   }): Promise<boolean> {
     if (patient.typeService !== "Pacote" || !currentPackage) return false
+    const hasPendingExtraSession = patient.session.some(
+      (session) =>
+        session.originPackageId === currentPackage.id &&
+        session.isExtra &&
+        session.finish !== "realizado"
+    )
+    if (hasPendingExtraSession) {
+      toast.error(
+        "Conclua a sessão avulsa extra antes de seguir com o próximo pacote."
+      )
+      return false
+    }
     if (!Number.isInteger(data.totalSessions) || data.totalSessions < 1) {
       toast.error("Informe uma quantidade válida de sessões.")
       return false
@@ -203,6 +221,7 @@ export function useSessionCreation({
         startDate: data.startDate,
         pricePerSession: data.valueSession,
         totalSessions: data.totalSessions,
+        fixedWeekDays: data.fixedWeekDays,
         sessions: newPackageSessions.map((session) => ({
           date: parseISO(session.date),
           time: "16:00",
@@ -248,7 +267,7 @@ export function useSessionCreation({
 
   return {
     addSeparateSession,
-    addSessionToCurrentPackage,
+    restoreMissingPackageSession,
     createNextPackage,
   }
 }

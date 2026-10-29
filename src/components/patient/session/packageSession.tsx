@@ -26,6 +26,9 @@ export function PackageSession({
   const {
     openSessionId,
     currentPackage,
+    missingPackageSessions,
+    canContinueToNextPackage,
+    hasPendingExtraSessions,
     isAddSessionModalOpen,
     addSessionModalMode,
     packageIsComplete,
@@ -43,7 +46,7 @@ export function PackageSession({
     handleChange,
     openAddSessionModal,
     closeAddSessionModal,
-    addSessionToCurrentPackage,
+    restoreMissingPackageSession,
     addSeparateSession,
     createNextPackage,
   } = sessionActions
@@ -56,10 +59,17 @@ export function PackageSession({
       ? [...patient.session]
           .filter(
             (session) =>
-              session.packageId === currentPackage.id || !session.packageId
+              session.packageId === currentPackage.id ||
+              session.originPackageId === currentPackage.id ||
+              (!session.packageId && !session.originPackageId)
           )
           .sort(
-            (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+            (a, b) => {
+              const aIsExtra = a.packageId !== currentPackage.id
+              const bIsExtra = b.packageId !== currentPackage.id
+              if (aIsExtra !== bIsExtra) return aIsExtra ? 1 : -1
+              return new Date(a.date).getTime() - new Date(b.date).getTime()
+            }
           )
       : [...patient.session].sort(
           (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
@@ -88,8 +98,11 @@ export function PackageSession({
           isOpen={isAddSessionModalOpen}
           patientType={patient.typeService}
           packageIsComplete={packageIsComplete}
+          canContinueToNextPackage={canContinueToNextPackage}
+          hasPendingExtraSessions={hasPendingExtraSessions}
+          missingPackageSessions={missingPackageSessions}
           onClose={closeAddSessionModal}
-          onContinueCurrentPackage={addSessionToCurrentPackage}
+          onRestoreMissingPackageSession={restoreMissingPackageSession}
           currentPackage={currentPackage}
           onCreateSeparateSession={addSeparateSession}
           onCreateNextPackage={createNextPackage}
@@ -125,7 +138,7 @@ export function PackageSession({
           "grid gap-3",
           visibleSession.length === 1
             ? "grid-cols-1"
-            : "grid-cols-1 lg:grid-cols-2"
+            : "grid-cols-1 2xl:grid-cols-2"
         )}
       >
         {visibleSession.map((session) => (

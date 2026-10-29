@@ -134,7 +134,17 @@ export function useSessionDeletion({
       return
     }
 
-    const shouldCreateReplacement = createReplacementSession
+    const deletableSessions = patient.session.filter((session) =>
+      sessionsToDelete.includes(session.id)
+    )
+    const canCreateReplacement =
+      patient.typeService === "Pacote" &&
+      deletableSessions.length > 0 &&
+      deletableSessions.every(
+        (session) => Boolean(session.packageId) && !session.isExtra
+      )
+    const shouldCreateReplacement =
+      createReplacementSession && canCreateReplacement
     const amountDeleted = sessionsToDelete.length
 
     setDeletingSessionId(sessionsToDelete[0])
@@ -182,7 +192,8 @@ export function useSessionDeletion({
                   )
                 : await addSingleTreatmentSession(
                     patient.id,
-                    parseISO(replacementSession.date)
+                    parseISO(replacementSession.date),
+                    removedSession.originPackageId
                   )
 
               const savedReplacement = {
@@ -190,6 +201,10 @@ export function useSessionDeletion({
                 id: saved.id,
                 number: saved.number,
                 date: saved.date,
+                ...(removedSession.originPackageId
+                  ? { originPackageId: removedSession.originPackageId }
+                  : {}),
+                isExtra: removedSession.isExtra ?? false,
               }
               replacementSessions.push(savedReplacement)
               addSession(patient.id, savedReplacement)
@@ -224,6 +239,20 @@ export function useSessionDeletion({
       deleteModal,
       deletingSessionId,
       createReplacementSession,
+      showReplacementOption: (() => {
+        const sessionsToDelete = deleteModal.sessionId
+          ? patient.session.filter(
+              (session) => session.id === deleteModal.sessionId
+            )
+          : selectedSessionItems
+        return (
+          patient.typeService === "Pacote" &&
+          sessionsToDelete.length > 0 &&
+          sessionsToDelete.every(
+            (session) => Boolean(session.packageId) && !session.isExtra
+          )
+        )
+      })(),
       isDeletingAllSessions,
     },
 

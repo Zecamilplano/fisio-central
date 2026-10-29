@@ -23,12 +23,15 @@ type TreatmentRow = {
   planned_sessions: number
   status: string
   package_start_date: string | null
+  fixed_week_days: DayOfWeek[] | null
   created_at: string
 }
 
 type TreatmentSessionRow = {
   id: string
   treatment_id: string
+  origin_package_id: string | null
+  is_extra: boolean
   session_number: number
   session_date: string
   session_time: string
@@ -84,6 +87,10 @@ function toSessionRows(
       id: session.id,
       number: session.session_number,
       ...(belongsToPackage ? { packageId: treatmentId } : {}),
+      ...(session.origin_package_id
+        ? { originPackageId: session.origin_package_id }
+        : {}),
+      isExtra: session.is_extra,
       date: session.session_date,
       time: session.session_time.slice(0, 5),
       finish: toFinishStatus(session.finish_status),
@@ -113,13 +120,13 @@ export async function getPatientsForList(): Promise<ListPatient[]> {
       supabase
         .from("patient_treatments")
         .select(
-          "id, patient_id, treatment_type, price_per_session, planned_sessions, status, package_start_date, created_at"
+          "id, patient_id, treatment_type, price_per_session, planned_sessions, status, package_start_date, fixed_week_days, created_at"
         )
         .order("created_at", { ascending: true }),
       supabase
         .from("treatment_sessions")
         .select(
-          "id, treatment_id, session_number, session_date, session_time, finish_status, paid_status"
+          "id, treatment_id, origin_package_id, is_extra, session_number, session_date, session_time, finish_status, paid_status"
         )
         .order("session_date", { ascending: true }),
       supabase
@@ -219,7 +226,9 @@ export async function getPatientsForList(): Promise<ListPatient[]> {
               ? (profile?.sessions_before_current_package ?? 0)
               : 0,
           valueSession: Number(treatment.price_per_session),
-          fixedWeekDays: getFixedWeekDays(packageSessions),
+          fixedWeekDays: treatment.fixed_week_days?.length
+            ? treatment.fixed_week_days
+            : getFixedWeekDays(packageSessions),
           defaultTime: packageSessions[0]?.time ?? "08:00",
           current: treatment.id === currentTreatment.id,
           completed: treatment.status === "completed",

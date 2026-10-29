@@ -66,6 +66,140 @@ export async function createPatient(patient: PatientType, photo?: File) {
   return data.id
 }
 
+export async function updatePatientProfile(
+  patientId: string,
+  patient: PatientType,
+  photo?: File,
+  removePhoto = false
+): Promise<{ photoUrl?: string | null }> {
+  const supabase = createClient()
+  const { data: currentPatient, error: currentPatientError } = await supabase
+    .from("patients")
+    .select("photo_path")
+    .eq("id", patientId)
+    .single()
+
+  if (currentPatientError) throw new Error(currentPatientError.message)
+
+  let photoPath = removePhoto
+    ? null
+    : (currentPatient.photo_path as string | null)
+  let photoUrl: string | undefined
+
+  if (photo) {
+    const extensionByType: Record<string, string> = {
+      "image/jpeg": "jpeg",
+      "image/png": "png",
+      "image/webp": "webp",
+    }
+    const extension = extensionByType[photo.type]
+    if (!extension) {
+      throw new Error("A foto deve estar no formato JPG, PNG ou WEBP.")
+    }
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
+    if (authError || !user) throw new Error("Usuário não autenticado.")
+
+    const newPhotoPath = `${user.id}/${crypto.randomUUID()}.${extension}`
+    const { error: uploadError } = await supabase.storage
+      .from("patient-photos")
+      .upload(newPhotoPath, photo, { contentType: photo.type, upsert: false })
+    if (uploadError) throw new Error(uploadError.message)
+
+    const { data: signedUrl, error: signedUrlError } = await supabase.storage
+      .from("patient-photos")
+      .createSignedUrl(newPhotoPath, 60 * 60)
+    if (signedUrlError) {
+      await supabase.storage.from("patient-photos").remove([newPhotoPath])
+      throw new Error(signedUrlError.message)
+    }
+
+    photoPath = newPhotoPath
+    photoUrl = signedUrl.signedUrl
+  }
+
+  const { error: updateError } = await supabase
+    .from("patients")
+    .update({
+      first_name: patient.firstName.trim(),
+      sur_name: patient.surName.trim(),
+      telephone: patient.address.telephone,
+      street: patient.address.street,
+      address_number: patient.address.noNumber
+        ? null
+        : patient.address.addressNumber,
+      no_number: patient.address.noNumber,
+      neighborhood: patient.address.neighborhood,
+      reference_house: patient.address.referenceHouse,
+      photo_path: photoPath,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", patientId)
+    .select("id")
+    .single()
+
+  if (updateError) {
+    if (photo && photoPath) {
+      await supabase.storage.from("patient-photos").remove([photoPath])
+    }
+    throw new Error(updateError.message)
+  }
+
+  if ((photo || removePhoto) && currentPatient.photo_path) {
+    const { error: removeOldPhotoError } = await supabase.storage
+      .from("patient-photos")
+      .remove([currentPatient.photo_path])
+    if (removeOldPhotoError) {
+      console.error(
+        "Não foi possível remover a foto anterior do paciente:",
+        removeOldPhotoError.message
+      )
+    }
+  }
+
+  if (photoUrl) return { photoUrl }
+  if (removePhoto) return { photoUrl: null }
+  return {}
+}
+
+export async function deletePatientPermanently(
+  patientId: string
+): Promise<{ photoCleanupError?: string }> {
+  const supabase = createClient()
+  const { data: patient, error: patientError } = await supabase
+    .from("patients")
+    .select("photo_path")
+    .eq("id", patientId)
+    .single()
+
+  if (patientError) throw new Error(patientError.message)
+
+  const { data: deleted, error: deleteError } = await supabase.rpc(
+    "delete_patient_permanently",
+    { p_patient_id: patientId }
+  )
+  if (deleteError) throw new Error(deleteError.message)
+  if (!deleted) throw new Error("O paciente não foi excluído.")
+
+  if (patient.photo_path) {
+    const { error: photoError } = await supabase.storage
+      .from("patient-photos")
+      .remove([patient.photo_path])
+    if (photoError) {
+      console.error(
+        "Paciente excluído, mas não foi possível remover a foto do Storage:",
+        photoError.message
+      )
+      return { photoCleanupError: photoError.message }
+    }
+  }
+
+  return {}
+}
+
 
 export async function getPatientById(id: string): Promise<PatientType | null> {
   const supabase = createClient()

@@ -5,13 +5,14 @@ import {
   statusRealizacao,
 } from "@/data/optionsSessionsData"
 import type {
+  DayOfWeek,
   ListPatient,
   Session,
   SessionChangeField,
   SessionChangeValue,
 } from "@/types"
 import { createTimeOptions } from "@/utils/sessions/createTimeOptions"
-import { format, parseISO } from "date-fns"
+import { format, getDay, parseISO } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { Check, ChevronDown } from "lucide-react"
 import { SessionOptions } from "./sessionOptions"
@@ -25,9 +26,10 @@ import { cn } from "tailwind-variants"
 import { useFisioStore } from "@/store/fisio/fisioStore"
 import { saveSessionEvolution } from "@/services/patients/sessionEvolutionRepository"
 import { toast } from "react-toastify"
+import { daysOfWeek } from "@/data"
 
 type SessionCardProps = {
-  patient: Pick<ListPatient, "firstName" | "surName" | "typeService">
+  patient: ListPatient
   session: Session
   defaultTime: string
   isSelected: boolean
@@ -79,6 +81,21 @@ export function SessionCard({
   const hasCustomTime = session.time && session.time !== defaultTime
   const hasRescheduledDate =
     session.originalDate !== undefined && session.originalDate !== session.date
+  const isStandaloneExtra =
+    patient.typeService === "Pacote" && Boolean(session.isExtra)
+  const nextPendingAvulsaSession =
+    patient.typeService === "Sessão avulsa"
+      ? patient.session
+          .filter(
+            (item) => item.finish === "pendente" && item.number > session.number
+          )
+          .sort((a, b) => a.number - b.number)[0]
+      : undefined
+  const nextWeekdayNumber = nextPendingAvulsaSession
+    ? getDay(parseISO(nextPendingAvulsaSession.date))
+    : 0
+  const nextSessionWeekDay: DayOfWeek | undefined =
+    nextWeekdayNumber > 0 ? daysOfWeek[nextWeekdayNumber - 1] : undefined
 
   function handleOpenEvolution() {
     if (evolution) {
@@ -134,12 +151,11 @@ export function SessionCard({
         ${isOpen ? "lg:col-span-2" : ""}
       `}
       >
-        <article className="flex items-center justify-between">
-          <div className="flex w-full flex-col">
-            <div className="flex w-full flex-wrap justify-between md:flex-nowrap">
-              <div className="flex w-full flex-col gap-3 pb-2 md:flex-row md:items-center">
-                <div className="flex items-center justify-left gap-3">
-                  <div className="flex items-center gap-2">
+        <article className="flex min-w-0 items-start gap-2 sm:gap-3">
+          <div className="flex min-w-0 flex-1 flex-col">
+            <div className="flex min-w-0 flex-col gap-3 pb-2 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex min-w-0 items-start gap-3">
+                  <div className="flex shrink-0 items-center gap-2">
                     <label className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-md border border-[#D0D5DD] bg-white">
                       <input
                         type="checkbox"
@@ -155,51 +171,57 @@ export function SessionCard({
                       />
                     </label>
 
-                    {(() => {
-                      const status = statusRealizacao[session.finish]
+                    {!isStandaloneExtra &&
+                      (() => {
+                        const status = statusRealizacao[session.finish]
 
-                      return (
-                        <span
-                          className={cn(
-                            "flex h-9 w-9 items-center justify-center rounded-full text-lg font-medium",
-                            status.className
-                          )}
-                        >
-                          {session.number}
-                        </span>
-                      )
-                    })()}
+                        return (
+                          <span
+                            className={cn(
+                              "flex h-9 w-9 items-center justify-center rounded-full text-lg font-medium",
+                              status.className
+                            )}
+                          >
+                            {session.number}
+                          </span>
+                        )
+                      })()}
                   </div>
 
-                  <div className="flex flex-col leading-tight">
+                  <div className="min-w-0 flex-1 leading-tight">
                     <time
                       dateTime={session.date}
-                      className="text-sm font-medium text-slate-600"
+                      className="block text-sm font-semibold text-slate-700"
                     >
                       {format(convertDate, "dd/MM/yyyy")}
                     </time>
 
-                    <p className="rounded-full text-xs text-slate-400">
-                      {weekDay}
+                    <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+                      <span className="text-slate-500">{weekDay}</span>
+
+                      {isStandaloneExtra && (
+                        <span className="rounded-full bg-violet-50 px-2 py-0.5 font-medium text-violet-700">
+                          Avulsa extra · fora do pacote
+                        </span>
+                      )}
 
                       {hasRescheduledDate && (
-                        <span className="ml-1 font-medium text-[#F79009]">
-                          • Data remarcada
+                        <span className="rounded-full bg-amber-50 px-2 py-0.5 font-medium text-[#F79009]">
+                          Data remarcada
                         </span>
                       )}
 
                       {hasCustomTime && (
-                        <span className="ml-1 font-medium text-[#F79009]">
-                          • {session.time}
+                        <span className="rounded-full bg-amber-50 px-2 py-0.5 font-medium text-[#F79009]">
+                          {session.time}
                         </span>
                       )}
-                    </p>
+                    </div>
                   </div>
-                </div>
               </div>
 
-              <div className="hidden w-full items-center justify-between gap-3 text-sm md:flex md:justify-end">
-                <div className="flex flex-col font-medium">
+              <div className="hidden shrink-0 items-center justify-end gap-3 text-sm lg:flex">
+                <div className="flex flex-col items-start font-medium">
                   <span className="px-3 py-2 text-xs text-slate-600 uppercase">
                     Realização
                   </span>
@@ -217,7 +239,7 @@ export function SessionCard({
                   })()}
                 </div>
 
-                <div className="hidden flex-col md:flex">
+                <div className="flex flex-col items-start">
                   <span className="px-3 py-2 text-xs text-slate-600 uppercase">
                     Pagamento
                   </span>
@@ -243,12 +265,33 @@ export function SessionCard({
               </div>
             </div>
 
+            <div className="mb-2 flex flex-wrap items-center gap-2 lg:hidden">
+              <span
+                className={`rounded-full border px-2.5 py-1 text-xs font-medium capitalize ${statusRealizacao[session.finish].className}`}
+              >
+                {session.finish}
+              </span>
+              <span
+                className={`rounded-full border px-2.5 py-1 text-xs font-medium ${statusPagamento[session.paid].className}`}
+              >
+                {statusPagamento[session.paid].label}
+              </span>
+              <EvolutionIcon
+                hasEvolution={Boolean(evolution)}
+                onclick={handleOpenEvolution}
+              />
+            </div>
+
             {isOpen && (
               <SessionOptions
                 session={session}
-                convertDate={convertDate}
                 defaultTime={defaultTime}
                 timeOptions={timeOptions}
+                nextSessionWeekDay={
+                  patient.typeService === "Sessão avulsa"
+                    ? nextSessionWeekDay
+                    : undefined
+                }
                 statusConfig={statusConfig}
                 pagamentoConfig={pagamentoConfig}
                 onChangeSession={onChangeSession}
