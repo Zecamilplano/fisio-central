@@ -26,15 +26,23 @@ export function useSessionCreation({
 }: UseSessionCreationProps) {
   const addSession = useFisioStore((state) => state.addSession)
   const startNextPackage = useFisioStore((state) => state.startNextPackage)
-  async function addSeparateSession(selectedDate: Date): Promise<boolean> {
+  async function addSeparateSession(
+    selectedDate: Date,
+    selectedTime = "16:00"
+  ): Promise<boolean> {
     if (patient.typeService === "Sessão avulsa") {
       try {
-        const saved = await addSingleTreatmentSession(patient.id, selectedDate)
+        const saved = await addSingleTreatmentSession(
+          patient.id,
+          selectedDate,
+          undefined,
+          selectedTime
+        )
         addSession(patient.id, {
           id: saved.id,
           number: saved.number,
           date: saved.date,
-          time: "16:00",
+          time: selectedTime,
           finish: "pendente",
           paid: "pendente",
         })
@@ -55,7 +63,7 @@ export function useSessionCreation({
         patient.id,
         selectedDate,
         currentPackage?.valueSession ?? 0,
-        currentPackage?.defaultTime ?? "16:00",
+        selectedTime,
         currentPackage?.id
       )
       addSession(patient.id, {
@@ -64,7 +72,7 @@ export function useSessionCreation({
         ...(currentPackage ? { originPackageId: currentPackage.id } : {}),
         isExtra: Boolean(currentPackage),
         date: saved.date,
-        time: currentPackage?.defaultTime ?? "16:00",
+        time: selectedTime,
         finish: "pendente",
         paid: "pendente",
       })
@@ -82,38 +90,49 @@ export function useSessionCreation({
     }
   }
 
-  async function restoreMissingPackageSession(): Promise<boolean> {
+  async function restoreMissingPackageSession(
+    selectedDate?: Date,
+    selectedTime?: string
+  ): Promise<boolean> {
     if (patient.typeService !== "Pacote" || !currentPackage) return false
-    if (currentPackage.fixedWeekDays.length === 0) {
-      toast.error("Não há dias da semana definidos para este pacote.")
+
+    const lastPackageSession = [...currentPackageSessions].sort((a, b) =>
+      a.date.localeCompare(b.date)
+    ).at(-1)
+    const hasPackageSchedule =
+      currentPackage.fixedWeekDays.length > 0 &&
+      Number.isFinite(currentPackage.startDate.getTime())
+    const nextDate = selectedDate ?? (
+      hasPackageSchedule
+        ? lastPackageSession
+          ? getNextPackageDate(
+              parseISO(lastPackageSession.date),
+              currentPackage.fixedWeekDays
+            )
+          : getFirstPackageDate(
+              currentPackage.startDate,
+              currentPackage.fixedWeekDays
+            )
+        : null
+    )
+
+    if (!nextDate) {
+      toast.error("Escolha uma data para repor a sessão do pacote.")
       return false
     }
-
-    const lastPackageSession = currentPackageSessions.at(-1)
-
-    const lastDate = lastPackageSession
-      ? parseISO(lastPackageSession.date)
-      : currentPackage.startDate
-
-    const nextDate = lastPackageSession
-      ? getNextPackageDate(lastDate, currentPackage.fixedWeekDays)
-      : getFirstPackageDate(
-          currentPackage.startDate,
-          currentPackage.fixedWeekDays
-        )
 
     try {
       const saved = await addPackageSession(
         currentPackage.id,
         nextDate,
-        currentPackage.defaultTime
+        selectedTime ?? currentPackage.defaultTime
       )
       addSession(patient.id, {
         id: saved.id,
         number: saved.number,
         packageId: currentPackage.id,
         date: saved.date,
-        time: currentPackage.defaultTime,
+        time: selectedTime ?? currentPackage.defaultTime,
         finish: "pendente",
         paid: "pendente",
       })
@@ -161,9 +180,7 @@ export function useSessionCreation({
 
   function getLastPackageSessionDate(packageId: string) {
     const packageSessions = patient.session.filter(
-      (session) =>
-        session.packageId === packageId ||
-        (session.originPackageId === packageId && session.isExtra)
+      (session) => session.packageId === packageId
     )
 
     const lastSession = packageSessions.sort((a, b) =>

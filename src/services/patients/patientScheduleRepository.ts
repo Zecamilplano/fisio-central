@@ -191,7 +191,8 @@ export async function savePackageSchedule(
 export async function addSingleTreatmentSession(
   patientId: string,
   date: Date,
-  originPackageId?: string
+  originPackageId?: string,
+  time = "16:00"
 ): Promise<{ id: string; number: number; date: string }> {
   const supabase = createClient()
   const { data: treatment, error: treatmentError } = await supabase
@@ -207,7 +208,7 @@ export async function addSingleTreatmentSession(
     throw new Error("Não encontrei o atendimento avulso deste paciente.")
   }
 
-  return addTreatmentSession(treatment.id, date, "16:00", originPackageId)
+  return addTreatmentSession(treatment.id, date, time, originPackageId)
 }
 
 export async function addTreatmentSession(
@@ -273,7 +274,35 @@ export async function addPackageSession(
     throw new Error("Este pacote não tem sessões excluídas para repor.")
   }
 
+  await ensureNoPackageSessionAtTime(treatmentId, date, time)
+
   return addTreatmentSession(treatmentId, date, time)
+}
+
+async function ensureNoPackageSessionAtTime(
+  treatmentId: string,
+  date: Date,
+  time: string
+): Promise<void> {
+  const supabase = createClient()
+  const sessionDate = toDateOnly(date)
+  if (!sessionDate) throw new Error("Informe uma data válida para a sessão.")
+
+  const { data: conflictingSession, error } = await supabase
+    .from("treatment_sessions")
+    .select("id")
+    .eq("treatment_id", treatmentId)
+    .eq("session_date", sessionDate)
+    .eq("session_time", time)
+    .limit(1)
+    .maybeSingle()
+
+  if (error) throw new Error(error.message)
+  if (conflictingSession) {
+    throw new Error(
+      "Já existe uma sessão do pacote neste dia e horário. Escolha outro horário."
+    )
+  }
 }
 
 export async function addStandaloneSessionToPatient(
@@ -284,6 +313,9 @@ export async function addStandaloneSessionToPatient(
   originPackageId?: string
 ): Promise<{ id: string; number: number; date: string }> {
   const supabase = createClient()
+  if (originPackageId) {
+    await ensureNoPackageSessionAtTime(originPackageId, date, time)
+  }
   const { data: treatment, error: treatmentError } = await supabase
     .from("patient_treatments")
     .select("id")

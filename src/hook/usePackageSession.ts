@@ -1,5 +1,5 @@
 import type { ListPatient, PaidKey } from "@/types"
-import { format, getDay, parseISO } from "date-fns"
+import { addDays, format, getDay, parseISO } from "date-fns"
 import { useEffect, useState } from "react"
 import { UsePackageSession, SessionChangeField } from "@/types"
 import { StatusSessaoKey } from "@/data/optionsSessionsData"
@@ -98,21 +98,19 @@ function usePackageSession({
 
   const packageTimelineSessions = currentPackage
     ? patient.session
-        .filter(
-          (session) =>
-            session.packageId === currentPackage.id ||
-            (session.originPackageId === currentPackage.id && session.isExtra)
-        )
+        .filter((session) => session.packageId === currentPackage.id)
         .sort((a, b) => a.date.localeCompare(b.date))
     : []
 
   const suggestedPackageStartDate =
     currentPackage && packageTimelineSessions.length > 0
-      ? sessionScheduling.getNextPackageDate(
-          parseISO(packageTimelineSessions.at(-1)!.date),
-          currentPackage.fixedWeekDays
-        )
-      : new Date()
+      ? currentPackage.fixedWeekDays.length > 0
+        ? sessionScheduling.getNextPackageDate(
+            parseISO(packageTimelineSessions.at(-1)!.date),
+            currentPackage.fixedWeekDays
+          )
+        : addDays(parseISO(packageTimelineSessions.at(-1)!.date), 1)
+      : currentPackage?.startDate ?? new Date()
 
   function handleToggleSession(sessionId: string) {
     setOpenSessionId((currentId) =>
@@ -199,6 +197,7 @@ function usePackageSession({
     sessionState: {
       openSessionId,
       currentPackage,
+      currentPackageSessions,
       missingPackageSessions,
       isAddSessionModalOpen,
       addSessionModalMode,

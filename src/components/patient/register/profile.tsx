@@ -446,7 +446,7 @@ function Profile({ form }: ProfileProps) {
         <textarea
           name="reference"
           id="reference"
-          rows={4}
+          rows={5}
           maxLength={registerPatientLimits.referenceHouse}
           placeholder="Ponto de referência"
           onKeyDown={(event) => preventTextLimitExceeded(event, patient.address.referenceHouse, registerPatientLimits.referenceHouse, "referenceHouse", `Limite de ${registerPatientLimits.referenceHouse} caracteres atingido.`)}
@@ -461,7 +461,7 @@ function Profile({ form }: ProfileProps) {
           }}
           onBlur={(e) => handleErrors("address.referenceHouse", e.target.value)}
           data-error={!!errorPatient.referenceHouse}
-          className={`w-full md:w-full border-2  rounded-md px-2 py-3
+          className={`min-h-32 max-h-64 w-full resize-y overflow-y-auto md:w-full border-2 rounded-md px-2 py-3
                        text-[#333] placeholder:text-text-gray-400
                       ${patient.address.referenceHouse ? "bg-white" : "bg-[#EAE9E9]"}
                       ${!errorPatient.referenceHouse ? "border-[#D0D7DE]/40 focus:outline-[#FFA726]" : "border-[red] focus:outline-[red]"}

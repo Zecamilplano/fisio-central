@@ -148,7 +148,7 @@ export function SessionCard({
             ? "translate-x-40 scale-95 opacity-0"
             : "translate-x-0 scale-100 opacity-100"
         }
-        ${isOpen ? "lg:col-span-2" : ""}
+        ${isOpen ? "xl:col-span-2" : ""}
       `}
       >
         <article className="flex min-w-0 items-start gap-2 sm:gap-3">

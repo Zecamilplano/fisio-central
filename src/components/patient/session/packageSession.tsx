@@ -26,6 +26,7 @@ export function PackageSession({
   const {
     openSessionId,
     currentPackage,
+    currentPackageSessions,
     missingPackageSessions,
     canContinueToNextPackage,
     hasPendingExtraSessions,
@@ -104,6 +105,7 @@ export function PackageSession({
           onClose={closeAddSessionModal}
           onRestoreMissingPackageSession={restoreMissingPackageSession}
           currentPackage={currentPackage}
+          currentPackageSessions={currentPackageSessions}
           onCreateSeparateSession={addSeparateSession}
           onCreateNextPackage={createNextPackage}
         />
@@ -138,7 +140,7 @@ export function PackageSession({
           "grid gap-3",
           visibleSession.length === 1
             ? "grid-cols-1"
-            : "grid-cols-1 2xl:grid-cols-2"
+            : "grid-cols-1 xl:grid-cols-2"
         )}
       >
         {visibleSession.map((session) => (

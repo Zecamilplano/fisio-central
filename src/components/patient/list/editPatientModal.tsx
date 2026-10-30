@@ -11,6 +11,7 @@ import { formatTelephone, unformatPhone } from "@/utils/form/phone"
 import { compressPatientPhoto } from "@/utils/patient/compressPatientPhoto"
 import { Camera, Trash2, X } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 import type { ChangeEvent, FormEvent } from "react"
 import { toast } from "react-toastify"
 
@@ -150,6 +151,7 @@ export function EditPatientModal({
   const [globalWeekDays, setGlobalWeekDays] = useState<DayOfWeek[]>(scheduleDefaults.days)
   const [originalGlobalSchedule, setOriginalGlobalSchedule] = useState(scheduleDefaults)
   const [scheduleError, setScheduleError] = useState("")
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null)
   const photoInputRef = useRef<HTMLInputElement>(null)
   const hasProfileChanges =
     JSON.stringify(normalizedPatient(form)) !==
@@ -160,6 +162,10 @@ export function EditPatientModal({
     sessionsPerWeek !== originalGlobalSchedule.sessionsPerWeek ||
     !sameWeekDays(globalWeekDays, originalGlobalSchedule.days)
   const hasChanges = hasProfileChanges || hasScheduleChanges
+
+  useEffect(() => {
+    setPortalTarget(document.body)
+  }, [])
 
   useEffect(() => {
     if (!isOpen) return
@@ -227,7 +233,7 @@ export function EditPatientModal({
     onClose,
   ])
 
-  if (!isOpen) return null
+  if (!isOpen || !portalTarget) return null
 
   function updateField(field: "firstName" | "surName", value: string) {
     setForm((current) => ({ ...current, [field]: value }))
@@ -468,9 +474,9 @@ export function EditPatientModal({
     }
   }
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-[1px]"
+      className="fixed inset-0 z-[10001] flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-[1px]"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) handleClose()
       }}
@@ -854,7 +860,7 @@ export function EditPatientModal({
 
       {showDeleteConfirmation && (
         <div
-          className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/60 p-4"
+          className="fixed inset-0 z-[10002] flex items-center justify-center bg-slate-950/60 p-4"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget && !isDeleting) {
               setShowDeleteConfirmation(false)
@@ -920,6 +926,7 @@ export function EditPatientModal({
           </section>
         </div>
       )}
-    </div>
+    </div>,
+    portalTarget
   )
 }
