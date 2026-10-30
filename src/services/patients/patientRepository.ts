@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client"
+import { registerPatientLimits } from "@/data/registerPatientLimits"
 import type {
   PackageSelectType,
   PatientType,
@@ -200,6 +201,68 @@ export async function deletePatientPermanently(
   return {}
 }
 
+export async function clearPatientTreatmentDraft(
+  patientId: string,
+  treatmentId: string,
+  removeTreatment: boolean
+): Promise<void> {
+  const supabase = createClient()
+  const { data: treatment, error: treatmentLookupError } = await supabase
+    .from("patient_treatments")
+    .select("id")
+    .eq("id", treatmentId)
+    .eq("patient_id", patientId)
+    .maybeSingle()
+
+  if (treatmentLookupError) throw new Error(treatmentLookupError.message)
+  if (!treatment) {
+    throw new Error("Não encontrei o atendimento salvo para limpar.")
+  }
+
+  const { data: sessions, error: sessionsError } = await supabase
+    .from("treatment_sessions")
+    .select("id")
+    .eq("treatment_id", treatmentId)
+
+  if (sessionsError) throw new Error(sessionsError.message)
+
+  const sessionIds = (sessions ?? []).map((session) => session.id)
+  if (sessionIds.length > 0) {
+    const { error: evolutionError } = await supabase
+      .from("treatment_session_evolutions")
+      .delete()
+      .in("session_id", sessionIds)
+    if (evolutionError) throw new Error(evolutionError.message)
+
+    const { error: deleteSessionsError } = await supabase
+      .from("treatment_sessions")
+      .delete()
+      .eq("treatment_id", treatmentId)
+    if (deleteSessionsError) throw new Error(deleteSessionsError.message)
+  }
+
+  const { error: profileError } = await supabase
+    .from("patient_treatment_profiles")
+    .delete()
+    .eq("patient_id", patientId)
+  if (profileError) throw new Error(profileError.message)
+
+  if (removeTreatment) {
+    const { data: deletedTreatment, error: treatmentError } = await supabase
+      .from("patient_treatments")
+      .delete()
+      .eq("id", treatmentId)
+      .eq("patient_id", patientId)
+      .select("id")
+      .maybeSingle()
+
+    if (treatmentError) throw new Error(treatmentError.message)
+    if (!deletedTreatment) {
+      throw new Error("Não encontrei o atendimento salvo para limpar.")
+    }
+  }
+}
+
 
 export async function getPatientById(id: string): Promise<PatientType | null> {
   const supabase = createClient()
@@ -298,13 +361,13 @@ export async function savePatientTreatment(
 
   if (
     form.selectService === "pacote" &&
-    (!Number.isInteger(form.totalSessions) || (form.totalSessions ?? 0) < 1)
+    (!Number.isInteger(form.totalSessions) || (form.totalSessions ?? 0) < 1 || (form.totalSessions ?? 0) > registerPatientLimits.packageSessions)
   ) {
     throw new Error("Informe uma quantidade inteira de sessões maior que zero.")
   }
 
   const pricePerSession = Number(form.priceSession)
-  if (!Number.isFinite(pricePerSession) || pricePerSession < 0) {
+  if (!Number.isFinite(pricePerSession) || pricePerSession < 0 || pricePerSession > registerPatientLimits.pricePerSession) {
     throw new Error("Informe um preço válido para a sessão.")
   }
 

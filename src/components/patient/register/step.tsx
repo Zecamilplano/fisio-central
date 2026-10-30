@@ -3,19 +3,21 @@ import { Check } from "lucide-react"
 type StepBallTypes = {
   number: number
   onClick?: () => void
+  disabled?: boolean
   step: {
     active: boolean
     completed: boolean
   }
 }
 
-function StepBall({ number, step, onClick }: StepBallTypes) {
+function StepBall({ number, step, onClick, disabled = false }: StepBallTypes) {
   return (
     <li>
       <button
         onClick={onClick}
+        disabled={disabled}
         className={`
-          flex items-center justify-center cursor-pointer outline-none
+          flex items-center justify-center cursor-pointer outline-none disabled:cursor-wait disabled:opacity-60
           w-10 h-10 sm:w-12 sm:h-12 rounded-full font-semibold
           ${step.active ? "bg-[#FFA726] text-white" : "bg-[#F5F0EB] text-[#8C7B6B]"}
           ${step.completed && step.active === false && "bg-[#FFD29A] text-[#FFA726]"}

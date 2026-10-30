@@ -1,3 +1,5 @@
+import { ProgressActionButton } from "./progressActionButton"
+
 type ButtonProps = {
   variant: "single" | "double" | "finish"
   onPrev?: () => void
@@ -5,6 +7,7 @@ type ButtonProps = {
   onRegisterViewPatient?: () => void
   onNext?: () => void
   active: boolean
+  isSubmitting?: boolean
 }
 
 function Button({
@@ -14,6 +17,7 @@ function Button({
   onRegisterViewPatient,
   onNext,
   active,
+  isSubmitting = false,
 }: ButtonProps) {
   // console.log(active)
   return (
@@ -22,15 +26,17 @@ function Button({
       <fieldset className="flex gap-2">
         {/*Botão anterior*/}
         {variant === "single" && (
-          <button
+          <ProgressActionButton
             type="button"
             onClick={onNext}
+            disabled={isSubmitting}
+            loading={isSubmitting}
             className={` text-xl  font-open-sans  rounded-md py-3 w-full  my-6 cursor-pointer hover:opacity-80 active:opacity-60
-                      ${active ? "bg-[#FFA725] text-white" : "bg-[#FFCC80] text-[#E65100]"}
+                      ${active ? "bg-[#FFA725] text-white" : "bg-[#FFCC80] text-[#E65100]"} disabled:cursor-wait disabled:opacity-60
 `}
           >
-            Próximo
-          </button>
+            {isSubmitting ? "Salvando..." : "Próximo"}
+          </ProgressActionButton>
         )}
 
         {variant === "double" && (
@@ -38,20 +44,23 @@ function Button({
             <button
               type="button"
               onClick={onPrev}
-              className="text-gray-700 text-xl  font-open-sans bg-gray-200 rounded-md py-3 w-full  my-6 cursor-pointer hover:opacity-80 active:opacity-60"
+              disabled={isSubmitting}
+              className="text-gray-700 text-xl font-open-sans bg-gray-200 rounded-md py-3 w-full my-6 cursor-pointer hover:opacity-80 active:opacity-60 disabled:cursor-wait disabled:opacity-60"
             >
               Anterior
             </button>
 
-            <button
+            <ProgressActionButton
               type="button"
               onClick={onNext}
+              disabled={isSubmitting}
+              loading={isSubmitting}
               className={` text-xl  font-open-sans  rounded-md py-3 w-full  my-6 cursor-pointer hover:opacity-80 active:opacity-60
-                      ${active ? "bg-[#FFA725] text-white" : "bg-[#FFCC80] text-[#E65100]"}
+                      ${active ? "bg-[#FFA725] text-white" : "bg-[#FFCC80] text-[#E65100]"} disabled:cursor-wait disabled:opacity-60
 `}
             >
-              Próximo
-            </button>
+              {isSubmitting ? "Salvando..." : "Próximo"}
+            </ProgressActionButton>
           </>
         )}
 
@@ -60,30 +69,35 @@ function Button({
             <button
               type="button"
               onClick={onPrev}
-              className="text-gray-700 text-lg  font-open-sans bg-gray-200 rounded-md py-3 w-full  my-6 cursor-pointer hover:opacity-80 active:opacity-60"
+              disabled={isSubmitting}
+              className="text-gray-700 text-lg font-open-sans bg-gray-200 rounded-md py-3 w-full my-6 cursor-pointer hover:opacity-80 active:opacity-60 disabled:cursor-wait disabled:opacity-60"
             >
               Anterior
             </button>
 
-            <button
+            <ProgressActionButton
               type="button"
               onClick={onRegisterAdd}
+              disabled={isSubmitting}
+              loading={isSubmitting}
               className={` text-lg  font-open-sans  rounded-md py-3 w-full  my-6 cursor-pointer hover:opacity-80 active:opacity-60
-                      ${active ? "bg-[#FFA725] text-white" : "bg-[#FFCC80] text-[#E65100]"}
+                      ${active ? "bg-[#FFA725] text-white" : "bg-[#FFCC80] text-[#E65100]"} disabled:cursor-wait disabled:opacity-60
 `}
             >
-              Cadastrar e adicionar
-            </button>
+              {isSubmitting ? "Salvando..." : "Cadastrar e adicionar"}
+            </ProgressActionButton>
 
-            <button
+            <ProgressActionButton
               type="button"
               onClick={onRegisterViewPatient}
+              disabled={isSubmitting}
+              loading={isSubmitting}
               className={` text-lg  font-open-sans  rounded-md py-3 w-full  my-6 cursor-pointer hover:opacity-80 active:opacity-60
-                      ${active ? "bg-[#FFA725] text-white" : "bg-[#FFCC80] text-[#E65100]"}
+                      ${active ? "bg-[#FFA725] text-white" : "bg-[#FFCC80] text-[#E65100]"} disabled:cursor-wait disabled:opacity-60
 `}
             >
-              Cadastrar e ver paciente
-            </button>
+              {isSubmitting ? "Salvando..." : "Cadastrar e ver paciente"}
+            </ProgressActionButton>
           </>
         )}
       </fieldset>

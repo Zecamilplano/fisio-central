@@ -1,6 +1,9 @@
 "use client"
 import { Bookmark, MapPinHouse, Phone } from "lucide-react"
 import { useFormProfile } from "@/hook/useFormProfile"
+import { registerPatientLimits } from "@/data/registerPatientLimits"
+import { unformatPhone } from "@/utils/form/phone"
+import type { ClipboardEvent, KeyboardEvent } from "react"
 
 type ProfileProps = {
   form: ReturnType<typeof useFormProfile>
@@ -16,6 +19,76 @@ function Profile({ form }: ProfileProps) {
     handleErrors,
   } = form
 
+  function handleLimitedTextChange(
+    field: "firstName" | "surName" | "address.street" | "address.neighborhood" | "address.referenceHouse",
+    errorKey: keyof typeof errorPatient,
+    value: string,
+    maxLength: number,
+    isPersonName = false
+  ) {
+    const sanitizedValue = isPersonName
+      ? value.replace(/[^\p{L}\p{M}\s'.-]/gu, "")
+      : value
+
+    handleChange(field, sanitizedValue)
+
+    if (sanitizedValue !== value) {
+      setErrorPatient((previous) => ({
+        ...previous,
+        [errorKey]: "Use apenas letras, espaços, hífen, apóstrofo ou ponto.",
+      }))
+    } else if (sanitizedValue.length >= maxLength) {
+      setErrorPatient((previous) => ({
+        ...previous,
+        [errorKey]: `Limite de ${maxLength} caracteres atingido.`,
+      }))
+    } else {
+      handleErrors(field, sanitizedValue)
+    }
+  }
+
+  function preventTextLimitExceeded(
+    event: KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>,
+    value: string,
+    maxLength: number,
+    errorKey: keyof typeof errorPatient,
+    message: string
+  ) {
+    if (
+      value.length < maxLength ||
+      event.key.length !== 1 ||
+      event.ctrlKey ||
+      event.metaKey ||
+      event.altKey
+    ) {
+      return
+    }
+
+    const input = event.currentTarget
+    const selectedLength = input.selectionEnd! - input.selectionStart!
+    if (selectedLength > 0) return
+
+    event.preventDefault()
+    setErrorPatient((previous) => ({ ...previous, [errorKey]: message }))
+  }
+
+  function preventOversizedPaste(
+    event: ClipboardEvent<HTMLInputElement | HTMLTextAreaElement>,
+    value: string,
+    maxLength: number,
+    errorKey: keyof typeof errorPatient,
+    message: string
+  ) {
+    const input = event.currentTarget
+    const selectedLength = input.selectionEnd! - input.selectionStart!
+    const pastedText = event.clipboardData.getData("text")
+
+    if (value.length - selectedLength + pastedText.length > maxLength) {
+      event.preventDefault()
+      setErrorPatient((previous) => ({ ...previous, [errorKey]: message }))
+    }
+  }
+
   return (
     <>
       {/*Primeiro nome, sobrenome*/}
@@ -30,16 +103,27 @@ function Profile({ form }: ProfileProps) {
           </label>
           <input
             type="text"
+            minLength={2}
+            maxLength={registerPatientLimits.firstName}
             name="firstName"
             id="firstName"
             placeholder="Digite seu nome primeiro nome"
             value={patient.firstName}
+            onKeyDown={(event) => preventTextLimitExceeded(event, patient.firstName, registerPatientLimits.firstName, "firstName", `Limite de ${registerPatientLimits.firstName} caracteres atingido.`)}
+            onPaste={(event) => preventOversizedPaste(event, patient.firstName, registerPatientLimits.firstName, "firstName", `Limite de ${registerPatientLimits.firstName} caracteres atingido.`)}
             onChange={(e) => {
-              handleChange("firstName", e.target.value)
-              setErrorPatient({ ...errorPatient, firstName: "" })
+              handleLimitedTextChange(
+                "firstName",
+                "firstName",
+                e.target.value,
+                registerPatientLimits.firstName,
+                true
+              )
             }}
             onBlur={(e) => handleErrors("firstName", e.target.value)}
             data-error={!!errorPatient.firstName}
+            aria-invalid={Boolean(errorPatient.firstName)}
+            aria-describedby={errorPatient.firstName ? "first-name-error" : undefined}
             className={`w-full md:w-full border-2  rounded-md px-2 py-3
                        text-[#333] placeholder:text-gray-400
                       ${!errorPatient.firstName ? "border-[#D0D7DE]/40 focus:outline-[#FFA726]" : "border-[red] focus:outline-[red]"}
@@ -47,7 +131,7 @@ function Profile({ form }: ProfileProps) {
                       `}
           />
           {errorPatient.firstName && (
-            <span className="flex text-[red] pl-2 py-2">
+            <span id="first-name-error" role="alert" aria-live="polite" className="block text-sm text-red-600 pl-2 pt-1">
               {errorPatient.firstName}
             </span>
           )}
@@ -63,16 +147,27 @@ function Profile({ form }: ProfileProps) {
           </label>
           <input
             type="text"
+            minLength={2}
+            maxLength={registerPatientLimits.surName}
             name="surName"
             id="surName"
             placeholder="Digite seu sobrenome"
             value={patient.surName}
+            onKeyDown={(event) => preventTextLimitExceeded(event, patient.surName, registerPatientLimits.surName, "surName", `Limite de ${registerPatientLimits.surName} caracteres atingido.`)}
+            onPaste={(event) => preventOversizedPaste(event, patient.surName, registerPatientLimits.surName, "surName", `Limite de ${registerPatientLimits.surName} caracteres atingido.`)}
             onChange={(e) => {
-              handleChange("surName", e.target.value)
-              setErrorPatient({ ...errorPatient, surName: "" })
+              handleLimitedTextChange(
+                "surName",
+                "surName",
+                e.target.value,
+                registerPatientLimits.surName,
+                true
+              )
             }}
             onBlur={(e) => handleErrors("surName", e.target.value)}
             data-error={!!errorPatient.surName}
+            aria-invalid={Boolean(errorPatient.surName)}
+            aria-describedby={errorPatient.surName ? "surname-error" : undefined}
             className={`w-full md:w-full border-2  rounded-md px-2 py-3
                        text-[#333] placeholder:text-text-gray-400
                       ${patient.surName ? "bg-white" : "bg-[#EAE9E9]"}
@@ -80,7 +175,7 @@ function Profile({ form }: ProfileProps) {
                       `}
           />
           {errorPatient.surName && (
-            <span className="flex text-[red] pl-2 pt-2">
+            <span id="surname-error" role="alert" aria-live="polite" className="block text-sm text-red-600 pl-2 pt-1">
               {errorPatient.surName}
             </span>
           )}
@@ -101,13 +196,24 @@ function Profile({ form }: ProfileProps) {
           id="tel"
           placeholder="00 00000-0000"
           value={patient.address.telephone}
+          maxLength={registerPatientLimits.telephoneFormatted}
+          onKeyDown={(event) => preventTextLimitExceeded(event, patient.address.telephone, registerPatientLimits.telephoneFormatted, "telephone", `Limite de ${registerPatientLimits.telephoneDigits} números atingido.`)}
+          onPaste={(event) => preventOversizedPaste(event, patient.address.telephone, registerPatientLimits.telephoneFormatted, "telephone", `Limite de ${registerPatientLimits.telephoneDigits} números atingido.`)}
           onChange={(e) => {
             handleChange("address.telephone", e.target.value)
-            setErrorPatient({ ...errorPatient, telephone: "" })
+            handleErrors("address.telephone", e.target.value)
+            if (unformatPhone(e.target.value).length >= registerPatientLimits.telephoneDigits) {
+              setErrorPatient((previous) => ({
+                ...previous,
+                telephone: `Limite de ${registerPatientLimits.telephoneDigits} números atingido.`,
+              }))
+            }
           }}
           onBlur={(e) => handleErrors("address.telephone", e.target.value)}
           data-error={!!errorPatient.telephone}
-          maxLength={15}
+          aria-invalid={Boolean(errorPatient.telephone)}
+          aria-describedby={errorPatient.telephone ? "telephone-error" : undefined}
+          inputMode="tel"
           className={`w-full md:w-full border-2  rounded-md px-2 py-3
                        text-[#333] placeholder:text-text-gray-400
                       ${patient.address.telephone ? "bg-white" : "bg-[#EAE9E9]"}
@@ -115,7 +221,7 @@ function Profile({ form }: ProfileProps) {
                       `}
         />
         {errorPatient.telephone && (
-          <span className="flex text-[red] pl-2 pt-2">
+          <span id="telephone-error" role="alert" aria-live="polite" className="block text-sm text-red-600 pl-2 pt-1">
             {errorPatient.telephone}
           </span>
         )}
@@ -134,16 +240,25 @@ function Profile({ form }: ProfileProps) {
             </label>
             <input
               type="text"
+              maxLength={registerPatientLimits.street}
               name="street"
               id="street"
               placeholder="Digite o nome da rua"
               value={patient.address.street}
+              onKeyDown={(event) => preventTextLimitExceeded(event, patient.address.street, registerPatientLimits.street, "street", `Limite de ${registerPatientLimits.street} caracteres atingido.`)}
+              onPaste={(event) => preventOversizedPaste(event, patient.address.street, registerPatientLimits.street, "street", `Limite de ${registerPatientLimits.street} caracteres atingido.`)}
               onChange={(e) => {
-                handleChange("address.street", e.target.value)
-                setErrorPatient({ ...errorPatient, street: "" })
+                handleLimitedTextChange(
+                  "address.street",
+                  "street",
+                  e.target.value,
+                  registerPatientLimits.street
+                )
               }}
               onBlur={(e) => handleErrors("address.street", e.target.value)}
               data-error={!!errorPatient.street}
+              aria-invalid={Boolean(errorPatient.street)}
+              aria-describedby={errorPatient.street ? "street-error" : undefined}
               className={`w-full md:w-full border-2  rounded-md px-2 py-3
                        text-[#333] placeholder:text-text-gray-400
                       ${patient.address.street ? "bg-white" : "bg-[#EAE9E9]"}
@@ -151,7 +266,7 @@ function Profile({ form }: ProfileProps) {
                       `}
             />
             {errorPatient.street && (
-              <span className="flex text-[red] pl-2 pt-2">
+              <span id="street-error" role="alert" aria-live="polite" className="block text-sm text-red-600 pl-2 pt-1">
                 {errorPatient.street}
               </span>
             )}
@@ -166,29 +281,71 @@ function Profile({ form }: ProfileProps) {
               Nº
             </label>
             <input
-              type="text"
+              type="number"
               name="addressNumber"
               id="addressNumber"
+              min={1}
+              max={registerPatientLimits.addressNumber}
+              step={1}
+              inputMode="numeric"
               placeholder="000º"
               disabled={patient.address.noNumber}
               value={patient.address.noNumber ? "" : (patient.address.addressNumber ?? "")}
               onChange={(e) => {
                 const value = e.target.value
+                const parsedValue = value === "" ? null : e.target.valueAsNumber
+
+                if (typeof parsedValue === "number" && !Number.isInteger(parsedValue)) {
+                  setErrorPatient((previous) => ({
+                    ...previous,
+                    addressNumber: "Informe um número inteiro, sem casas decimais.",
+                  }))
+                  return
+                }
+
+                if (
+                  typeof parsedValue === "number" &&
+                  parsedValue < 1
+                ) {
+                  handleChange("address.addressNumber", 1)
+                  setErrorPatient((previous) => ({
+                    ...previous,
+                    addressNumber: "O número do endereço deve ser maior que zero.",
+                  }))
+                  return
+                }
+
+                if (
+                  typeof parsedValue === "number" &&
+                  parsedValue > registerPatientLimits.addressNumber
+                ) {
+                  handleChange("address.addressNumber", registerPatientLimits.addressNumber)
+                  setErrorPatient((previous) => ({
+                    ...previous,
+                    addressNumber: `Limite de ${registerPatientLimits.addressNumber} atingido.`,
+                  }))
+                  return
+                }
 
                 handleChange(
                   "address.addressNumber",
-                  value === "" ? null : Number(value)
+                  parsedValue
                 )
-                setErrorPatient({ ...errorPatient, addressNumber: "" })
+                handleErrors(
+                  "address.addressNumber",
+                  parsedValue
+                )
               }}
               onBlur={(e) => {
                 const value = e.target.value
                 handleErrors(
                   "address.addressNumber",
-                  value === "" ? null : Number(value)
+                  value === "" ? null : e.target.valueAsNumber
                 )
               }}
               data-error={!!errorPatient.addressNumber}
+              aria-invalid={Boolean(errorPatient.addressNumber)}
+              aria-describedby={errorPatient.addressNumber ? "address-number-error" : undefined}
               className={`w-32 border-2  rounded-md px-2 py-3
                        text-[#333] placeholder:text-text-gray-400
                       ${patient.address.addressNumber ? "bg-white" : "bg-[#EAE9E9]"}
@@ -226,7 +383,7 @@ function Profile({ form }: ProfileProps) {
 
             {errorPatient.addressNumber && (
               <>
-                <span className="flex  text-[red] pl-2 pt-1 ">
+                <span id="address-number-error" role="alert" aria-live="polite" className="block text-sm text-red-600 pl-2 pt-1">
                   {errorPatient.addressNumber}
                 </span>
               </>
@@ -245,15 +402,24 @@ function Profile({ form }: ProfileProps) {
             </label>
             <input
               type="text"
+              maxLength={registerPatientLimits.neighborhood}
               name="neighborhood"
               id="neighborhood"
               value={patient.address.neighborhood}
+              onKeyDown={(event) => preventTextLimitExceeded(event, patient.address.neighborhood, registerPatientLimits.neighborhood, "neighborhood", `Limite de ${registerPatientLimits.neighborhood} caracteres atingido.`)}
+              onPaste={(event) => preventOversizedPaste(event, patient.address.neighborhood, registerPatientLimits.neighborhood, "neighborhood", `Limite de ${registerPatientLimits.neighborhood} caracteres atingido.`)}
               onChange={(e) => {
-                handleChange("address.neighborhood", e.target.value)
-                setErrorPatient({ ...errorPatient, neighborhood: "" })
+                handleLimitedTextChange(
+                  "address.neighborhood",
+                  "neighborhood",
+                  e.target.value,
+                  registerPatientLimits.neighborhood
+                )
               }}
               onBlur={(e) => handleErrors("address.neighborhood", e.target.value)}
               data-error={!!errorPatient.neighborhood}
+              aria-invalid={Boolean(errorPatient.neighborhood)}
+              aria-describedby={errorPatient.neighborhood ? "neighborhood-error" : undefined}
               className={`w-full md:w-full border-2 rounded-md px-2 py-3
                        text-[#333] placeholder:text-text-gray-400
                       ${patient.address.neighborhood ? "bg-white" : "bg-[#EAE9E9]"}
@@ -261,7 +427,7 @@ function Profile({ form }: ProfileProps) {
                       `}
             />
             {errorPatient.neighborhood && (
-              <span className="flex text-[red] pl-2 pt-2 ">
+              <span id="neighborhood-error" role="alert" aria-live="polite" className="block text-sm text-red-600 pl-2 pt-1">
                 {errorPatient.neighborhood}
               </span>
             )}
@@ -281,10 +447,17 @@ function Profile({ form }: ProfileProps) {
           name="reference"
           id="reference"
           rows={4}
+          maxLength={registerPatientLimits.referenceHouse}
           placeholder="Ponto de referência"
+          onKeyDown={(event) => preventTextLimitExceeded(event, patient.address.referenceHouse, registerPatientLimits.referenceHouse, "referenceHouse", `Limite de ${registerPatientLimits.referenceHouse} caracteres atingido.`)}
+          onPaste={(event) => preventOversizedPaste(event, patient.address.referenceHouse, registerPatientLimits.referenceHouse, "referenceHouse", `Limite de ${registerPatientLimits.referenceHouse} caracteres atingido.`)}
           onChange={(e) => {
-            handleChange("address.referenceHouse", e.target.value)
-            setErrorPatient({ ...errorPatient, referenceHouse: "" })
+            handleLimitedTextChange(
+              "address.referenceHouse",
+              "referenceHouse",
+              e.target.value,
+              registerPatientLimits.referenceHouse
+            )
           }}
           onBlur={(e) => handleErrors("address.referenceHouse", e.target.value)}
           data-error={!!errorPatient.referenceHouse}
@@ -294,8 +467,20 @@ function Profile({ form }: ProfileProps) {
                       ${!errorPatient.referenceHouse ? "border-[#D0D7DE]/40 focus:outline-[#FFA726]" : "border-[red] focus:outline-[red]"}
                       `}
         />
+        <p
+          aria-live="polite"
+          className={`mt-1 self-end text-xs font-medium ${
+            patient.address.referenceHouse.length >= registerPatientLimits.referenceHouse * 0.9
+              ? "text-red-600"
+              : patient.address.referenceHouse.length >= registerPatientLimits.referenceHouse * 0.7
+                ? "text-amber-600"
+                : "text-green-700"
+          }`}
+        >
+          {patient.address.referenceHouse.length}/{registerPatientLimits.referenceHouse} caracteres
+        </p>
         {errorPatient.referenceHouse && (
-          <span className="flex text-[red] pl-2 pt-2">
+          <span role="alert" aria-live="polite" className="block text-sm text-red-600 pl-2 pt-1">
             {errorPatient.referenceHouse}
           </span>
         )}

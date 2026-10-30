@@ -8,6 +8,7 @@ import { isSameDay, startOfDay } from "date-fns"
 import { PaymentType } from "@/types"
 import { cn } from "tailwind-variants"
 import { useEffect, useState } from "react"
+import { registerPatientLimits } from "@/data/registerPatientLimits"
 
 type SchedulingSessionsProps = {
   form: ReturnType<typeof useSchedulingSessions>
@@ -137,25 +138,36 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
                 Sessões já realizadas
               </h2>
               <input
+                id="sessions-already-completed"
                 type="number"
+                min={0}
+                max={registerPatientLimits.sessionsAlreadyCompleted}
+                step={1}
+                inputMode="numeric"
                 value={schedulingForm.totalSessions ?? ""}
                 onChange={(e) => {
-                  handleChange("totalSessions", e.target.value)
+                  handleChange("totalSessions", e.target.value === "" ? "" : e.target.valueAsNumber)
                 }}
-                className=" w-52 flex self-center text-[#333] placeholder:text-text-gray-400 border-2 border-solid border-[#D0D7DE]/80 focus:outline-[#FFA726] rounded-md py-2 pl-2 "
+                aria-invalid={schedulingFormErrors.totalSessions.length > 0}
+                className={`w-52 flex self-center text-[#333] placeholder:text-text-gray-400 border-2 border-solid ${schedulingFormErrors.totalSessions.length > 0 ? "border-red-500" : "border-[#D0D7DE]/80"} focus:outline-[#FFA726] rounded-md py-2 pl-2`}
               />
+              {schedulingFormErrors.totalSessions.map((error, index) => <p key={index} role="alert" aria-live="polite" className="mt-1 text-sm text-red-600">{error}</p>)}
             </div>
           </section>
 
           {/*Data inicial e horário*/}
-          <section className="flex justify-center items-center gap-4">
-            <div className="flex justify-center flex-col gap-2">
-              <label className="flex items-center gap-2 text-lg text-[#FFA726] text-center font-semibold">
+          <section className="flex justify-center items-start gap-4">
+            <div className="flex min-w-0 flex-col gap-2">
+              <label
+                htmlFor="package-start-date"
+                className="flex items-center gap-2 text-lg text-[#FFA726] text-center font-semibold"
+              >
                 <CalendarDays size={16} />
                 Data inicial
               </label>
 
               <input
+                id="package-start-date"
                 type="date"
                 value={
                   schedulingForm.package.startDate
@@ -164,26 +176,72 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
                         .split("T")[0]
                     : ""
                 }
+                aria-invalid={schedulingFormErrors.startDate.length > 0}
+                aria-describedby={
+                  schedulingFormErrors.startDate.length > 0
+                    ? "package-start-date-error"
+                    : undefined
+                }
                 onChange={(e) =>
                   handleChange("package.startDate", e.target.value)
                 }
-                className="w-38 text-[#333] border-2 border-[#D0D7DE]/80 focus:outline-[#FFA726] rounded-md py-2 px-3"
+                className={`w-38 rounded-md border-2 px-3 py-2 text-[#333] focus:outline-[#FFA726] ${
+                  schedulingFormErrors.startDate.length > 0
+                    ? "border-red-500"
+                    : "border-[#D0D7DE]/80"
+                }`}
               />
+              {schedulingFormErrors.startDate.map((error, index) => (
+                <p
+                  id="package-start-date-error"
+                  key={index}
+                  role="alert"
+                  aria-live="polite"
+                  className="max-w-48 text-xs text-red-600"
+                >
+                  {error}
+                </p>
+              ))}
             </div>
 
-            <div className="flex flex-col gap-2">
-              <label className="flex items-center gap-2 text-lg text-[#FFA726] text-center font-semibold">
+            <div className="flex min-w-0 flex-col gap-2">
+              <label
+                htmlFor="package-default-time"
+                className="flex items-center gap-2 text-lg text-[#FFA726] text-center font-semibold"
+              >
                 <Clock3 size={16} /> Horário
               </label>
 
               <input
+                id="package-default-time"
                 type="time"
                 value={schedulingForm.package.defaultTime}
+                aria-invalid={schedulingFormErrors.defaultTime.length > 0}
+                aria-describedby={
+                  schedulingFormErrors.defaultTime.length > 0
+                    ? "package-default-time-error"
+                    : undefined
+                }
                 onChange={(e) =>
                   handleChange("package.defaultTime", e.target.value)
                 }
-                className="text-[#333] border-2 border-[#D0D7DE]/80 focus:outline-[#FFA726] rounded-md py-2 px-3"
+                className={`rounded-md border-2 px-3 py-2 text-[#333] focus:outline-[#FFA726] ${
+                  schedulingFormErrors.defaultTime.length > 0
+                    ? "border-red-500"
+                    : "border-[#D0D7DE]/80"
+                }`}
               />
+              {schedulingFormErrors.defaultTime.map((error, index) => (
+                <p
+                  id="package-default-time-error"
+                  key={index}
+                  role="alert"
+                  aria-live="polite"
+                  className="max-w-48 text-xs text-red-600"
+                >
+                  {error}
+                </p>
+              ))}
             </div>
           </section>
 
@@ -228,7 +286,7 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
             })}
           </fieldset>
           {schedulingFormErrors.weeklyAmount.map((error, index) => (
-            <p key={index} className="text-red-500 text-sm flex justify-center">
+            <p key={index} role="alert" aria-live="polite" className="text-red-600 text-sm flex justify-center">
               {error}
             </p>
           ))}
@@ -270,7 +328,7 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
               )
             })}
             {schedulingFormErrors.selectedDays.map((error, index) => (
-              <p key={index} className="text-red-500 text-sm flex">
+              <p key={index} role="alert" aria-live="polite" className="text-red-600 text-sm flex w-full justify-center">
                 {error}
               </p>
             ))}
@@ -358,6 +416,7 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
                     min={0}
                     max={form.totalSessions}
                     step={1}
+                    inputMode="numeric"
                     value={paidSessionsInput}
                     onChange={(event) => setPaidSessionsInput(event.target.value)}
                     onKeyDown={(event) => {
@@ -451,11 +510,6 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
           )}
 
           {/*Sessões*/}
-          {schedulingFormErrors.sessions.map((error, index) => (
-            <p key={index} className="text-red-500 text-sm text-center">
-              {error}
-            </p>
-          ))}
           {sessions.length > 0 && (
             <div className="flex justify-end">
               <button
@@ -582,6 +636,12 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
             ))}
           </ul>
 
+          {schedulingFormErrors.sessions.map((error, index) => (
+            <p key={index} role="alert" aria-live="polite" className="text-center text-sm text-red-600">
+              {error}
+            </p>
+          ))}
+
           <button
             type="button"
             onClick={() => handleChange("handleAddSessions")}
@@ -618,10 +678,15 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
 
               return `${base} hover:bg-amber-50 hover:text-amber-800`
             }}
-            className="w-full rounded-xl border border-gray-100 p-4"
+            className={cn(
+              "w-full rounded-xl border p-4",
+              schedulingFormErrors.weekDay.length > 0
+                ? "border-red-500"
+                : "border-gray-100"
+            )}
           />
           {schedulingFormErrors.weekDay.length > 0 && (
-            <span className="text-red-500">
+            <span role="alert" aria-live="polite" className="text-sm text-red-600">
               {schedulingFormErrors.weekDay[0]}
             </span>
           )}
@@ -657,8 +722,29 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
                     type="time"
                     value={schedulingForm.singleSession.time}
                     onChange={(event) => updateSingleSession({ time: event.target.value })}
-                    className="rounded-md border border-white/60 bg-white px-2 py-1.5 text-[#333]"
+                    aria-invalid={schedulingFormErrors.defaultTime.length > 0}
+                    aria-describedby={
+                      schedulingFormErrors.defaultTime.length > 0
+                        ? "single-session-time-error"
+                        : undefined
+                    }
+                    className={`rounded-md border bg-white px-2 py-1.5 text-[#333] ${
+                      schedulingFormErrors.defaultTime.length > 0
+                        ? "border-red-500"
+                        : "border-white/60"
+                    }`}
                   />
+                  {schedulingFormErrors.defaultTime.map((error, index) => (
+                    <span
+                      id="single-session-time-error"
+                      key={index}
+                      role="alert"
+                      aria-live="polite"
+                      className="mt-1 rounded bg-white px-1 py-0.5 text-xs font-medium text-red-600"
+                    >
+                      {error}
+                    </span>
+                  ))}
                 </label>
                 <label className="flex flex-col gap-1 text-sm text-white">
                   Sessão

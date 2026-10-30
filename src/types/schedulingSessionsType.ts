@@ -47,6 +47,7 @@ export type SchedulingForm = {
 }
 
 export type SchedulingErrorForm = {
+  totalSessions: string[]
   startDate: string[]
   defaultTime: string[]
   paymentType: string[]

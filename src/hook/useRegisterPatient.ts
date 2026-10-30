@@ -7,7 +7,9 @@ import { scrollToFirstError } from "@/utils/form/scrollToFirstError"
 import { useFormTypeService } from "./useFormTypeService"
 import { useSchedulingSessions } from "./useSchedulingSessions"
 import {
+  clearPatientTreatmentDraft,
   createPatient,
+  deletePatientPermanently,
   getPatientById,
   getPatientServiceById,
   savePatientTreatment,
@@ -29,6 +31,8 @@ function useRegisterPatient() {
 
   const formRef = useRef<HTMLFormElement>(null)
   const [shouldScroll, setShouldScroll] = useState(false)
+  const [isSavingPatient, setIsSavingPatient] = useState(false)
+  const [isSavingService, setIsSavingService] = useState(false)
   const [restoreStatus, setRestoreStatus] = useState<
     "checking" | "ready" | "error"
   >("checking")
@@ -157,6 +161,7 @@ function useRegisterPatient() {
 
       if (creatingPatient.current) return
       creatingPatient.current = true
+      setIsSavingPatient(true)
 
       try {
         const patientId = await createPatient(formProfile.patient, photo)
@@ -180,6 +185,7 @@ function useRegisterPatient() {
         )
       } finally {
         creatingPatient.current = false
+        setIsSavingPatient(false)
       }
     }
 
@@ -192,6 +198,7 @@ function useRegisterPatient() {
 
       if (savingService.current) return
       savingService.current = true
+      setIsSavingService(true)
 
       try {
         const patientId = localStorage.getItem("createdPatientId")
@@ -220,13 +227,17 @@ function useRegisterPatient() {
         )
       } finally {
         savingService.current = false
+        setIsSavingService(false)
       }
     }
   }
 
   async function handleSavePackageSchedule(): Promise<boolean> {
     if (savingSchedule.current) return false
+    if (!formScheduling.validateBeforeSubmit()) return false
+
     savingSchedule.current = true
+    formScheduling.setIsSavingSchedule(true)
 
     try {
       const patientId = localStorage.getItem("createdPatientId")
@@ -265,6 +276,7 @@ function useRegisterPatient() {
       return false
     } finally {
       savingSchedule.current = false
+      formScheduling.setIsSavingSchedule(false)
     }
   }
 
@@ -280,6 +292,62 @@ function useRegisterPatient() {
     formTypeService.resetForm()
     formScheduling.resetScheduling()
     setStep(InitialStep)
+  }
+
+  async function clearCurrentStep(): Promise<{
+    resetAll: boolean
+    photoCleanupError?: string
+  }> {
+    const patientId = localStorage.getItem("createdPatientId")
+
+    if (step1.active) {
+      if (patientId) {
+        const result = await deletePatientPermanently(patientId)
+        resetRegistration()
+        return { resetAll: true, photoCleanupError: result.photoCleanupError }
+      }
+
+      formProfile.resetPatient()
+      return { resetAll: false }
+    }
+
+    if (step2.active) {
+      if (patientId && treatmentId.current) {
+        await clearPatientTreatmentDraft(
+          patientId,
+          treatmentId.current,
+          true
+        )
+      }
+
+      treatmentId.current = null
+      formTypeService.resetForm()
+      formScheduling.resetScheduling()
+      setStep((prev) => ({
+        ...prev,
+        step1: { ...prev.step1, active: false, completed: true },
+        step2: { active: true, completed: false },
+        step3: { active: false, completed: false },
+      }))
+      return { resetAll: false }
+    }
+
+    if (patientId && treatmentId.current) {
+      await clearPatientTreatmentDraft(
+        patientId,
+        treatmentId.current,
+        false
+      )
+    }
+
+    formScheduling.resetScheduling(formTypeService.serviceForm.selectService)
+    setStep((prev) => ({
+      ...prev,
+      step1: { ...prev.step1, active: false, completed: true },
+      step2: { ...prev.step2, active: false, completed: true },
+      step3: { active: true, completed: false },
+    }))
+    return { resetAll: false }
   }
 
   useEffect(() => {
@@ -334,9 +402,13 @@ function useRegisterPatient() {
     handleNext,
     handleSavePackageSchedule,
     resetRegistration,
+    clearCurrentStep,
     handleStepClick,
     isFormValid,
     isNextActive,
+    isSavingPatient,
+    isSavingService,
+    isRestoring: restoreStatus === "checking",
   }
 }
 

@@ -5,13 +5,14 @@ import {
 } from "@/data/registerPatientData"
 import { useFormTypeService } from "@/hook/useFormTypeService"
 import { NumericFormat } from "react-number-format"
+import { registerPatientLimits } from "@/data/registerPatientLimits"
 
 type TypeOfServiceProps = {
   form: ReturnType<typeof useFormTypeService>
 }
 
 function TypeOfService({ form }: TypeOfServiceProps) {
-  const { serviceForm, error, handleChange, submitted, inputRef } = form
+  const { serviceForm, error, handleChange, submitted, inputRef, setError } = form
 
   return (
     <section className="w-full">
@@ -85,7 +86,8 @@ function TypeOfService({ form }: TypeOfServiceProps) {
         {submitted && error?.service && (
           <span
             id="service-error"
-            className="text-red-600 flex px-1 pt-2"
+            aria-live="polite"
+            className="block text-sm text-red-600 px-1 pt-2"
             role="alert"
           >
             {error.service}
@@ -135,28 +137,41 @@ function TypeOfService({ form }: TypeOfServiceProps) {
                 id="custom-total-sessions"
                 type="number"
                 min={1}
+                max={registerPatientLimits.packageSessions}
                 step={1}
                 inputMode="numeric"
                 value={serviceForm.totalSessions ?? ""}
-                onChange={(event) =>
-                  handleChange(
-                    "totalSessions",
-                    event.target.value === "" ? null : event.target.valueAsNumber
-                  )
-                }
-                aria-invalid={Boolean(submitted && error?.package)}
+                onChange={(event) => {
+                  const value = event.target.value === "" ? null : event.target.valueAsNumber
+                  if (value !== null && !Number.isInteger(value)) {
+                    setError({ service: "", package: "Informe uma quantidade inteira de sessões." })
+                    return
+                  }
+                  if (value !== null && value < 1) {
+                    setError({ service: "", package: "Informe pelo menos 1 sessão." })
+                    return
+                  }
+                  if (value !== null && value > registerPatientLimits.packageSessions) {
+                    handleChange("totalSessions", registerPatientLimits.packageSessions)
+                    setError({ service: "", package: `Limite de ${registerPatientLimits.packageSessions} sessões atingido.` })
+                    return
+                  }
+                  handleChange("totalSessions", value)
+                }}
+                aria-invalid={Boolean(error?.package)}
                 aria-describedby={
-                  submitted && error?.package ? "package-error" : undefined
+                  error?.package ? "package-error" : undefined
                 }
-                className="w-40 rounded-md border-2 border-[#D0D7DE] px-3 py-2 text-[#2D2D2D] focus:border-[#FFA726] focus:outline-none"
+                className={`w-40 rounded-md border-2 px-3 py-2 text-[#2D2D2D] focus:border-[#FFA726] focus:outline-none ${error?.package ? "border-red-500" : "border-[#D0D7DE]"}`}
               />
             </div>
           )}
 
-          {submitted && error?.package && (
+          {error?.package && (
             <span
               id="package-error"
-              className="text-red-600 flex px-1 pt-2"
+              aria-live="polite"
+              className="block text-sm text-red-600 px-1 pt-2"
               role="alert"
             >
               {error.package}
@@ -184,13 +199,29 @@ function TypeOfService({ form }: TypeOfServiceProps) {
             prefix="R$ "
             allowNegative={false}
             allowLeadingZeros={false}
+            onKeyDown={(event) => {
+              if (event.key === "-") {
+                event.preventDefault()
+                setError({ service: "", price: "O preço não pode ser negativo." })
+              }
+            }}
             onValueChange={(values) =>
               handleChange("priceSession", values.value || "0")
             }
-            isAllowed={(values) => values.value.length <= 6}
-            className="w-full rounded-md border-2 border-[#EAECF0] px-3 py-2 text-[#333] focus:border-[#FFA726] focus:outline-none"
+            isAllowed={(values) => {
+              if ((values.floatValue ?? 0) > registerPatientLimits.pricePerSession) {
+                setError({ service: "", price: "Limite de R$ 999.999,99 atingido." })
+                return false
+              }
+              return true
+            }}
+            aria-invalid={Boolean(error?.price)}
+            className={`w-full rounded-md border-2 px-3 py-2 text-[#333] focus:border-[#FFA726] focus:outline-none ${error?.price ? "border-red-500" : "border-[#EAECF0]"}`}
           />
         </div>
+        {error?.price && (
+          <span className="mt-1 block text-sm text-red-600" role="alert" aria-live="polite">{error.price}</span>
+        )}
       </div>
     </section>
   )

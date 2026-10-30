@@ -7,6 +7,7 @@ export type TypeServiceType = "pacote" | "sessoes"
 export type ErrorTypeService = {
   service: string
   package?: string
+  price?: string
 }
 
 export type totalNumberSessionType = {

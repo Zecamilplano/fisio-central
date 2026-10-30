@@ -37,6 +37,7 @@ const schedulingFormData: SchedulingForm = {
 }
 
 export const initialErrors: SchedulingErrorForm = {
+  totalSessions: [],
   startDate: [],
   defaultTime: [],
   paymentType: [],

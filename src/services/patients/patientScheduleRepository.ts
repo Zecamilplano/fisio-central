@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client"
+import { registerPatientLimits } from "@/data/registerPatientLimits"
 import type { DayOfWeek, PaidKey, SchedulingForm } from "@/types"
 import type { StatusSessaoKey } from "@/data/optionsSessionsData"
 
@@ -36,7 +37,8 @@ export async function savePackageSchedule(
   const sessionsBeforeCurrentPackage = Number(form.totalSessions ?? 0)
   if (
     !Number.isSafeInteger(sessionsBeforeCurrentPackage) ||
-    sessionsBeforeCurrentPackage < 0
+    sessionsBeforeCurrentPackage < 0 ||
+    sessionsBeforeCurrentPackage > registerPatientLimits.sessionsAlreadyCompleted
   ) {
     throw new Error("Informe um número inteiro válido para as sessões já realizadas.")
   }
@@ -358,7 +360,7 @@ export async function createNextPackageTreatment(data: {
     )
   }
 
-  if (!Number.isInteger(data.totalSessions) || data.totalSessions < 1) {
+  if (!Number.isInteger(data.totalSessions) || data.totalSessions < 1 || data.totalSessions > registerPatientLimits.packageSessions) {
     throw new Error("Informe uma quantidade válida de sessões para o pacote.")
   }
   if (data.sessions.length !== data.totalSessions) {
