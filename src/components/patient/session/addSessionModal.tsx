@@ -27,8 +27,11 @@ type AddSessionModalProps = {
   onClose: () => void
   currentPackageSessions?: Session[]
   onRestoreMissingPackageSession: (
-    selectedDate?: Date,
-    selectedTime?: string
+    schedule?: {
+      startDate: Date
+      time: string
+      fixedWeekDays: DayOfWeek[]
+    }
   ) => void | Promise<boolean>
   onCreateSeparateSession: (
     selectedDate: Date,
@@ -72,11 +75,6 @@ export function AddSessionModal({
 
   const [packageStartDate, setPackageStartDate] = useState(new Date())
   const [isSaving, setIsSaving] = useState(false)
-  const needsManualRestore = Boolean(
-    currentPackage &&
-      (!currentPackage.fixedWeekDays.length ||
-        !Number.isFinite(currentPackage.startDate.getTime()))
-  )
   const hasPackageScheduleConflict =
     patientType === "Pacote" &&
     currentPackageSessions.some(
@@ -85,7 +83,6 @@ export function AddSessionModal({
         (session.time ?? currentPackage?.defaultTime ?? "16:00").slice(0, 5) ===
           selectedTime
     )
-
   useEffect(() => {
     if (!packageWeekDays.length) return
 
@@ -117,13 +114,14 @@ export function AddSessionModal({
     onClose()
   }
 
-  async function handleRestoreMissingPackageSession(manualSchedule = false) {
+  async function handleRestoreMissingPackageSession() {
     setIsSaving(true)
     try {
-      const created = await onRestoreMissingPackageSession(
-        manualSchedule ? selectedDate : undefined,
-        manualSchedule ? selectedTime : undefined
-      )
+      const created = await onRestoreMissingPackageSession({
+        startDate: packageStartDate,
+        time: selectedTime,
+        fixedWeekDays: packageWeekDays,
+      })
       if (created !== false) handleSaveComplete()
     } finally {
       setIsSaving(false)
@@ -169,7 +167,12 @@ export function AddSessionModal({
     if (!isOpen) return
 
     if (patientType === "Pacote" && currentPackage) {
-      setPackageStartDate(suggestedPackageStartDate)
+      const initialStartDate = Number.isFinite(currentPackage.startDate.getTime())
+        ? currentPackage.startDate
+        : Number.isFinite(suggestedPackageStartDate.getTime())
+          ? suggestedPackageStartDate
+          : new Date()
+      setPackageStartDate(initialStartDate)
 
       setPackageTotalSessions(currentPackage.totalSessions)
 
@@ -209,12 +212,18 @@ export function AddSessionModal({
         className="mx-4 w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg"
       >
         <h3 className="text-lg font-semibold text-[#344054]">
-          {mode === "next-package" ? "Novo pacote" : "Adicionar sessão"}
+          {mode === "next-package"
+            ? "Novo pacote"
+            : mode === "restore-session"
+              ? "Repor pacote"
+              : "Adicionar sessão"}
         </h3>
 
         <p className="mt-1 text-sm text-slate-500">
           {mode === "next-package"
             ? "Configure as sessões do próximo pacote."
+            : mode === "restore-session"
+              ? "Informe a agenda para repor todas as sessões que faltam no pacote."
             : patientType === "Sessão avulsa"
               ? "Escolha a data da nova sessão."
               : missingPackageSessions > 0
@@ -228,25 +237,17 @@ export function AddSessionModal({
               {!packageIsComplete && missingPackageSessions > 0 && (
                 <button
                   type="button"
-                  onClick={() => {
-                    if (needsManualRestore) {
-                      setMode("restore-session")
-                    } else {
-                      void handleRestoreMissingPackageSession()
-                    }
-                  }}
+                  onClick={() => setMode("restore-session")}
                   disabled={isSaving}
                   className="rounded-lg border border-[#EAECF0] px-4 py-3 text-left text-sm font-medium text-[#344054] hover:bg-[#F9FAFB]"
                 >
                   {isSaving
                     ? "Salvando..."
-                    : "Repor sessão excluída no pacote atual"}
+                    : "Repor pacote"}
                   <span className="mt-1 block text-xs font-normal text-slate-500">
-                    {needsManualRestore
-                      ? "Defina a data e o horário para repor a sessão no pacote."
-                      : missingPackageSessions === 1
-                        ? "Há 1 sessão do pacote sem cadastro. Esta ação repõe essa sessão."
-                        : `Há ${missingPackageSessions} sessões do pacote sem cadastro. Esta ação repõe uma por vez.`}
+                    {missingPackageSessions === 1
+                      ? "Configure a data, o horário e os dias para repor a sessão que falta."
+                      : `Faltam ${missingPackageSessions} sessões. A ação repõe todas de uma vez.`}
                   </span>
                 </button>
               )}
@@ -321,33 +322,70 @@ export function AddSessionModal({
           )}
 
           {mode === "restore-session" && (
-            <div>
-              <p className="mb-3 text-sm text-slate-500">
-                Este pacote não tem dias ou data inicial definidos. Escolha quando repor a sessão.
+            <div className="flex flex-col gap-4">
+              <p className="text-sm text-slate-500">
+                Configure a agenda para repor todas as sessões que faltam neste pacote.
               </p>
-              <DatePicker date={selectedDate} setDate={setSelectedDate} />
-              <label className="mt-3 block text-sm font-medium text-slate-600">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-[#344054]">
+                  Data inicial
+                </label>
+                <DatePicker
+                  date={packageStartDate}
+                  setDate={setPackageStartDate}
+                />
+              </div>
+              <label className="block text-sm font-medium text-slate-600">
                 Horário
                 <input
                   type="time"
                   value={selectedTime}
                   onChange={(event) => setSelectedTime(event.target.value)}
-                  aria-invalid={hasPackageScheduleConflict}
-                  className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm text-slate-800 ${hasPackageScheduleConflict ? "border-red-500" : "border-slate-300"}`}
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800"
                 />
               </label>
-              {hasPackageScheduleConflict && (
-                <p role="alert" className="mt-1 text-sm text-red-600">
-                  Já existe uma sessão do pacote neste dia e horário. Escolha outro horário.
-                </p>
-              )}
+              <div>
+                <label className="mb-2 block text-sm font-medium text-[#344054]">
+                  Dias do pacote
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {daysOfWeek.map((day) => {
+                    const isSelected = packageWeekDays.includes(day)
+                    return (
+                      <button
+                        key={day}
+                        type="button"
+                        aria-pressed={isSelected}
+                        onClick={() =>
+                          setPackageWeekDays((previous) =>
+                            isSelected
+                              ? previous.filter((item) => item !== day)
+                              : [...previous, day]
+                          )
+                        }
+                        className={`rounded-lg border px-3 py-2 text-sm font-medium transition-all ${
+                          isSelected
+                            ? "border-[#FDB022] bg-[#FFF7E8] text-[#B54708]"
+                            : "border-[#D0D5DD] bg-white text-[#344054] hover:bg-[#F9FAFB]"
+                        }`}
+                      >
+                        {day}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
               <button
                 type="button"
-                onClick={() => void handleRestoreMissingPackageSession(true)}
-                disabled={isSaving || hasPackageScheduleConflict}
-                className="mt-3 w-full rounded-lg bg-[#FDB022] px-4 py-2 text-sm font-medium text-white hover:bg-[#F79009] disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => void handleRestoreMissingPackageSession()}
+                disabled={
+                  isSaving ||
+                  packageWeekDays.length === 0 ||
+                  !selectedTime
+                }
+                className="w-full rounded-lg bg-[#FDB022] px-4 py-2 text-sm font-medium text-white hover:bg-[#F79009] disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {isSaving ? "Salvando..." : "Confirmar reposição no pacote"}
+                {isSaving ? "Salvando..." : "Repor pacote"}
               </button>
             </div>
           )}

@@ -9,6 +9,12 @@ export type PackagesSlice = {
     packageId: string,
     days: DayOfWeek[]
   ) => void
+  updatePackageSchedule: (
+    patientId: PatientId,
+    packageId: string,
+    startDate: Date,
+    days: DayOfWeek[]
+  ) => void
   startNextPackage: (
     patientId: PatientId,
     treatmentPackage: TreatmentPackage,
@@ -32,6 +38,25 @@ export const createPackagesSlice: StateCreator<
               packages: patient.packages.map((treatmentPackage) =>
                 treatmentPackage.id === packageId
                   ? { ...treatmentPackage, fixedWeekDays: days }
+                  : treatmentPackage
+              ),
+            }
+          : patient
+      ),
+    })),
+  updatePackageSchedule: (patientId, packageId, startDate, days) =>
+    set((state) => ({
+      patients: state.patients.map((patient) =>
+        patient.id === patientId && patient.typeService === "Pacote"
+          ? {
+              ...patient,
+              packages: patient.packages.map((treatmentPackage) =>
+                treatmentPackage.id === packageId
+                  ? {
+                      ...treatmentPackage,
+                      startDate,
+                      fixedWeekDays: days,
+                    }
                   : treatmentPackage
               ),
             }

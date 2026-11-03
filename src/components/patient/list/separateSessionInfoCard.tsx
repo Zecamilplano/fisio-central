@@ -9,11 +9,13 @@ export function SeparateSessionInfoCard({
   patient,
 }: SeparateSessionInfoCardProps) {
   const sessionsDone = patient.session.filter(
-    (session) => session.finish
+    (session) => session.finish === "realizado"
   ).length
-
-  const sessionsScheduled = patient.session.filter(
-    (session) => !session.finish
+  const sessionsPending = patient.session.filter(
+    (session) => session.finish === "pendente"
+  ).length
+  const sessionsCancelled = patient.session.filter(
+    (session) => session.finish === "cancelado"
   ).length
 
   return (
@@ -32,18 +34,37 @@ export function SeparateSessionInfoCard({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 md:flex md:items-center md:gap-8">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 md:flex md:items-center md:gap-8">
           <div>
-            <p className="text-xs font-medium text-[#667085]">Realizadas</p>
+            <p>
+              <span className="inline-flex rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+                Concluídas
+              </span>
+            </p>
             <strong className="text-lg font-bold text-[#101828]">
               {sessionsDone}
             </strong>
           </div>
 
           <div>
-            <p className="text-xs font-medium text-[#667085]">Pendentes</p>
+            <p>
+              <span className="inline-flex rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">
+                Pendentes
+              </span>
+            </p>
             <strong className="text-lg font-bold text-[#101828]">
-              {sessionsScheduled}
+              {sessionsPending}
+            </strong>
+          </div>
+
+          <div>
+            <p>
+              <span className="inline-flex rounded-full bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700">
+                Canceladas
+              </span>
+            </p>
+            <strong className="text-lg font-bold text-[#101828]">
+              {sessionsCancelled}
             </strong>
           </div>
 

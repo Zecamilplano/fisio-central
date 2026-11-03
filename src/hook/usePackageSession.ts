@@ -62,7 +62,6 @@ function usePackageSession({
   const sessionCreation = useSessionCreation({
     patient,
     currentPackage,
-    currentPackageSessions,
     getNextPackageDate: sessionScheduling.getNextPackageDate,
     getFirstPackageDate: sessionScheduling.getFirstPackageDate,
   })

@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>FisioCentral — graphify tree viewer</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f9f9f9;
+      color: #333;
+    }
+    h1 {
+      margin: 20px 0 0 24px;
+      font-size: 2.2rem;
+      font-weight: bold;
+      color: #1e3a56;
+    }
+    .controls {
+      margin: 20px 0 15px 24px;
+    }
+    button {
+      margin-right: 10px;
+      padding: 8px 18px;
+      background: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background 0.2s ease-in-out;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    button:active {
+      background: #004085;
+    }
+    #tree-container {
+      width: calc(100vw - 48px); /* Adjust for body margin/padding */
+      height: 85vh;
+      overflow: auto;
+      border-radius: 8px;
+      background: #fff;
+      margin-left: 24px;
+      margin-right: 24px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      border: 1px solid #ddd;
+    }
+    svg {
+      background: #fff;
+      border-radius: 8px;
+      display: block; /* Important for D3 */
+    }
+    .node circle {
+      stroke-width: 2.5px;
+    }
+    .node text { /* Base style for the <text> container */
+      font: 13px 'Segoe UI', sans-serif;
+      paint-order: stroke fill; /* Ensures text is readable over lines */
+      stroke: #fff; /* White halo */
+      stroke-width: 3px; /* Halo thickness */
+      stroke-linejoin: round;
+      stroke-opacity: 0.85; /* Halo opacity */
+    }
+    .link {
+      fill: none;
+      stroke-opacity: 0.7;
+      stroke-width: 2px;
+    }
+  </style>
+</head>
+<body>
+  <h1>FisioCentral — Knowledge Graph</h1>
+  <div class="controls">
+    <button onclick="expandAll()">Expand All</button>
+    <button onclick="collapseAll()">Collapse All</button>
+    <button onclick="resetView()">Reset View</button>
+  </div>
+  <div id="tree-container">
+    <svg id="tree-svg" width="6000" height="8000"></svg>
+  </div>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script>
+    const initialJsonData = {"name":"FisioCentral","total_count":505,"children":[{"name":"next.config.ts","total_count":2,"children":[{"name":"getSupabaseImagePattern()","total_count":1,"children":[]},{"name":"nextConfig","total_count":1,"children":[]}]},{"name":"package.json","total_count":51,"children":[{"name":"@supabase/ssr","total_count":1,"children":[]},{"name":"@supabase/ssr@^0.12.7","total_count":1,"children":[]},{"name":"@supabase/supabase-js","total_count":1,"children":[]},{"name":"@supabase/supabase-js@^2.118.0","total_count":1,"children":[]},{"name":"@tailwindcss/postcss","total_count":1,"children":[]},{"name":"@tailwindcss/postcss@^4","total_count":1,"children":[]},{"name":"@types/node","total_count":1,"children":[]},{"name":"@types/node@^20","total_count":1,"children":[]},{"name":"@types/react","total_count":1,"children":[]},{"name":"@types/react-dom","total_count":1,"children":[]},{"name":"@types/react-dom@^19","total_count":1,"children":[]},{"name":"@types/react@^19","total_count":1,"children":[]},{"name":"autoprefixer","total_count":1,"children":[]},{"name":"autoprefixer@^10.4.24","total_count":1,"children":[]},{"name":"build","total_count":1,"children":[]},{"name":"date-fns","total_count":1,"children":[]},{"name":"date-fns@^4.1.0","total_count":1,"children":[]},{"name":"dependencies","total_count":1,"children":[]},{"name":"dev","total_count":1,"children":[]},{"name":"devDependencies","total_count":1,"children":[]},{"name":"lucide-react","total_count":1,"children":[]},{"name":"lucide-react@^0.575.0","total_count":1,"children":[]},{"name":"name","total_count":1,"children":[]},{"name":"next","total_count":1,"children":[]},{"name":"next@16.1.6","total_count":1,"children":[]},{"name":"postcss","total_count":1,"children":[]},{"name":"postcss@^8.5.6","total_count":1,"children":[]},{"name":"prettier","total_count":1,"children":[]},{"name":"prettier@^3.8.3","total_count":1,"children":[]},{"name":"private","total_count":1,"children":[]},{"name":"react","total_count":1,"children":[]},{"name":"react-calendar","total_count":1,"children":[]},{"name":"react-calendar@^6.0.1","total_count":1,"children":[]},{"name":"react-dom","total_count":1,"children":[]},{"name":"react-dom@19.2.3","total_count":1,"children":[]},{"name":"react-number-format","total_count":1,"children":[]},{"name":"react-number-format@^5.4.5","total_count":1,"children":[]},{"name":"react-toastify","total_count":1,"children":[]},{"name":"react-toastify@^11.1.0","total_count":1,"children":[]},{"name":"react@19.2.3","total_count":1,"children":[]},{"name":"scripts","total_count":1,"children":[]},{"name":"start","total_count":1,"children":[]},{"name":"tailwind-variants","total_count":1,"children":[]},{"name":"tailwind-variants@^3.3.1","total_count":1,"children":[]},{"name":"tailwindcss","total_count":1,"children":[]},{"name":"tailwindcss@^4.2.0","total_count":1,"children":[]},{"name":"typescript","total_count":1,"children":[]},{"name":"typescript@^5","total_count":1,"children":[]},{"name":"version","total_count":1,"children":[]},{"name":"zustand","total_count":1,"children":[]},{"name":"zustand@^5.0.15","total_count":1,"children":[]}]},{"name":"postcss.config.mjs","total_count":1,"children":[{"name":"config","total_count":1,"children":[]}]},{"name":"src","total_count":433,"children":[{"name":"actions","total_count":1,"children":[{"name":"devAuth.ts","total_count":1,"children":[{"name":"signInDevUser()","total_count":1,"children":[]}]}]},{"name":"app","total_count":15,"children":[{"name":"(patient)","total_count":6,"children":[{"name":"cadastrar-pacientes","total_count":4,"children":[{"name":"page.tsx","total_count":4,"children":[{"name":"clearRegistrationDraft()","total_count":1,"children":[]},{"name":"handleRegisterAndAdd()","total_count":1,"children":[]},{"name":"handleRegisterAndViewPatient()","total_count":1,"children":[]},{"name":"RegisterPatient()","total_count":1,"children":[]}]}]},{"name":"layout.tsx","total_count":1,"children":[{"name":"LayoutPatient()","total_count":1,"children":[]}]},{"name":"listar-pacientes","total_count":1,"children":[{"name":"page.tsx","total_count":1,"children":[{"name":"ListPatient()","total_count":1,"children":[]}]}]}]},{"name":"entrar","total_count":1,"children":[{"name":"page.tsx","total_count":1,"children":[{"name":"Login()","total_count":1,"children":[]}]}]},{"name":"layout.tsx","total_count":4,"children":[{"name":"metadata","total_count":1,"children":[]},{"name":"montserrat","total_count":1,"children":[]},{"name":"opensans","total_count":1,"children":[]},{"name":"RootLayout()","total_count":1,"children":[]}]},{"name":"page.tsx","total_count":1,"children":[{"name":"ChooseScreen()","total_count":1,"children":[]}]},{"name":"primeiro-cadastro","total_count":3,"children":[{"name":"page.tsx","total_count":3,"children":[{"name":"errorMessage()","total_count":1,"children":[]},{"name":"FirstRegistration()","total_count":1,"children":[]},{"name":"inputClassName()","total_count":1,"children":[]}]}]}]},{"name":"components","total_count":210,"children":[{"name":"icons","total_count":3,"children":[{"name":"evolutionIcon.tsx","total_count":2,"children":[{"name":"EvolutionIcon()","total_count":1,"children":[]},{"name":"EvolutionIconProps","total_count":1,"children":[]}]},{"name":"logo.tsx","total_count":1,"children":[{"name":"Logo()","total_count":1,"children":[]}]}]},{"name":"patient","total_count":198,"children":[{"name":"evolution","total_count":79,"children":[{"name":"components","total_count":32,"children":[{"name":"evolutionExerciseSection.tsx","total_count":7,"children":[{"name":"EvolutionExerciseSection()","total_count":1,"children":[]},{"name":"EvolutionExerciseSectionProps","total_count":1,"children":[]},{"name":"ExerciseField","total_count":1,"children":[]},{"name":"handleAddButtonClick()","total_count":1,"children":[]},{"name":"handleAddExercise()","total_count":1,"children":[]},{"name":"handleClearExercises()","total_count":1,"children":[]},{"name":"handleExerciseKeyDown()","total_count":1,"children":[]}]},{"name":"evolutionFormFooter.tsx","total_count":2,"children":[{"name":"EvolutionFormFooter()","total_count":1,"children":[]},{"name":"EvolutionFormFooterProps","total_count":1,"children":[]}]},{"name":"evolutionFormHeader.tsx","total_count":2,"children":[{"name":"EvolutionFormHeader()","total_count":1,"children":[]},{"name":"EvolutionFormHeaderProps","total_count":1,"children":[]}]},{"name":"evolutionListSection.tsx","total_count":8,"children":[{"name":"EvolutionListSection()","total_count":1,"children":[]},{"name":"EvolutionListSectionProps","total_count":1,"children":[]},{"name":"focusItem()","total_count":1,"children":[]},{"name":"getInputs()","total_count":1,"children":[]},{"name":"handleAddItem()","total_count":1,"children":[]},{"name":"handleClearList()","total_count":1,"children":[]},{"name":"handleItemKeyDown()","total_count":1,"children":[]},{"name":"handleRemoveItem()","total_count":1,"children":[]}]},{"name":"evolutionPainSection.tsx","total_count":4,"children":[{"name":"EvolutionPainSection()","total_count":1,"children":[]},{"name":"EvolutionPainSectionProps","total_count":1,"children":[]},{"name":"PainField()","total_count":1,"children":[]},{"name":"PainFieldProps","total_count":1,"children":[]}]},{"name":"evolutionSection.tsx","total_count":2,"children":[{"name":"EvolutionSection()","total_count":1,"children":[]},{"name":"EvolutionSectionProps","total_count":1,"children":[]}]},{"name":"evolutionVitalSignsSection.tsx","total_count":7,"children":[{"name":"EvolutionVitalSignsSection()","total_count":1,"children":[]},{"name":"EvolutionVitalSignsSectionProps","total_count":1,"children":[]},{"name":"handleKeyDown()","total_count":1,"children":[]},{"name":"VITAL_SIGNS_MAX_LENGTH","total_count":1,"children":[]},{"name":"VitalField()","total_count":1,"children":[]},{"name":"VitalFieldProps","total_count":1,"children":[]},{"name":"VitalSignsField","total_count":1,"children":[]}]}]},{"name":"evolution.types.ts","total_count":12,"children":[{"name":"Evolution","total_count":1,"children":[]},{"name":"EvolutionFormData","total_count":1,"children":[]},{"name":"EvolutionFormErrors","total_count":1,"children":[]},{"name":"EvolutionFormProps","total_count":1,"children":[]},{"name":"EvolutionSaveData","total_count":1,"children":[]},{"name":"Exercise","total_count":1,"children":[]},{"name":"ExerciseField","total_count":1,"children":[]},{"name":"StringListField","total_count":1,"children":[]},{"name":"TemporaryWarning","total_count":1,"children":[]},{"name":"UseEvolutionFormParams","total_count":1,"children":[]},{"name":"VitalSigns","total_count":1,"children":[]},{"name":"WarningField","total_count":1,"children":[]}]},{"name":"evolutionData.ts","total_count":1,"children":[{"name":"createEmptyEvolution()","total_count":1,"children":[]}]},{"name":"evolutionForm.tsx","total_count":1,"children":[{"name":"EvolutionForm()","total_count":1,"children":[]}]},{"name":"evolutionView.tsx","total_count":10,"children":[{"name":"ContentSection()","total_count":1,"children":[]},{"name":"ContentSectionProps","total_count":1,"children":[]},{"name":"EvolutionView()","total_count":1,"children":[]},{"name":"EvolutionViewProps","total_count":1,"children":[]},{"name":"ListContent()","total_count":1,"children":[]},{"name":"ListContentProps","total_count":1,"children":[]},{"name":"PainValue()","total_count":1,"children":[]},{"name":"PainValueProps","total_count":1,"children":[]},{"name":"VitalRow()","total_count":1,"children":[]},{"name":"VitalRowProps","total_count":1,"children":[]}]},{"name":"hooks","total_count":22,"children":[{"name":"useEvolutionForm.ts","total_count":21,"children":[{"name":"addExercise()","total_count":1,"children":[]},{"name":"addStringListItem()","total_count":1,"children":[]},{"name":"clearExercises()","total_count":1,"children":[]},{"name":"clearStringList()","total_count":1,"children":[]},{"name":"handleFormKeyDown()","total_count":1,"children":[]},{"name":"handleSubmit()","total_count":1,"children":[]},{"name":"hasDuplicateExercises()","total_count":1,"children":[]},{"name":"hasSameEvolutionContent()","total_count":1,"children":[]},{"name":"normalizeEvolutionData()","total_count":1,"children":[]},{"name":"removeExercise()","total_count":1,"children":[]},{"name":"removeStringListItem()","total_count":1,"children":[]},{"name":"showWarning()","total_count":1,"children":[]},{"name":"updateComplications()","total_count":1,"children":[]},{"name":"updateExercise()","total_count":1,"children":[]},{"name":"updatePainAfter()","total_count":1,"children":[]},{"name":"updatePainBefore()","total_count":1,"children":[]},{"name":"updateProgress()","total_count":1,"children":[]},{"name":"updateStringList()","total_count":1,"children":[]},{"name":"updateVitalSign()","total_count":1,"children":[]},{"name":"useEvolutionForm()","total_count":1,"children":[]},{"name":"validateForm()","total_count":1,"children":[]}]},{"name":"useEvolutionListNavigation.ts\nuseEvolutionListNavigation.ts\nuseEvolutionListNavigation.ts\nuseEvolutionListNavigation.ts\nuseEvolutionListNavigation.ts\nuseEvolutionListNavigation.ts","total_count":1,"children":[]}]},{"name":"index.ts","total_count":1,"children":[]}]},{"name":"list","total_count":34,"children":[{"name":"editPatientModal.tsx","total_count":16,"children":[{"name":"characterLimits","total_count":1,"children":[]},{"name":"clearSelectedPhoto()","total_count":1,"children":[]},{"name":"EditPatientModal()","total_count":1,"children":[]},{"name":"EditPatientModalProps","total_count":1,"children":[]},{"name":"fieldClass()","total_count":1,"children":[]},{"name":"FormErrors","total_count":1,"children":[]},{"name":"getGlobalScheduleDefaults()","total_count":1,"children":[]},{"name":"handleClose()","total_count":1,"children":[]},{"name":"handleEscape()","total_count":1,"children":[]},{"name":"handlePhotoChange()","total_count":1,"children":[]},{"name":"handleSubmit()","total_count":1,"children":[]},{"name":"markPhotoForRemoval()","total_count":1,"children":[]},{"name":"normalizedPatient()","total_count":1,"children":[]},{"name":"sameWeekDays()","total_count":1,"children":[]},{"name":"updateAddress()","total_count":1,"children":[]},{"name":"updateField()","total_count":1,"children":[]}]},{"name":"patientContactGrid.tsx","total_count":2,"children":[{"name":"PatientContactGrid()","total_count":1,"children":[]},{"name":"PatientContactGridProps","total_count":1,"children":[]}]},{"name":"patientDetails.tsx","total_count":3,"children":[{"name":"handleSavePatientProfile()","total_count":1,"children":[]},{"name":"PatientDetails()","total_count":1,"children":[]},{"name":"PatientDetailsProps","total_count":1,"children":[]}]},{"name":"patientEmptyState.tsx","total_count":1,"children":[{"name":"PatientEmptyState()","total_count":1,"children":[]}]},{"name":"patientSidebar.tsx","total_count":3,"children":[{"name":"highlightSearch()","total_count":1,"children":[]},{"name":"PatientSidebar()","total_count":1,"children":[]},{"name":"PatientSidebarProps","total_count":1,"children":[]}]},{"name":"selectedPatient.tsx","total_count":2,"children":[{"name":"SelectedPatient()","total_count":1,"children":[]},{"name":"SelectedPatientProps","total_count":1,"children":[]}]},{"name":"separateSessionInfoCard.tsx","total_count":2,"children":[{"name":"SeparateSessionInfoCard()","total_count":1,"children":[]},{"name":"SeparateSessionInfoCardProps","total_count":1,"children":[]}]},{"name":"subHeaderPatient.tsx","total_count":4,"children":[{"name":"clearSearch()","total_count":1,"children":[]},{"name":"handleChange()","total_count":1,"children":[]},{"name":"handleEscape()","total_count":1,"children":[]},{"name":"SubHeaderPatientList","total_count":1,"children":[]}]},{"name":"index.ts","total_count":1,"children":[]}]},{"name":"package","total_count":7,"children":[{"name":"currentPackageCard.tsx","total_count":4,"children":[{"name":"CurrentPackageCard()","total_count":1,"children":[]},{"name":"CurrentPackageCardProps","total_count":1,"children":[]},{"name":"handleNextPackage()","total_count":1,"children":[]},{"name":"handlePreviousPackage()","total_count":1,"children":[]}]},{"name":"historyPackage.tsx","total_count":3,"children":[{"name":"handleKeyDown()","total_count":1,"children":[]},{"name":"PackageHistoryModal()","total_count":1,"children":[]},{"name":"PackageHistoryModalProps","total_count":1,"children":[]}]}]},{"name":"register","total_count":12,"children":[{"name":"profile.tsx","total_count":2,"children":[{"name":"Profile()","total_count":1,"children":[]},{"name":"ProfileProps","total_count":1,"children":[]}]},{"name":"schedulingSessions.tsx","total_count":4,"children":[{"name":"handleEscape()","total_count":1,"children":[]},{"name":"paymentInitialOptions","total_count":1,"children":[]},{"name":"SchedulingSessions()","total_count":1,"children":[]},{"name":"SchedulingSessionsProps","total_count":1,"children":[]}]},{"name":"step.tsx","total_count":3,"children":[{"name":"LineStep()","total_count":1,"children":[]},{"name":"StepBall()","total_count":1,"children":[]},{"name":"StepBallTypes","total_count":1,"children":[]}]},{"name":"SubHeaderFormRegister.tsx","total_count":1,"children":[{"name":"SubHeaderFormRegister()","total_count":1,"children":[]}]},{"name":"typeOfService.tsx","total_count":2,"children":[{"name":"TypeOfService()","total_count":1,"children":[]},{"name":"TypeOfServiceProps","total_count":1,"children":[]}]}]},{"name":"session","total_count":65,"children":[{"name":"addSessionModal.tsx","total_count":9,"children":[{"name":"AddSessionModal()","total_count":1,"children":[]},{"name":"AddSessionModalProps","total_count":1,"children":[]},{"name":"handleClose()","total_count":1,"children":[]},{"name":"handleConfirmSeparateSession()","total_count":1,"children":[]},{"name":"handleContinueCurrentPackage()","total_count":1,"children":[]},{"name":"handleCreateNextPackage()","total_count":1,"children":[]},{"name":"handleEscape()","total_count":1,"children":[]},{"name":"handleSaveComplete()","total_count":1,"children":[]},{"name":"weekDayNumber","total_count":1,"children":[]}]},{"name":"deleteSessionModal.tsx","total_count":2,"children":[{"name":"DeleteSessionModal()","total_count":1,"children":[]},{"name":"DeleteSessionModalProps","total_count":1,"children":[]}]},{"name":"hooks","total_count":38,"children":[{"name":"useSessionCreation.ts","total_count":7,"children":[{"name":"addSeparateSession()","total_count":1,"children":[]},{"name":"addSessionToCurrentPackage()","total_count":1,"children":[]},{"name":"createNextPackage()","total_count":1,"children":[]},{"name":"createPackageSessions()","total_count":1,"children":[]},{"name":"getLastPackageSessionDate()","total_count":1,"children":[]},{"name":"useSessionCreation()","total_count":1,"children":[]},{"name":"UseSessionCreationProps","total_count":1,"children":[]}]},{"name":"useSessionDeletion.ts","total_count":6,"children":[{"name":"closeDeleteModal()","total_count":1,"children":[]},{"name":"confirmDelete()","total_count":1,"children":[]},{"name":"openDeleteModal()","total_count":1,"children":[]},{"name":"openSelectedDeleteModal()","total_count":1,"children":[]},{"name":"useSessionDeletion()","total_count":1,"children":[]},{"name":"UseSessionDeletionProps","total_count":1,"children":[]}]},{"name":"useSessionScheduling.ts","total_count":13,"children":[{"name":"getFirstPackageDate()","total_count":1,"children":[]},{"name":"getNextPackageDate()","total_count":1,"children":[]},{"name":"getNextSessionDate()","total_count":1,"children":[]},{"name":"handleChangeDate()","total_count":1,"children":[]},{"name":"handleChangeGlobalSchedule()","total_count":1,"children":[]},{"name":"handleChangePackageDays()","total_count":1,"children":[]},{"name":"handleChangeTime()","total_count":1,"children":[]},{"name":"maxDate()","total_count":1,"children":[]},{"name":"persistSchedule()","total_count":1,"children":[]},{"name":"ScheduleUpdate","total_count":1,"children":[]},{"name":"useSessionScheduling()","total_count":1,"children":[]},{"name":"UseSessionSchedulingProps","total_count":1,"children":[]},{"name":"weekDayMap","total_count":1,"children":[]}]},{"name":"useSessionSelection.ts","total_count":5,"children":[{"name":"clearSelection()","total_count":1,"children":[]},{"name":"handleSelectAllSessions()","total_count":1,"children":[]},{"name":"handleSelectSession()","total_count":1,"children":[]},{"name":"selectAllSessions()","total_count":1,"children":[]},{"name":"useSessionSelection()","total_count":1,"children":[]}]},{"name":"useSessionStatus.ts","total_count":6,"children":[{"name":"changeFinishStatus()","total_count":1,"children":[]},{"name":"changePaymentStatus()","total_count":1,"children":[]},{"name":"changeSessionFinish()","total_count":1,"children":[]},{"name":"changeSessionPayment()","total_count":1,"children":[]},{"name":"useSessionStatus()","total_count":1,"children":[]},{"name":"UseSessionStatusProps","total_count":1,"children":[]}]},{"name":"index.ts","total_count":1,"children":[]}]},{"name":"packageSession.tsx","total_count":2,"children":[{"name":"PackageSession()","total_count":1,"children":[]},{"name":"PackageSessionProps","total_count":1,"children":[]}]},{"name":"selectedSessionsActions.tsx","total_count":4,"children":[{"name":"SelectedSessionsActionHandlers","total_count":1,"children":[]},{"name":"SelectedSessionsActions()","total_count":1,"children":[]},{"name":"SelectedSessionsActionsProps","total_count":1,"children":[]},{"name":"SelectedSessionsStatus","total_count":1,"children":[]}]},{"name":"sessionCard.tsx","total_count":5,"children":[{"name":"EvolutionMode","total_count":1,"children":[]},{"name":"handleOpenEvolution()","total_count":1,"children":[]},{"name":"normalizeEvolutionForForm()","total_count":1,"children":[]},{"name":"SessionCard()","total_count":1,"children":[]},{"name":"SessionCardProps","total_count":1,"children":[]}]},{"name":"sessionOptions.tsx","total_count":5,"children":[{"name":"handleSelectDate()","total_count":1,"children":[]},{"name":"handleSelectDay()","total_count":1,"children":[]},{"name":"SessionFieldValue","total_count":1,"children":[]},{"name":"SessionOptions()","total_count":1,"children":[]},{"name":"SessionOptionsProps","total_count":1,"children":[]}]}]},{"name":"index.ts","total_count":1,"children":[]}]},{"name":"ui","total_count":9,"children":[{"name":"buttonCustom.tsx","total_count":2,"children":[{"name":"Button()","total_count":1,"children":[]},{"name":"ButtonProps","total_count":1,"children":[]}]},{"name":"datePicker.tsx","total_count":3,"children":[{"name":"DatePicker()","total_count":1,"children":[]},{"name":"handleClickOutside()","total_count":1,"children":[]},{"name":"Props","total_count":1,"children":[]}]},{"name":"header.tsx","total_count":1,"children":[{"name":"Header()","total_count":1,"children":[]}]},{"name":"modal.tsx","total_count":3,"children":[{"name":"handleEscape()","total_count":1,"children":[]},{"name":"Modal()","total_count":1,"children":[]},{"name":"ModalProp","total_count":1,"children":[]}]}]}]},{"name":"context","total_count":13,"children":[{"name":"patientContext.tsx","total_count":4,"children":[{"name":"PatientContext","total_count":1,"children":[]},{"name":"PatientContextType","total_count":1,"children":[]},{"name":"PatientProvider()","total_count":1,"children":[]},{"name":"useGlobalPatient()","total_count":1,"children":[]}]},{"name":"sessionCardContext.tsx","total_count":4,"children":[{"name":"SessionCardContext","total_count":1,"children":[]},{"name":"SessionCardContextData","total_count":1,"children":[]},{"name":"SessionCardProvider()","total_count":1,"children":[]},{"name":"useSessionCardContext()","total_count":1,"children":[]}]},{"name":"stepContext.tsx","total_count":5,"children":[{"name":"HasTriedNextType","total_count":1,"children":[]},{"name":"StepContext","total_count":1,"children":[]},{"name":"StepContextType","total_count":1,"children":[]},{"name":"StepProvider()","total_count":1,"children":[]},{"name":"useStepContext()","total_count":1,"children":[]}]}]},{"name":"data","total_count":20,"children":[{"name":"listPatient.ts","total_count":1,"children":[{"name":"listPatientData","total_count":1,"children":[]}]},{"name":"optionsSessionsData.ts","total_count":8,"children":[{"name":"PagamentoConfig","total_count":1,"children":[]},{"name":"paymentActions","total_count":1,"children":[]},{"name":"sessionActions","total_count":1,"children":[]},{"name":"StatusConfig","total_count":1,"children":[]},{"name":"statusPagamento","total_count":1,"children":[]},{"name":"statusRealizacao","total_count":1,"children":[]},{"name":"StatusSessao","total_count":1,"children":[]},{"name":"StatusSessaoKey","total_count":1,"children":[]}]},{"name":"registerPatientData.ts","total_count":5,"children":[{"name":"daysOfWeek","total_count":1,"children":[]},{"name":"InitialStep","total_count":1,"children":[]},{"name":"serviceTypeOptionsData","total_count":1,"children":[]},{"name":"summaryCardData","total_count":1,"children":[]},{"name":"totalNumberSession","total_count":1,"children":[]}]},{"name":"schedulingData.ts","total_count":5,"children":[{"name":"currentDate","total_count":1,"children":[]},{"name":"currentWeekDay","total_count":1,"children":[]},{"name":"dayToIndex","total_count":1,"children":[]},{"name":"initialErrors","total_count":1,"children":[]},{"name":"schedulingFormData","total_count":1,"children":[]}]},{"name":"index.ts","total_count":1,"children":[]}]},{"name":"hook","total_count":61,"children":[{"name":"useFirstRegistration.ts","total_count":10,"children":[{"name":"fieldOrder","total_count":1,"children":[]},{"name":"FirstRegistrationErrors","total_count":1,"children":[]},{"name":"FirstRegistrationField","total_count":1,"children":[]},{"name":"FirstRegistrationValues","total_count":1,"children":[]},{"name":"handleBlur()","total_count":1,"children":[]},{"name":"handleChange()","total_count":1,"children":[]},{"name":"handleSubmit()","total_count":1,"children":[]},{"name":"initialValues","total_count":1,"children":[]},{"name":"useFirstRegistration()","total_count":1,"children":[]},{"name":"validateForm()","total_count":1,"children":[]}]},{"name":"useFormProfile.ts","total_count":5,"children":[{"name":"handleChange()","total_count":1,"children":[]},{"name":"handleErrors()","total_count":1,"children":[]},{"name":"resetPatient()","total_count":1,"children":[]},{"name":"useFormProfile()","total_count":1,"children":[]},{"name":"validateAllFields()","total_count":1,"children":[]}]},{"name":"useFormTypeService.ts","total_count":6,"children":[{"name":"handleChange()","total_count":1,"children":[]},{"name":"resetForm()","total_count":1,"children":[]},{"name":"serviceFormData","total_count":1,"children":[]},{"name":"useFormTypeService()","total_count":1,"children":[]},{"name":"validate()","total_count":1,"children":[]},{"name":"validateFormTypeService()","total_count":1,"children":[]}]},{"name":"useImageInput.ts","total_count":5,"children":[{"name":"handleFileChange()","total_count":1,"children":[]},{"name":"removeImage()","total_count":1,"children":[]},{"name":"selectImage()","total_count":1,"children":[]},{"name":"supportedImageTypes","total_count":1,"children":[]},{"name":"useImageInput()","total_count":1,"children":[]}]},{"name":"usePackageSession.ts","total_count":8,"children":[{"name":"closeAddSessionModal()","total_count":1,"children":[]},{"name":"createReplacementDeletedSession()","total_count":1,"children":[]},{"name":"handleChange()","total_count":1,"children":[]},{"name":"handleToggleSession()","total_count":1,"children":[]},{"name":"openAddSessionModal()","total_count":1,"children":[]},{"name":"openNewPackageModal()","total_count":1,"children":[]},{"name":"usePackageSession()","total_count":1,"children":[]},{"name":"UsePackageSessionReturn","total_count":1,"children":[]}]},{"name":"usePatientSessions.ts","total_count":1,"children":[{"name":"usePatientSessions()","total_count":1,"children":[]}]},{"name":"useRegisterPatient.ts","total_count":6,"children":[{"name":"handleNext()","total_count":1,"children":[]},{"name":"handlePrev()","total_count":1,"children":[]},{"name":"handleSavePackageSchedule()","total_count":1,"children":[]},{"name":"handleStepClick()","total_count":1,"children":[]},{"name":"resetRegistration()","total_count":1,"children":[]},{"name":"useRegisterPatient()","total_count":1,"children":[]}]},{"name":"useSchedulingSessions.ts","total_count":20,"children":[{"name":"buildInitialSchedulingForm()","total_count":1,"children":[]},{"name":"clearError()","total_count":1,"children":[]},{"name":"handleAddSessions()","total_count":1,"children":[]},{"name":"handleChange()","total_count":1,"children":[]},{"name":"handleClearSessions()","total_count":1,"children":[]},{"name":"handleDateChange()","total_count":1,"children":[]},{"name":"handleDateClear()","total_count":1,"children":[]},{"name":"handleDayToggle()","total_count":1,"children":[]},{"name":"handleDeleteSession()","total_count":1,"children":[]},{"name":"handleHalfPaymentChoice()","total_count":1,"children":[]},{"name":"handlePaymentType()","total_count":1,"children":[]},{"name":"handleValidateSingleSession()","total_count":1,"children":[]},{"name":"handleWeeklyAmount()","total_count":1,"children":[]},{"name":"resetScheduling()","total_count":1,"children":[]},{"name":"updatePackage()","total_count":1,"children":[]},{"name":"updateSessionSchedule()","total_count":1,"children":[]},{"name":"updateSessionStatus()","total_count":1,"children":[]},{"name":"updateSingleSession()","total_count":1,"children":[]},{"name":"useSchedulingSessions()","total_count":1,"children":[]},{"name":"validateSchedulingForm()","total_count":1,"children":[]}]}]},{"name":"lib","total_count":3,"children":[{"name":"supabase","total_count":3,"children":[{"name":"client.ts","total_count":1,"children":[{"name":"createClient()","total_count":1,"children":[]}]},{"name":"proxy.ts","total_count":1,"children":[{"name":"updateSession()","total_count":1,"children":[]}]},{"name":"server.ts","total_count":1,"children":[{"name":"createClient()","total_count":1,"children":[]}]}]}]},{"name":"proxy.ts","total_count":2,"children":[{"name":"config","total_count":1,"children":[]},{"name":"proxy()","total_count":1,"children":[]}]},{"name":"services","total_count":32,"children":[{"name":"patients","total_count":32,"children":[{"name":"patientListRepository.ts","total_count":11,"children":[{"name":"getFixedWeekDays()","total_count":1,"children":[]},{"name":"getPatientsForList()","total_count":1,"children":[]},{"name":"PatientRow","total_count":1,"children":[]},{"name":"toFinishStatus()","total_count":1,"children":[]},{"name":"toLocalDate()","total_count":1,"children":[]},{"name":"toPaidStatus()","total_count":1,"children":[]},{"name":"toSessionRows()","total_count":1,"children":[]},{"name":"TreatmentProfileRow","total_count":1,"children":[]},{"name":"TreatmentRow","total_count":1,"children":[]},{"name":"TreatmentSessionRow","total_count":1,"children":[]},{"name":"weekdayByNumber","total_count":1,"children":[]}]},{"name":"patientRepository.ts","total_count":5,"children":[{"name":"createPatient()","total_count":1,"children":[]},{"name":"getPatientById()","total_count":1,"children":[]},{"name":"getPatientServiceById()","total_count":1,"children":[]},{"name":"savePatientTreatment()","total_count":1,"children":[]},{"name":"updatePatientProfile()","total_count":1,"children":[]}]},{"name":"patientScheduleRepository.ts","total_count":13,"children":[{"name":"addPackageSession()","total_count":1,"children":[]},{"name":"addSingleTreatmentSession()","total_count":1,"children":[]},{"name":"addStandaloneSessionToPatient()","total_count":1,"children":[]},{"name":"addTreatmentSession()","total_count":1,"children":[]},{"name":"createNextPackageTreatment()","total_count":1,"children":[]},{"name":"deleteTreatmentSessions()","total_count":1,"children":[]},{"name":"savePackageSchedule()","total_count":1,"children":[]},{"name":"syncPackagePlannedSessions()","total_count":1,"children":[]},{"name":"toDateOnly()","total_count":1,"children":[]},{"name":"updatePendingTreatmentSessionTime()","total_count":1,"children":[]},{"name":"updateTreatmentPackageWeekDays()","total_count":1,"children":[]},{"name":"updateTreatmentSessions()","total_count":1,"children":[]},{"name":"updateTreatmentSessionSchedule()","total_count":1,"children":[]}]},{"name":"sessionEvolutionRepository.ts","total_count":3,"children":[{"name":"getSessionEvolutions()","total_count":1,"children":[]},{"name":"saveSessionEvolution()","total_count":1,"children":[]},{"name":"SessionEvolutionRow","total_count":1,"children":[]}]}]}]},{"name":"store","total_count":14,"children":[{"name":"fisio","total_count":14,"children":[{"name":"fisioStore.ts","total_count":2,"children":[{"name":"FisioStore","total_count":1,"children":[]},{"name":"useFisioStore","total_count":1,"children":[]}]},{"name":"slices","total_count":12,"children":[{"name":"evolutionsSlice.ts","total_count":3,"children":[{"name":"createEvolutionsSlice()","total_count":1,"children":[]},{"name":"EvolutionsSlice","total_count":1,"children":[]},{"name":"SessionId","total_count":1,"children":[]}]},{"name":"packagesSlice.ts","total_count":2,"children":[{"name":"createPackagesSlice()","total_count":1,"children":[]},{"name":"PackagesSlice","total_count":1,"children":[]}]},{"name":"patientsSlice.ts","total_count":3,"children":[{"name":"createPatientsSlice()","total_count":1,"children":[]},{"name":"PatientId","total_count":1,"children":[]},{"name":"PatientsSlice","total_count":1,"children":[]}]},{"name":"sessionsSlice.ts","total_count":4,"children":[{"name":"createSessionsSlice()","total_count":1,"children":[]},{"name":"SessionId","total_count":1,"children":[]},{"name":"SessionsSlice","total_count":1,"children":[]},{"name":"updateSessions()","total_count":1,"children":[]}]}]}]}]},{"name":"types","total_count":38,"children":[{"name":"listPatientType.ts","total_count":8,"children":[{"name":"DayOfWeek","total_count":1,"children":[]},{"name":"ListPatient","total_count":1,"children":[]},{"name":"PackagePatient","total_count":1,"children":[]},{"name":"SeparatePatient","total_count":1,"children":[]},{"name":"SeparateSessionInfo","total_count":1,"children":[]},{"name":"TreatmentPackage","total_count":1,"children":[]},{"name":"TypeService","total_count":1,"children":[]},{"name":"UsePackageSession","total_count":1,"children":[]}]},{"name":"registerPatientsTypes.ts","total_count":6,"children":[{"name":"PatientAddressType","total_count":1,"children":[]},{"name":"PatientOptionalType","total_count":1,"children":[]},{"name":"PatientType","total_count":1,"children":[]},{"name":"StepDataType","total_count":1,"children":[]},{"name":"StepKey","total_count":1,"children":[]},{"name":"StepType","total_count":1,"children":[]}]},{"name":"schedulingSessionsType.ts","total_count":8,"children":[{"name":"Package","total_count":1,"children":[]},{"name":"PaymentType","total_count":1,"children":[]},{"name":"SchedulingErrorForm","total_count":1,"children":[]},{"name":"SchedulingForm","total_count":1,"children":[]},{"name":"Session_","total_count":1,"children":[]},{"name":"SingleSession","total_count":1,"children":[]},{"name":"summaryCardType","total_count":1,"children":[]},{"name":"SummaryItem","total_count":1,"children":[]}]},{"name":"session.ts","total_count":6,"children":[{"name":"DeleteModal","total_count":1,"children":[]},{"name":"PaidKey","total_count":1,"children":[]},{"name":"Session","total_count":1,"children":[]},{"name":"SessionChangeField","total_count":1,"children":[]},{"name":"SessionChangeValue","total_count":1,"children":[]},{"name":"SessionController","total_count":1,"children":[]}]},{"name":"subHeaderFormType.ts","total_count":2,"children":[{"name":"imageType","total_count":1,"children":[]},{"name":"SubHeaderFormRegisterType","total_count":1,"children":[]}]},{"name":"typeServiceType.ts","total_count":7,"children":[{"name":"ErrorTypeService","total_count":1,"children":[]},{"name":"PackageSelectType","total_count":1,"children":[]},{"name":"ServiceForm","total_count":1,"children":[]},{"name":"serviceTypeOptionsDataType","total_count":1,"children":[]},{"name":"totalNumberSessionType","total_count":1,"children":[]},{"name":"typeOfServiceParams","total_count":1,"children":[]},{"name":"TypeServiceType","total_count":1,"children":[]}]},{"name":"index.ts","total_count":1,"children":[]}]},{"name":"utils","total_count":24,"children":[{"name":"form","total_count":9,"children":[{"name":"phone.ts","total_count":2,"children":[{"name":"formatTelephone()","total_count":1,"children":[]},{"name":"unformatPhone()","total_count":1,"children":[]}]},{"name":"schedulingUtils.ts","total_count":5,"children":[{"name":"applyPaymentToSessions()","total_count":1,"children":[]},{"name":"buildSessions()","total_count":1,"children":[]},{"name":"dayMap","total_count":1,"children":[]},{"name":"getLastDate()","total_count":1,"children":[]},{"name":"getNextDateForDay()","total_count":1,"children":[]}]},{"name":"scrollToFirstError.ts","total_count":1,"children":[{"name":"scrollToFirstError()","total_count":1,"children":[]}]},{"name":"index.ts","total_count":1,"children":[]}]},{"name":"package","total_count":1,"children":[{"name":"getCurrentPackage.ts","total_count":1,"children":[{"name":"getCurrentPackage()","total_count":1,"children":[]}]}]},{"name":"patient","total_count":4,"children":[{"name":"compressPatientPhoto.ts","total_count":2,"children":[{"name":"canvasToBlob()","total_count":1,"children":[]},{"name":"compressPatientPhoto()","total_count":1,"children":[]}]},{"name":"getInitialLetters.ts","total_count":2,"children":[{"name":"getInitialLetters()","total_count":1,"children":[]},{"name":"ignoredWords","total_count":1,"children":[]}]}]},{"name":"sessions","total_count":9,"children":[{"name":"createTimeOptions.ts","total_count":1,"children":[{"name":"createTimeOptions()","total_count":1,"children":[]}]},{"name":"generateReplacementSession.ts","total_count":1,"children":[{"name":"generateReplacementSession()","total_count":1,"children":[]}]},{"name":"getNextSessionDate.ts","total_count":2,"children":[{"name":"getNextSession()","total_count":1,"children":[]},{"name":"getNextSessionDate()","total_count":1,"children":[]}]},{"name":"mockCreateSession.ts","total_count":5,"children":[{"name":"CreateSessionParams","total_count":1,"children":[]},{"name":"createSessions()","total_count":1,"children":[]},{"name":"randomFinishStatus()","total_count":1,"children":[]},{"name":"randomPaymentStatus()","total_count":1,"children":[]},{"name":"WeekDay","total_count":1,"children":[]}]}]},{"name":"text","total_count":1,"children":[{"name":"normalizeText.ts","total_count":1,"children":[{"name":"normalizeText()","total_count":1,"children":[]}]}]}]}]},{"name":"tsconfig.json","total_count":18,"children":[{"name":"allowJs","total_count":1,"children":[]},{"name":"compilerOptions","total_count":1,"children":[]},{"name":"esModuleInterop","total_count":1,"children":[]},{"name":"exclude","total_count":1,"children":[]},{"name":"include","total_count":1,"children":[]},{"name":"incremental","total_count":1,"children":[]},{"name":"isolatedModules","total_count":1,"children":[]},{"name":"jsx","total_count":1,"children":[]},{"name":"lib","total_count":1,"children":[]},{"name":"module","total_count":1,"children":[]},{"name":"moduleResolution","total_count":1,"children":[]},{"name":"noEmit","total_count":1,"children":[]},{"name":"paths","total_count":1,"children":[]},{"name":"plugins","total_count":1,"children":[]},{"name":"resolveJsonModule","total_count":1,"children":[]},{"name":"skipLibCheck","total_count":1,"children":[]},{"name":"strict","total_count":1,"children":[]},{"name":"target","total_count":1,"children":[]}]}]};
+
+    function transformData(jsonData) {
+        // Helper function to recursively build the children structure
+        function processNode(node, parentL1StageName) {
+            let displayName = node.name;
+            // Append total_count if it exists and is not already in the name
+            if (node.total_count !== undefined) {
+                if (!/\(Total Count: \d+\)$/.test(displayName)) {
+                    displayName += ` (Total Count: ${node.total_count})`;
+                }
+            }
+
+            const newNode = { name: displayName };
+
+            if (parentL1StageName === "Root") {
+                 newNode.originalStageName = node.name;
+            } else {
+                newNode.originalStageName = parentL1StageName;
+            }
+
+            if (node.children && node.children.length > 0) {
+                const stageNameToPass = (parentL1StageName === "Root") ? node.name : parentL1StageName;
+                newNode.children = node.children.map(child => processNode(child, stageNameToPass));
+            }
+
+            return newNode;
+        }
+
+        let rootDisplayName = jsonData.name;
+        if (jsonData.total_count !== undefined && !/\(Total Count: \d+\)$/.test(rootDisplayName)) {
+            rootDisplayName += ` (Total Count: ${jsonData.total_count})`;
+        }
+
+        return {
+            name: rootDisplayName,
+            originalStageName: "Root",
+            children: (jsonData.children || []).map(child => processNode(child, "Root"))
+        };
+    }
+
+    const treeData = transformData(initialJsonData);
+
+    // Auto-populated phaseColors: every depth-1 child of the root gets
+    // a stable colour from a bigger palette so all top-level dirs are
+    // distinguishable.
+    const PALETTE = [
+      ["#3498DB","#2980B9","#AED6F1"], ["#2ECC71","#27AE60","#A9DFBF"],
+      ["#E74C3C","#C0392B","#F5B7B1"], ["#9B59B6","#8E44AD","#D7BDE2"],
+      ["#F39C12","#D68910","#FAD7A0"], ["#1ABC9C","#117864","#A2D9CE"],
+      ["#34495E","#1B2631","#ABB2B9"], ["#E67E22","#BA4A00","#F5CBA7"],
+      ["#16A085","#0E6655","#A2D9CE"], ["#D35400","#A04000","#EDBB99"],
+      ["#7F8C8D","#566573","#D5DBDB"], ["#C0392B","#7B241C","#F5B7B1"],
+      ["#2E86C1","#1B4F72","#A9CCE3"], ["#28B463","#196F3D","#A9DFBF"],
+      ["#AF7AC5","#6C3483","#D2B4DE"],
+    ];
+    const phaseColors = { "Root": { fill: "#4A4A4A", stroke: "#333333", collapsedFill: "#6C757D" },
+                          "Default": { fill: "#BDC3C7", stroke: "#95A5A6", collapsedFill: "#ECF0F1" } };
+    (initialJsonData.children || []).forEach((c, i) => {
+      const pal = PALETTE[i % PALETTE.length];
+      phaseColors[c.name] = { fill: pal[0], stroke: pal[1], collapsedFill: pal[2] };
+    });
+
+    const levelSpecificPalettes = {
+      0: { fill: "#4A4A4A", stroke: "#333333", collapsedFill: "#6C757D" },
+      2: { fill: "#6ab04c", stroke: "#508a38", collapsedFill: "#a3d391" },
+      3: { fill: "#f0932b", stroke: "#d0730f", collapsedFill: "#f6c07e" },
+      4: { fill: "#be2edd", stroke: "#a01cb3", collapsedFill: "#e08bf2" },
+      5: { fill: "#00a8ff", stroke: "#007ac1", collapsedFill: "#74d2ff" },
+      6: { fill: "#e55039", stroke: "#c23620", collapsedFill: "#f09a8d" },
+      default: { fill: "#747d8c", stroke: "#57606f", collapsedFill: "#a4b0be" }
+    };
+
+    const svgElement = d3.select("#tree-svg");
+    const initialSvgWidth = +svgElement.attr("width");
+    const initialSvgHeight = +svgElement.attr("height");
+    const margin = { top: 40, right: 120, bottom: 80, left: 450 };
+    let width = initialSvgWidth - margin.left - margin.right;
+    let height = initialSvgHeight - margin.top - margin.bottom;
+    const duration = 500;
+    let nodeCounter = 0;
+    const g = svgElement.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+    const treemap = d3.tree().nodeSize([40, 0]);
+    let rootNode = d3.hierarchy(treeData, d => d.children);
+    rootNode.x0 = 0;
+    rootNode.y0 = 0;
+
+    if (rootNode.children) {
+      rootNode.children.forEach(d_child => {
+        if (d_child.children) { collapseBranch(d_child); }
+      });
+    }
+    updateTree(rootNode);
+
+    function collapseBranch(d) { if (d.children) { d._children = d.children; d._children.forEach(collapseBranch); d.children = null; } }
+    function expandBranch(d) { if (d._children) { d.children = d._children; d._children = null; } if (d.children) { d.children.forEach(expandBranch); } }
+    window.expandAll = () => { expandBranch(rootNode); updateTree(rootNode); };
+    window.collapseAll = () => { if (rootNode.children) { rootNode.children.forEach(collapseBranch); } updateTree(rootNode); };
+    window.resetView = () => { if (rootNode.children) { rootNode.children.forEach(d_child => { if (d_child.children || d_child._children) { collapseBranch(d_child); } }); } if (rootNode._children && !rootNode.children) { rootNode.children = rootNode._children; rootNode._children = null; } updateTree(rootNode); };
+
+    function updateTree(source) {
+      const treeLayoutData = treemap(rootNode);
+      let nodes = treeLayoutData.descendants();
+      let links = treeLayoutData.descendants().slice(1);
+
+      let minX = 0;
+      let maxX = 0;
+      if (nodes.length > 0) {
+        minX = d3.min(nodes, d => d.x);
+        maxX = d3.max(nodes, d => d.x);
+      }
+
+      let neededHeight = Math.max(initialSvgHeight, maxX - minX + margin.top + margin.bottom + 100);
+      svgElement.transition().duration(duration / 2).attr("height", neededHeight);
+      g.transition().duration(duration / 2).attr("transform", `translate(${margin.left},${margin.top - minX + 40})`);
+
+      nodes.forEach(d => { d.y = d.depth * 400; }); // Adjust horizontal separation if needed
+
+      const node = g.selectAll('g.node').data(nodes, d => d.id || (d.id = ++nodeCounter));
+      const nodeEnter = node.enter().append('g')
+        .attr('class', d => "node" + (d.children || d._children ? " node--internal" : " node--leaf") + (d._children ? " _children" : ""))
+        .attr('transform', d => `translate(${source.y0},${source.x0})`)
+        .on('click', (event, d) => { if (d.children) { d._children = d.children; d.children = null; } else if (d._children) { d.children = d._children; d._children = null; } updateTree(d); })
+        .style('cursor', d => (d.children || d._children) ? 'pointer' : 'default');
+
+      nodeEnter.append('circle').attr('r', 1e-6);
+
+      nodeEnter.append('text')
+        .attr('dy', '.35em')
+        .attr('x', d => d.children || d._children ? -14 : 14)
+        .attr('text-anchor', d => d.children || d._children ? 'end' : 'start')
+        .style("fill-opacity", 1e-6)
+        .call(wrapText, 380);
+
+      const nodeUpdate = nodeEnter.merge(node);
+      nodeUpdate.transition().duration(duration)
+        .attr('transform', d => `translate(${d.y},${d.x})`)
+        .attr('class', d => "node" + (d.children ? " node--internal" : " node--leaf") + (d._children ? " node--internal _children" : ""));
+
+      nodeUpdate.select('circle').attr('r', 8.5)
+        .style('fill', d => {
+            let palette;
+            if (d.depth === 0) {
+                palette = levelSpecificPalettes[0];
+            } else if (d.depth === 1) {
+                palette = phaseColors[d.data.originalStageName] || phaseColors.Default;
+            } else {
+                palette = levelSpecificPalettes[d.depth] || levelSpecificPalettes.default;
+            }
+            if (d._children) return palette.collapsedFill;
+            if (d.children) return palette.fill;
+            return "#fff";
+        })
+        .style('stroke', d => {
+            let palette;
+            if (d.depth === 0) {
+                palette = levelSpecificPalettes[0];
+            } else if (d.depth === 1) {
+                palette = phaseColors[d.data.originalStageName] || phaseColors.Default;
+            } else {
+                palette = levelSpecificPalettes[d.depth] || levelSpecificPalettes.default;
+            }
+            return palette.stroke;
+        });
+      nodeUpdate.select('text').style("fill-opacity", 1).call(wrapText, 380);
+
+      const nodeExit = node.exit().transition().duration(duration).attr('transform', d => `translate(${source.y},${source.x})`).remove();
+      nodeExit.select('circle').attr('r', 1e-6);
+      nodeExit.select('text').style('fill-opacity', 1e-6);
+
+      const link = g.selectAll('path.link').data(links, d => d.id);
+      const linkEnter = link.enter().insert('path', "g").attr('class', 'link').attr('d', d => { const o = { x: source.x0, y: source.y0 }; return diagonal(o, o); });
+
+      linkEnter.merge(link).transition().duration(duration).attr('d', d => diagonal(d, d.parent))
+        .style('stroke', d => {
+            const sourceNode = d.parent;
+            if (!sourceNode) return phaseColors.Default.stroke;
+            const l1AncestorName = sourceNode.data.originalStageName;
+            const colorPalette = phaseColors[l1AncestorName] || phaseColors.Default;
+            return colorPalette.stroke;
+        });
+      link.exit().transition().duration(duration).attr('d', d => { const o = { x: source.x, y: source.y }; return diagonal(o, o); }).remove();
+      nodes.forEach(d => { d.x0 = d.x; d.y0 = d.y; });
+    }
+
+    function diagonal(s, d) { return `M ${s.y} ${s.x} C ${(s.y + d.y) / 2} ${s.x}, ${(s.y + d.y) / 2} ${d.x}, ${d.y} ${d.x}`; }
+
+    function wrapText(textElements, maxWidth) {
+        const textPartColors = {
+            name: '#343a40',
+            count: '#0056b3'
+        };
+        const countRegex = /(\s\(Total Count: \d+\))$/;
+
+        textElements.each(function () {
+            const textD3 = d3.select(this);
+            const originalNodeText = textD3.datum().data.name;
+            const x = parseFloat(textD3.attr("x") || 0);
+            const initialDy = textD3.attr("dy");
+            const textAnchor = textD3.attr("text-anchor");
+            const lineHeight = 1.1;
+
+            textD3.text(null);
+
+            let namePart = originalNodeText;
+            let countPartText = "";
+
+            const countMatch = originalNodeText.match(countRegex);
+            if (countMatch && originalNodeText.endsWith(countMatch[0])) {
+                namePart = originalNodeText.substring(0, originalNodeText.length - countMatch[0].length).trim();
+                countPartText = countMatch[0].trim();
+            }
+
+            const tokens = [];
+            namePart.split(/\s+/).filter(Boolean).forEach(word => {
+                tokens.push({ text: word, type: 'name' });
+            });
+            if (countPartText) {
+                tokens.push({ text: countPartText, type: 'count' });
+            }
+
+            if (tokens.length === 0 && originalNodeText) {
+                tokens.push({ text: originalNodeText, type: 'name' });
+            }
+
+            let currentTspan = textD3.append("tspan").attr("x", x).attr("dy", initialDy);
+            if (textAnchor === "end") currentTspan.attr("text-anchor", "end");
+
+            let lineTokens = [];
+
+            for (let i = 0; i < tokens.length; i++) {
+                const tokenObj = tokens[i];
+
+                lineTokens.push(tokenObj);
+                currentTspan.text(lineTokens.map(t => t.text).join(" "));
+
+                if (currentTspan.node().getComputedTextLength() > maxWidth && lineTokens.length > 1) {
+                    lineTokens.pop();
+
+                    currentTspan.text(null);
+                    lineTokens.forEach((prevToken, idx) => {
+                        currentTspan.append("tspan")
+                            .text((idx > 0 ? " " : "") + prevToken.text)
+                            .style("fill", textPartColors[prevToken.type] || textPartColors.name)
+                            .style("font-weight", prevToken.type === 'count' ? "bold" : "normal");
+                    });
+
+                    lineTokens = [tokenObj];
+                    currentTspan = textD3.append("tspan").attr("x", x).attr("dy", lineHeight + "em");
+                    if (textAnchor === "end") currentTspan.attr("text-anchor", "end");
+                }
+            }
+
+            currentTspan.text(null);
+            lineTokens.forEach((token, idx) => {
+                currentTspan.append("tspan")
+                    .text((idx > 0 ? " " : "") + token.text)
+                    .style("fill", textPartColors[token.type] || textPartColors.name)
+                    .style("font-weight", token.type === 'count' ? "bold" : "normal");
+            });
+
+            if (textD3.selectAll("tspan > tspan").empty() && textD3.select("tspan").text().length === 0 && originalNodeText) {
+                let t = textD3.select("tspan");
+                let displayText = originalNodeText;
+                t.text(displayText).style("fill", textPartColors.name);
+                if (t.node() && t.node().getComputedTextLength() > maxWidth && displayText.length > 20) {
+                    let estimatedChars = Math.floor(maxWidth / (t.node().getComputedTextLength()/displayText.length) );
+                    displayText = displayText.substring(0, Math.max(0, estimatedChars - 3)) + "...";
+                    t.text(displayText);
+                }
+            }
+        });
+    }
+  </script>
+</body>
+</html>

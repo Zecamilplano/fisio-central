@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/client"
 import { registerPatientLimits } from "@/data/registerPatientLimits"
 import type { DayOfWeek, PaidKey, SchedulingForm } from "@/types"
 import type { StatusSessaoKey } from "@/data/optionsSessionsData"
+import { addDays, getDay } from "date-fns"
 
 function toDateOnly(value: Date | string | null): string | null {
   if (!value) return null
@@ -277,6 +278,189 @@ export async function addPackageSession(
   await ensureNoPackageSessionAtTime(treatmentId, date, time)
 
   return addTreatmentSession(treatmentId, date, time)
+}
+
+export async function restoreMissingPackageSessionsWithSchedule(
+  treatmentId: string,
+  startDate: Date,
+  time: string,
+  fixedWeekDays: DayOfWeek[]
+): Promise<Array<{ id: string; number: number; date: string; time: string }>> {
+  const allowedDays: DayOfWeek[] = [
+    "Segunda",
+    "Terça",
+    "Quarta",
+    "Quinta",
+    "Sexta",
+    "Sábado",
+  ]
+  if (
+    fixedWeekDays.length === 0 ||
+    fixedWeekDays.some((day) => !allowedDays.includes(day)) ||
+    new Set(fixedWeekDays).size !== fixedWeekDays.length
+  ) {
+    throw new Error("Selecione ao menos um dia válido para o pacote.")
+  }
+  if (!time.trim()) throw new Error("Informe o horário da sessão.")
+  const packageStartDate = toDateOnly(startDate)
+  if (!packageStartDate) throw new Error("Informe uma data inicial válida.")
+
+  const supabase = createClient()
+  const { data: treatment, error: treatmentError } = await supabase
+    .from("patient_treatments")
+    .select("planned_sessions, treatment_type")
+    .eq("id", treatmentId)
+    .single()
+  if (treatmentError) throw new Error(treatmentError.message)
+  if (treatment.treatment_type !== "package") {
+    throw new Error("O atendimento selecionado não é um pacote.")
+  }
+
+  const { data: existingSessions, error: sessionsError } = await supabase
+    .from("treatment_sessions")
+    .select("id, session_number, session_date, session_time")
+    .eq("treatment_id", treatmentId)
+    .order("session_date", { ascending: true })
+  if (sessionsError) throw new Error(sessionsError.message)
+
+  const { data: extraSessions, error: extraSessionsError } = await supabase
+    .from("treatment_sessions")
+    .select("session_date, session_time")
+    .eq("origin_package_id", treatmentId)
+    .eq("is_extra", true)
+  if (extraSessionsError) throw new Error(extraSessionsError.message)
+
+  const existing = existingSessions ?? []
+  const missingCount = treatment.planned_sessions - existing.length
+  if (missingCount <= 0) {
+    throw new Error("Este pacote já tem todas as sessões cadastradas.")
+  }
+
+  const weekDayNumbers: Record<DayOfWeek, number> = {
+    Domingo: 0,
+    Segunda: 1,
+    Terça: 2,
+    Quarta: 3,
+    Quinta: 4,
+    Sexta: 5,
+    Sábado: 6,
+  }
+  const selectedWeekDayNumbers = new Set(
+    fixedWeekDays.map((day) => weekDayNumbers[day])
+  )
+  const existingDateTimes = new Set(
+    [...existing, ...(extraSessions ?? [])].map(
+      (session) =>
+        `${session.session_date}|${String(session.session_time).slice(0, 5)}`
+    )
+  )
+  const latestExistingDate = existing.reduce<Date | null>((latest, session) => {
+    const [year, month, day] = session.session_date
+      .slice(0, 10)
+      .split("-")
+      .map(Number)
+    const date = new Date(year, month - 1, day)
+    return !latest || date > latest ? date : latest
+  }, null)
+  let nextDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate())
+  if (latestExistingDate && nextDate <= latestExistingDate) {
+    nextDate = addDays(latestExistingDate, 1)
+  }
+
+  const generatedSessions: Array<{
+    session_number: number
+    session_date: string
+    session_time: string
+    is_extra: boolean
+    origin_package_id: string | null
+    finish_status: string
+    paid_status: string
+    updated_at: string
+  }> = []
+  const maxSessionNumber = Math.max(
+    0,
+    ...existing.map((session) => session.session_number)
+  )
+  const updatedAt = new Date().toISOString()
+  while (generatedSessions.length < missingCount) {
+    const sessionDate = toDateOnly(nextDate)
+    if (
+      selectedWeekDayNumbers.has(getDay(nextDate)) &&
+      sessionDate &&
+      !existingDateTimes.has(`${sessionDate}|${time.slice(0, 5)}`)
+    ) {
+      generatedSessions.push({
+        session_number: maxSessionNumber + generatedSessions.length + 1,
+        session_date: sessionDate,
+        session_time: time,
+        is_extra: false,
+        origin_package_id: null,
+        finish_status: "pendente",
+        paid_status: "pendente",
+        updated_at: updatedAt,
+      })
+    }
+    nextDate = addDays(nextDate, 1)
+  }
+
+  const { data: savedSessions, error: insertError } = await supabase
+    .from("treatment_sessions")
+    .insert(
+      generatedSessions.map((session) => ({
+        ...session,
+        treatment_id: treatmentId,
+      }))
+    )
+    .select("id, session_number, session_date, session_time")
+  if (insertError) throw new Error(insertError.message)
+  if ((savedSessions?.length ?? 0) !== missingCount) {
+    const insertedIds = (savedSessions ?? []).map((session) => session.id)
+    if (insertedIds.length > 0) {
+      const { error: cleanupError } = await supabase
+        .from("treatment_sessions")
+        .delete()
+        .in("id", insertedIds)
+      if (cleanupError) {
+        throw new Error(
+          `O pacote não gravou todas as sessões. Não foi possível remover as sessões parciais: ${cleanupError.message}`
+        )
+      }
+    }
+    throw new Error("O pacote não gravou todas as sessões.")
+  }
+
+  const { data: updatedPackage, error } = await supabase
+    .from("patient_treatments")
+    .update({
+      package_start_date: packageStartDate,
+      fixed_week_days: fixedWeekDays,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", treatmentId)
+    .eq("treatment_type", "package")
+    .select("id")
+    .maybeSingle()
+
+  if (error || !updatedPackage) {
+    const { error: cleanupError } = await supabase
+      .from("treatment_sessions")
+      .delete()
+      .in("id", (savedSessions ?? []).map((session) => session.id))
+    const updateError = error?.message ?? "Não encontrei o pacote para atualizar."
+    if (cleanupError) {
+      throw new Error(
+        `${updateError} As sessões criadas não puderam ser removidas: ${cleanupError.message}`
+      )
+    }
+    throw new Error(updateError)
+  }
+
+  return (savedSessions ?? []).map((session) => ({
+    id: session.id,
+    number: session.session_number,
+    date: session.session_date,
+    time: session.session_time,
+  }))
 }
 
 async function ensureNoPackageSessionAtTime(

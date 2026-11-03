@@ -66,10 +66,22 @@ export function PackageSession({
           )
           .sort(
             (a, b) => {
-              const aIsExtra = a.packageId !== currentPackage.id
-              const bIsExtra = b.packageId !== currentPackage.id
+              const dateOrder = a.date
+                .slice(0, 10)
+                .localeCompare(b.date.slice(0, 10))
+              if (dateOrder !== 0) return dateOrder
+
+              const aTime = a.time ?? currentPackage.defaultTime
+              const bTime = b.time ?? currentPackage.defaultTime
+              const timeOrder = aTime.localeCompare(bTime)
+              if (timeOrder !== 0) return timeOrder
+
+              const aIsExtra =
+                a.isExtra && a.originPackageId === currentPackage.id
+              const bIsExtra =
+                b.isExtra && b.originPackageId === currentPackage.id
               if (aIsExtra !== bIsExtra) return aIsExtra ? 1 : -1
-              return new Date(a.date).getTime() - new Date(b.date).getTime()
+              return a.number - b.number
             }
           )
       : [...patient.session].sort(

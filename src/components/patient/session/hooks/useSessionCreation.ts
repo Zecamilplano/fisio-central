@@ -2,17 +2,16 @@ import type { DayOfWeek, ListPatient, Session, TreatmentPackage } from "@/types"
 import { useFisioStore } from "@/store/fisio/fisioStore"
 import { parseISO } from "date-fns"
 import {
-  addPackageSession,
   addSingleTreatmentSession,
   addStandaloneSessionToPatient,
   createNextPackageTreatment,
+  restoreMissingPackageSessionsWithSchedule,
 } from "@/services/patients/patientScheduleRepository"
 import { toast } from "react-toastify"
 
 type UseSessionCreationProps = {
   patient: ListPatient
   currentPackage: TreatmentPackage | null
-  currentPackageSessions: Session[]
   getNextPackageDate: (lastDate: Date, fixedWeekDays: DayOfWeek[]) => Date
   getFirstPackageDate: (startDate: Date, fixedWeekDays: DayOfWeek[]) => Date
 }
@@ -20,11 +19,13 @@ type UseSessionCreationProps = {
 export function useSessionCreation({
   patient,
   currentPackage,
-  currentPackageSessions,
   getNextPackageDate,
   getFirstPackageDate,
 }: UseSessionCreationProps) {
   const addSession = useFisioStore((state) => state.addSession)
+  const updatePackageSchedule = useFisioStore(
+    (state) => state.updatePackageSchedule
+  )
   const startNextPackage = useFisioStore((state) => state.startNextPackage)
   async function addSeparateSession(
     selectedDate: Date,
@@ -91,58 +92,61 @@ export function useSessionCreation({
   }
 
   async function restoreMissingPackageSession(
-    selectedDate?: Date,
-    selectedTime?: string
+    schedule?: {
+      startDate: Date
+      time: string
+      fixedWeekDays: DayOfWeek[]
+    }
   ): Promise<boolean> {
     if (patient.typeService !== "Pacote" || !currentPackage) return false
-
-    const lastPackageSession = [...currentPackageSessions].sort((a, b) =>
-      a.date.localeCompare(b.date)
-    ).at(-1)
-    const hasPackageSchedule =
-      currentPackage.fixedWeekDays.length > 0 &&
-      Number.isFinite(currentPackage.startDate.getTime())
-    const nextDate = selectedDate ?? (
-      hasPackageSchedule
-        ? lastPackageSession
-          ? getNextPackageDate(
-              parseISO(lastPackageSession.date),
-              currentPackage.fixedWeekDays
-            )
-          : getFirstPackageDate(
-              currentPackage.startDate,
-              currentPackage.fixedWeekDays
-            )
-        : null
-    )
-
-    if (!nextDate) {
-      toast.error("Escolha uma data para repor a sessão do pacote.")
+    if (!schedule || !Number.isFinite(schedule.startDate.getTime())) {
+      toast.error("Informe uma data inicial válida para o pacote.")
+      return false
+    }
+    if (schedule.fixedWeekDays.length === 0) {
+      toast.error("Selecione ao menos um dia da semana para o pacote.")
+      return false
+    }
+    if (!schedule.time.trim()) {
+      toast.error("Informe o horário da sessão.")
       return false
     }
 
     try {
-      const saved = await addPackageSession(
+      const savedSessions = await restoreMissingPackageSessionsWithSchedule(
         currentPackage.id,
-        nextDate,
-        selectedTime ?? currentPackage.defaultTime
+        schedule.startDate,
+        schedule.time,
+        schedule.fixedWeekDays
       )
-      addSession(patient.id, {
-        id: saved.id,
-        number: saved.number,
-        packageId: currentPackage.id,
-        date: saved.date,
-        time: selectedTime ?? currentPackage.defaultTime,
-        finish: "pendente",
-        paid: "pendente",
+      updatePackageSchedule(
+        patient.id,
+        currentPackage.id,
+        schedule.startDate,
+        schedule.fixedWeekDays
+      )
+      savedSessions.forEach((saved) => {
+        addSession(patient.id, {
+          id: saved.id,
+          number: saved.number,
+          packageId: currentPackage.id,
+          date: saved.date,
+          time: saved.time,
+          finish: "pendente",
+          paid: "pendente",
+        })
       })
-      toast.success("Sessão reposta no pacote e salva no servidor.")
+      toast.success(
+        savedSessions.length === 1
+          ? "Pacote reposto com 1 sessão e salvo no servidor."
+          : `Pacote reposto com ${savedSessions.length} sessões e salvo no servidor.`
+      )
       return true
     } catch (error) {
       toast.error(
         error instanceof Error
-          ? `Não foi possível adicionar a sessão: ${error.message}`
-          : "Não foi possível adicionar a sessão."
+          ? `Não foi possível repor o pacote: ${error.message}`
+          : "Não foi possível repor o pacote."
       )
       return false
     }

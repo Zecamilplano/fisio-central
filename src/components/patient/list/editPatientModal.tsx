@@ -158,9 +158,10 @@ export function EditPatientModal({
       JSON.stringify(normalizedPatient(originalForm)) ||
     photo !== undefined || removePhoto
   const hasScheduleChanges =
-    globalStartDate !== originalGlobalSchedule.startDate ||
-    sessionsPerWeek !== originalGlobalSchedule.sessionsPerWeek ||
-    !sameWeekDays(globalWeekDays, originalGlobalSchedule.days)
+    patient.typeService === "Pacote" &&
+    (globalStartDate !== originalGlobalSchedule.startDate ||
+      sessionsPerWeek !== originalGlobalSchedule.sessionsPerWeek ||
+      !sameWeekDays(globalWeekDays, originalGlobalSchedule.days))
   const hasChanges = hasProfileChanges || hasScheduleChanges
 
   useEffect(() => {
@@ -714,7 +715,8 @@ export function EditPatientModal({
               </label>
             </div>
 
-            <section className="space-y-4 border-t border-slate-200 pt-5">
+            {patient.typeService === "Pacote" && (
+              <section className="space-y-4 border-t border-slate-200 pt-5">
               <div>
                 <h3 className="text-base font-semibold text-slate-800">
                   Agenda global das sessões pendentes
@@ -804,7 +806,8 @@ export function EditPatientModal({
                   Não há sessões pendentes para editar.
                 </p>
               )}
-            </section>
+              </section>
+            )}
 
             <section className="space-y-3 border-t border-red-200 pt-5">
               <div>
