@@ -1,4 +1,20 @@
+"use client"
+
+import Button from "@/components/ui/buttonCustom"
+import { useLogin } from "@/hook/useLogin"
+import { cn } from "tailwind-variants"
+
 function Login() {
+  const {
+    values,
+    errors,
+    submitting,
+    submitError,
+    handleChange,
+    handleBlur,
+    handleSubmit,
+  } = useLogin()
+
   return (
     <section className=" w-full h-full flex justify-center items-center">
       <section className="bg-white flex justify-center items-center flex-col px-3 w-full max-w-[90%] h-110 md:w-120 md:max-h-screen overflow-y-auto rounded-md shadow-2xl">
@@ -8,7 +24,10 @@ function Login() {
           </h1>
         </header>
 
-        <form className="font-open-sans py-2 px-3 w-full">
+        <form
+          onSubmit={handleSubmit}
+          className="font-open-sans py-2 px-3 w-full"
+        >
           <section className="mb-4">
             <label
               htmlFor="email"
@@ -21,9 +40,31 @@ function Login() {
               id="email"
               type="email"
               name="email"
+              value={values.email}
+              aria-autocomplete="list"
+              onChange={(e) => handleChange("email", e.target.value)}
+              onBlur={() => handleBlur("email")}
+              autoComplete="email"
+              maxLength={254}
               placeholder="Digite seu email:"
-              className="w-full border-2 border-[#FFA726]/40 focus:outline-[#FFA726] rounded-md px-2 py-3 bg-[#EAE9E9] text-gray-600 placeholder:text-gray-400"
+              aria-invalid={Boolean(errors.email)}
+              aria-describedby={errors.email ? "email-error" : undefined}
+              className={cn(
+                "w-full border-2 rounded-md px-2 py-3 bg-[#EAE9E9] text-gray-600 placeholder:text-gray-400",
+                errors.email
+                  ? "border-red-500 focus:outline-red-500"
+                  : "border-[#FFA726]/40 focus:outline-[#FFA726]"
+              )}
             />
+            {errors.email && (
+              <span
+                id="email-error"
+                role="alert"
+                className="pl-2 pt-1 text-sm text-red-600 block"
+              >
+                {errors.email}
+              </span>
+            )}
           </section>
 
           <section className="mb-6">
@@ -38,18 +79,26 @@ function Login() {
               id="password"
               type="password"
               name="password"
+              onChange={(e) => handleChange("password", e.target.value)}
               placeholder="Digite sua senha:"
               className="w-full border-2 border-[#FFA726]/40 focus:outline-[#FFA726] rounded-md px-2 py-3 bg-[#EAE9E9] text-gray-600 placeholder:text-gray-400"
             />
           </section>
 
+          {submitError && (
+            <p role="alert" className="text-sm text-red-600 text-center mb-4">
+              {submitError}
+            </p>
+          )}
+
           <footer>
-            <button
-              type="submit"
-              className="text-white text-lg font-bold bg-[#FFA726] rounded-md py-3 w-[60%] block mx-auto mb-6 cursor-pointer hover:opacity-80 active:opacity-60"
-            >
-              Entrar
-            </button>
+            <Button
+              variant="single"
+              textAlt="Entrar"
+              active={true}
+              isSubmitting={submitting}
+              onNext={() => handleSubmit()}
+            />
           </footer>
         </form>
       </section>

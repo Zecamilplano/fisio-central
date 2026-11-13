@@ -35,7 +35,7 @@ export const InitialStep: StepType = {
   },
 }
 
-export const totalNumberSession: totalNumberSessionType[] = [
+export const totalNumberSession: readonly totalNumberSessionType[] = [
   { label: 4, value: "4" },
   { label: 6, value: "6" },
   { label: 8, value: "8" },

@@ -1,26 +1,27 @@
 import { InitialStep } from "@/data/registerPatientData"
 import { StepKey, StepType } from "@/types/registerPatientsTypes"
 import { useEffect, useRef, useState } from "react"
-import { useGlobalPatient } from "@/context/patientContext"
 import { useFormProfile } from "@/hook/useFormProfile"
 import { scrollToFirstError } from "@/utils/form/scrollToFirstError"
 import { useFormTypeService } from "./useFormTypeService"
 import { useSchedulingSessions } from "./useSchedulingSessions"
 import {
   clearPatientTreatmentDraft,
-  createPatient,
   deletePatientPermanently,
   getPatientById,
   getPatientServiceById,
   savePatientTreatment,
+  createPatient,
 } from "@/services/patients/patientRepository"
+// import { createPatient } from "@/lib/patients/createPatient"
 import { toast } from "react-toastify"
 import { savePackageSchedule } from "@/services/patients/patientScheduleRepository"
+import { usePatientForm } from "./usePatientForm"
 
 function useRegisterPatient() {
   const [steps, setStep] = useState<StepType>(InitialStep)
   const { step1, step2, step3 } = steps
-  const { isFormValid } = useGlobalPatient()
+  const { isFormValid } = usePatientForm()
   const formProfile = useFormProfile()
   const formTypeService = useFormTypeService()
 
@@ -150,6 +151,10 @@ function useRegisterPatient() {
         return
       }
 
+      if (patientCreated.current && !localStorage.getItem("createdPatientId")) {
+        patientCreated.current = false
+      }
+
       if (patientCreated.current) {
         setStep((prev) => ({
           ...prev,
@@ -165,6 +170,7 @@ function useRegisterPatient() {
 
       try {
         const patientId = await createPatient(formProfile.patient, photo)
+        console.log("banco passou")
 
         localStorage.setItem("createdPatientId", patientId)
 
@@ -232,6 +238,17 @@ function useRegisterPatient() {
     }
   }
 
+  function goToFirstStep() {
+    setStep((prev) => ({
+      ...prev,
+      step1: { ...prev.step1, active: true, completed: false },
+      step2: { ...prev.step2, active: false, completed: false },
+      step3: { ...prev.step3, active: false, completed: false },
+    }))
+
+    localStorage.removeItem("createdPatientId")
+  }
+
   async function handleSavePackageSchedule(): Promise<boolean> {
     if (savingSchedule.current) return false
     if (!formScheduling.validateBeforeSubmit()) return false
@@ -292,6 +309,9 @@ function useRegisterPatient() {
     formTypeService.resetForm()
     formScheduling.resetScheduling()
     setStep(InitialStep)
+
+    localStorage.removeItem("createdPatientId")
+    localStorage.removeItem("patientRegistrationStep")
   }
 
   async function clearCurrentStep(): Promise<{
@@ -313,11 +333,7 @@ function useRegisterPatient() {
 
     if (step2.active) {
       if (patientId && treatmentId.current) {
-        await clearPatientTreatmentDraft(
-          patientId,
-          treatmentId.current,
-          true
-        )
+        await clearPatientTreatmentDraft(patientId, treatmentId.current, true)
       }
 
       treatmentId.current = null
@@ -333,11 +349,7 @@ function useRegisterPatient() {
     }
 
     if (patientId && treatmentId.current) {
-      await clearPatientTreatmentDraft(
-        patientId,
-        treatmentId.current,
-        false
-      )
+      await clearPatientTreatmentDraft(patientId, treatmentId.current, false)
     }
 
     formScheduling.resetScheduling(formTypeService.serviceForm.selectService)
@@ -404,6 +416,7 @@ function useRegisterPatient() {
     resetRegistration,
     clearCurrentStep,
     handleStepClick,
+    goToFirstStep,
     isFormValid,
     isNextActive,
     isSavingPatient,

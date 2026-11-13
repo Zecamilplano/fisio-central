@@ -1,9 +1,9 @@
 "use client"
-import { useGlobalPatient } from "@/context/patientContext"
 import { PatientOptionalType, PatientType } from "@/types/registerPatientsTypes"
 import { formatTelephone, unformatPhone } from "@/utils/form/phone"
 import { registerPatientLimits } from "@/data/registerPatientLimits"
 import { useState, useRef, useEffect } from "react"
+import { usePatientForm } from "./usePatientForm"
 
 function useFormProfile() {
   const [patient, setPatient] = useState<PatientType>({
@@ -233,6 +233,8 @@ function useFormProfile() {
     return hasError
   }
 
+  const { setPatient: setPatientForm } = usePatientForm()
+
   function resetPatient() {
     Object.values(debounceRef.current).forEach(clearTimeout)
     debounceRef.current = {}
@@ -252,7 +254,7 @@ function useFormProfile() {
 
     setPatient(emptyPatient)
     setErrorPatient({})
-    setPatientGlobal(emptyPatient)
+    setPatientForm(emptyPatient)
     localStorage.removeItem("formProfile")
   }
 
@@ -304,11 +306,9 @@ function useFormProfile() {
     }
   }, [])
 
-  const { setPatientGlobal } = useGlobalPatient()
-
   useEffect(() => {
     const timeout = setTimeout(() => {
-      setPatientGlobal(patient)
+      setPatientForm(patient)
     }, 800)
 
     return () => clearTimeout(timeout)

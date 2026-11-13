@@ -3,6 +3,7 @@ import { registerPatientLimits } from "@/data/registerPatientLimits"
 import type { DayOfWeek, PaidKey, SchedulingForm } from "@/types"
 import type { StatusSessaoKey } from "@/data/optionsSessionsData"
 import { addDays, getDay } from "date-fns"
+import { getClinicId } from "@/lib/clinic/getClinicId"
 
 function toDateOnly(value: Date | string | null): string | null {
   if (!value) return null
@@ -35,13 +36,17 @@ export async function savePackageSchedule(
   form: SchedulingForm,
   plannedSessions: number
 ): Promise<void> {
+  const clinicId = getClinicId()
   const sessionsBeforeCurrentPackage = Number(form.totalSessions ?? 0)
   if (
     !Number.isSafeInteger(sessionsBeforeCurrentPackage) ||
     sessionsBeforeCurrentPackage < 0 ||
-    sessionsBeforeCurrentPackage > registerPatientLimits.sessionsAlreadyCompleted
+    sessionsBeforeCurrentPackage >
+      registerPatientLimits.sessionsAlreadyCompleted
   ) {
-    throw new Error("Informe um número inteiro válido para as sessões já realizadas.")
+    throw new Error(
+      "Informe um número inteiro válido para as sessões já realizadas."
+    )
   }
 
   if (form.serviceType === "sessoes") {
@@ -57,6 +62,7 @@ export async function savePackageSchedule(
       .upsert(
         {
           patient_id: patientId,
+          clinic_id: clinicId,
           initial_start_date: toDateOnly(form.initialDateSession),
           sessions_before_current_package: sessionsBeforeCurrentPackage,
           updated_at: now,
@@ -73,13 +79,15 @@ export async function savePackageSchedule(
       .select("id")
       .single()
     if (treatmentError) throw new Error(treatmentError.message)
-    if (!treatment) throw new Error("Não encontrei o atendimento deste paciente.")
+    if (!treatment)
+      throw new Error("Não encontrei o atendimento deste paciente.")
 
     const { error: sessionError } = await supabase
       .from("treatment_sessions")
       .upsert(
         {
           treatment_id: treatmentId,
+          clinic_id: clinicId,
           session_number: 1,
           session_date: toDateOnly(session.fullDate),
           session_time: session.time,
@@ -118,6 +126,7 @@ export async function savePackageSchedule(
     .upsert(
       {
         patient_id: patientId,
+        clinic_id: clinicId,
         initial_start_date: toDateOnly(form.initialDateSession),
         sessions_before_current_package: sessionsBeforeCurrentPackage,
         updated_at: now,
@@ -134,6 +143,7 @@ export async function savePackageSchedule(
       fixed_week_days: Object.entries(form.package.selectedDays)
         .filter(([, selected]) => selected)
         .map(([day]) => day as DayOfWeek),
+      clinic_id: clinicId,
       updated_at: now,
     })
     .eq("id", treatmentId)
@@ -219,6 +229,7 @@ export async function addTreatmentSession(
   originPackageId?: string
 ): Promise<{ id: string; number: number; date: string }> {
   const supabase = createClient()
+  const clinicId = getClinicId()
 
   const { data: existing, error: sessionsError } = await supabase
     .from("treatment_sessions")
@@ -235,6 +246,7 @@ export async function addTreatmentSession(
     .from("treatment_sessions")
     .insert({
       treatment_id: treatmentId,
+      clinic_id: clinicId,
       is_extra: Boolean(originPackageId),
       origin_package_id: originPackageId ?? null,
       session_number: number,
@@ -337,13 +349,12 @@ export async function restoreMissingPackageSessionsWithSchedule(
   }
 
   const weekDayNumbers: Record<DayOfWeek, number> = {
-    Domingo: 0,
-    Segunda: 1,
-    Terça: 2,
-    Quarta: 3,
-    Quinta: 4,
-    Sexta: 5,
-    Sábado: 6,
+    Segunda: 0,
+    Terça: 1,
+    Quarta: 2,
+    Quinta: 3,
+    Sexta: 4,
+    Sábado: 5,
   }
   const selectedWeekDayNumbers = new Set(
     fixedWeekDays.map((day) => weekDayNumbers[day])
@@ -362,7 +373,11 @@ export async function restoreMissingPackageSessionsWithSchedule(
     const date = new Date(year, month - 1, day)
     return !latest || date > latest ? date : latest
   }, null)
-  let nextDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate())
+  let nextDate = new Date(
+    startDate.getFullYear(),
+    startDate.getMonth(),
+    startDate.getDate()
+  )
   if (latestExistingDate && nextDate <= latestExistingDate) {
     nextDate = addDays(latestExistingDate, 1)
   }
@@ -403,11 +418,14 @@ export async function restoreMissingPackageSessionsWithSchedule(
     nextDate = addDays(nextDate, 1)
   }
 
+  const clinicId = getClinicId()
+
   const { data: savedSessions, error: insertError } = await supabase
     .from("treatment_sessions")
     .insert(
       generatedSessions.map((session) => ({
         ...session,
+        clinic_id: clinicId,
         treatment_id: treatmentId,
       }))
     )
@@ -445,8 +463,12 @@ export async function restoreMissingPackageSessionsWithSchedule(
     const { error: cleanupError } = await supabase
       .from("treatment_sessions")
       .delete()
-      .in("id", (savedSessions ?? []).map((session) => session.id))
-    const updateError = error?.message ?? "Não encontrei o pacote para atualizar."
+      .in(
+        "id",
+        (savedSessions ?? []).map((session) => session.id)
+      )
+    const updateError =
+      error?.message ?? "Não encontrei o pacote para atualizar."
     if (cleanupError) {
       throw new Error(
         `${updateError} As sessões criadas não puderam ser removidas: ${cleanupError.message}`
@@ -512,10 +534,14 @@ export async function addStandaloneSessionToPatient(
 
   let treatmentId = treatment?.id
   let createdTreatmentRow = false
+
+  const clinicId = getClinicId()
+
   if (!treatmentId) {
     const { data: newTreatment, error: createError } = await supabase
       .from("patient_treatments")
       .insert({
+        clinic_id: clinicId,
         patient_id: patientId,
         treatment_type: "single",
         price_per_session: pricePerSession,
@@ -559,7 +585,10 @@ export async function createNextPackageTreatment(data: {
   totalSessions: number
   fixedWeekDays: DayOfWeek[]
   sessions: Array<{ date: Date; time: string }>
-}): Promise<{ id: string; sessions: Array<{ id: string; number: number; date: string; time: string }> }> {
+}): Promise<{
+  id: string
+  sessions: Array<{ id: string; number: number; date: string; time: string }>
+}> {
   const supabase = createClient()
   const { data: pendingExtraSession, error: pendingExtraError } = await supabase
     .from("treatment_sessions")
@@ -576,7 +605,11 @@ export async function createNextPackageTreatment(data: {
     )
   }
 
-  if (!Number.isInteger(data.totalSessions) || data.totalSessions < 1 || data.totalSessions > registerPatientLimits.packageSessions) {
+  if (
+    !Number.isInteger(data.totalSessions) ||
+    data.totalSessions < 1 ||
+    data.totalSessions > registerPatientLimits.packageSessions
+  ) {
     throw new Error("Informe uma quantidade válida de sessões para o pacote.")
   }
   if (data.sessions.length !== data.totalSessions) {
@@ -590,9 +623,12 @@ export async function createNextPackageTreatment(data: {
     return { ...session, date: sessionDate }
   })
 
+  const clinicId = getClinicId()
+
   const { data: treatment, error: createError } = await supabase
     .from("patient_treatments")
     .insert({
+      clinic_id: clinicId,
       patient_id: data.patientId,
       treatment_type: "package",
       price_per_session: data.pricePerSession,
@@ -607,6 +643,7 @@ export async function createNextPackageTreatment(data: {
 
   const treatmentId = treatment.id
   const sessionRows = normalizedSessions.map((session, index) => ({
+    clinic_id: clinicId,
     treatment_id: treatmentId,
     session_number: index + 1,
     session_date: session.date,
@@ -631,7 +668,9 @@ export async function createNextPackageTreatment(data: {
         `${originalMessage} Falha ao remover o pacote incompleto: ${cleanupError.message}`
       )
     }
-    throw new Error(sessionsError?.message ?? "O pacote não gravou todas as sessões.")
+    throw new Error(
+      sessionsError?.message ?? "O pacote não gravou todas as sessões."
+    )
   }
 
   const { error: previousTreatmentError } = await supabase
@@ -711,7 +750,9 @@ export async function updateTreatmentSessionSchedule(
       .maybeSingle()
     if (error) throw new Error(error.message)
     if (!data) {
-      throw new Error("Uma das sessões não está mais pendente e não foi alterada.")
+      throw new Error(
+        "Uma das sessões não está mais pendente e não foi alterada."
+      )
     }
   }
 }
@@ -761,7 +802,9 @@ export async function updateTreatmentPackageWeekDays(
     .maybeSingle()
   if (pendingSessionError) throw new Error(pendingSessionError.message)
   if (!pendingSession) {
-    throw new Error("Os dias só podem ser alterados enquanto houver sessões pendentes.")
+    throw new Error(
+      "Os dias só podem ser alterados enquanto houver sessões pendentes."
+    )
   }
 
   const { data, error } = await supabase

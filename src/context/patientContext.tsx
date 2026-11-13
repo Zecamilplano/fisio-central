@@ -35,7 +35,8 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
       !!patientGlobal.address.telephone.trim() &&
       !!patientGlobal.address.street.trim() &&
       !!patientGlobal.address.neighborhood.trim() &&
-      (patientGlobal.address.noNumber || patientGlobal.address.addressNumber !== null)
+      (patientGlobal.address.noNumber ||
+        patientGlobal.address.addressNumber !== null)
     )
   }, [patientGlobal])
   // console.log("isFormValid:", isFormValid)

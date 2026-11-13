@@ -2,16 +2,26 @@
 import { ReactNode, useEffect } from "react"
 import { createPortal } from "react-dom"
 import { X } from "lucide-react"
+import { cn } from "tailwind-variants"
 
 type ModalProp = {
   isOpen: boolean
+  size?: "small" | "default"
   onClose: () => void
+  hiddenClose?: boolean
   children: ReactNode
 }
 
-function Modal({ isOpen, onClose, children }: ModalProp) {
+function Modal({
+  isOpen,
+  size = "default",
+  onClose,
+  hiddenClose,
+  children,
+}: ModalProp) {
   useEffect(() => {
     if (!isOpen) return
+    if (!hiddenClose) return
 
     function handleEscape(event: KeyboardEvent) {
       if (event.key === "Escape") {
@@ -36,16 +46,21 @@ function Modal({ isOpen, onClose, children }: ModalProp) {
       onMouseDown={onClose}
     >
       <div
-        className="relative my-auto max-h-[calc(100vh-2rem)] w-full max-w-7xl overflow-y-auto rounded-2xl bg-white shadow-2xl md:max-h-[calc(100vh-4rem)]"
+        className={cn(
+          "relative my-auto   overflow-y-auto rounded-2xl bg-white shadow-2xl md:max-h-[calc(100vh-4rem)]",
+          size === "default" ? "max-h-[calc(100vh-2rem)]" : "w-auto"
+        )}
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <button
-          type="button"
-          onClick={onClose}
-          className="sticky top-4 z-10 ml-auto mr-4 mt-4 flex h-10 w-10 items-center justify-center rounded-full bg-white text-slate-500 shadow-md transition hover:bg-slate-100 hover:text-slate-800"
-        >
-          <X size={20} />
-        </button>
+        {!hiddenClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="sticky top-4 z-10 ml-auto mr-4 mt-4 flex h-10 w-10 items-center justify-center rounded-full bg-white text-slate-500 shadow-md transition hover:bg-slate-100 hover:text-slate-800"
+          >
+            <X size={20} />
+          </button>
+        )}
         <div className="px-4 pb-6 md:px-8 mb-8">{children}</div>
       </div>
     </div>,

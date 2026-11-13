@@ -27,7 +27,34 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  await supabase.auth.getClaims()
+  const { data } = await supabase.auth.getClaims()
+  const user = data?.claims
 
+  const pathname = request.nextUrl.pathname
+  const isPublic =
+    pathname.startsWith("/entrar") || pathname.startsWith("/primeiro-cadastro")
+
+  // 1. deslogado em rota protegida -> /entrar
+  if (!user && !isPublic) {
+    const url = request.nextUrl.clone()
+    url.pathname = "/entrar"
+    const redirect = NextResponse.redirect(url)
+    supabaseResponse.cookies.getAll().forEach((c) => redirect.cookies.set(c))
+    return redirect
+  }
+
+  // 2. logado em /entrar (sem ?motivo) -> tela inicial
+  if (
+    user &&
+    pathname.startsWith("/entrar") &&
+    !request.nextUrl.searchParams.has("motivo")
+  ) {
+    const url = request.nextUrl.clone()
+    url.pathname = "/listar-pacientes" // troque pela URL real
+    url.search = ""
+    const redirect = NextResponse.redirect(url)
+    supabaseResponse.cookies.getAll().forEach((c) => redirect.cookies.set(c))
+    return redirect
+  }
   return supabaseResponse
 }

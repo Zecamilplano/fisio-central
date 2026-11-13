@@ -55,6 +55,14 @@ function RegisterPatient() {
   const isBusy =
     isSavingPatient || isSavingService || formScheduling.isSavingSchedule
 
+  function clearRegistrationDraft() {
+    localStorage.removeItem("createdPatientId")
+    localStorage.removeItem("patientRegistrationStep")
+    localStorage.removeItem("formProfile")
+    localStorage.removeItem("typeServiceForm")
+    localStorage.removeItem("schedulingForm")
+  }
+
   async function handleRegisterAndAdd() {
     if (!(await handleSavePackageSchedule())) return
     clearRegistrationDraft()
@@ -70,14 +78,6 @@ function RegisterPatient() {
     imageInput.removeImage()
     resetRegistration()
     router.push(`/listar-pacientes?patientId=${encodeURIComponent(patientId)}`)
-  }
-
-  function clearRegistrationDraft() {
-    localStorage.removeItem("createdPatientId")
-    localStorage.removeItem("patientRegistrationStep")
-    localStorage.removeItem("formProfile")
-    localStorage.removeItem("typeServiceForm")
-    localStorage.removeItem("schedulingForm")
   }
 
   async function handleConfirmClear() {
@@ -168,27 +168,6 @@ function RegisterPatient() {
     )
   }
 
-  const devAuthStarted = useRef(false)
-
-  useEffect(() => {
-    if (process.env.NODE_ENV !== "development" || devAuthStarted.current) {
-      return
-    }
-
-    devAuthStarted.current = true
-
-    void signInDevUser().then((result) => {
-      if (!result.success) {
-        console.error(
-          "Falha na autênticação de desenvolvimento:",
-          result.message
-        )
-        return
-      }
-      console.log("Logado")
-    })
-  }, [])
-
   return (
     <section className=" flex justify-center items-center">
       <section
@@ -224,7 +203,6 @@ function RegisterPatient() {
               />
             </ol>
           </nav>
-
         </div>
 
         <form ref={formRef} className="flex flex-col gap-6 px-2">
@@ -318,7 +296,10 @@ function RegisterPatient() {
         <div
           className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/50 p-4"
           onMouseDown={(event) => {
-            if (event.target === event.currentTarget && !isClearingRegistration) {
+            if (
+              event.target === event.currentTarget &&
+              !isClearingRegistration
+            ) {
               setClearMode(null)
             }
           }}

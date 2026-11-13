@@ -6,45 +6,53 @@ import type {
   ServiceForm,
   TypeServiceType,
 } from "@/types"
+import { getClinicId } from "@/lib/clinic/getClinicId"
 
-export async function createPatient(patient: PatientType, photo?: File) {
+const PHOTO_BUCKET = "patient-photos"
+const PHOTO_MAX_BYTES = 5 * 1024 * 1024
+const PHOTO_EXTENSIONS: Record<string, string> = {
+  "image/jpeg": "jpeg",
+  "image/png": "png",
+  "image/webp": "webp",
+}
+
+// valida e envia a foto; devolve o caminho salvo no Storage
+async function uploadPatientPhoto(
+  supabase: ReturnType<typeof createClient>,
+  clinicId: string,
+  photo: File
+): Promise<string> {
+  const extension = PHOTO_EXTENSIONS[photo.type]
+  if (!extension)
+    throw new Error("A foto deve estar no formato JPG, PNG ou WEBP.")
+  if (photo.size > PHOTO_MAX_BYTES)
+    throw new Error("A foto deve ter no máximo 5 MB.")
+
+  const path = `${clinicId}/${crypto.randomUUID()}.${extension}`
+  const { error } = await supabase.storage
+    .from(PHOTO_BUCKET)
+    .upload(path, photo, { contentType: photo.type, upsert: false })
+  if (error) throw new Error(error.message)
+
+  return path
+}
+
+export async function createPatient(
+  patient: PatientType,
+  photo?: File
+): Promise<string> {
+  const clinicId = getClinicId()
   const supabase = createClient()
 
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
-
-  if (authError || !user) {
-    throw new Error("Usuário não autenticado.")
-  }
-
-  let photoPath: string | null = null
-
-  if (photo) {
-    const extension = photo.type.split("/")[1]
-
-    if (!["jpeg", "png", "webp"].includes(extension)) {
-      throw new Error("A foto deve estar no formato JPG, PNG ou WEBP.")
-    }
-
-    photoPath = `${user.id}/${crypto.randomUUID()}.${extension}`
-
-    const { error: uploadError } = await supabase.storage
-      .from("patient-photos")
-      .upload(photoPath, photo, {
-        contentType: photo.type,
-        upsert: false,
-      })
-
-    if (uploadError) {
-      throw new Error(uploadError.message)
-    }
-  }
+  // a foto só é enviada se o usuário escolheu uma
+  const photoPath = photo
+    ? await uploadPatientPhoto(supabase, clinicId, photo)
+    : null
 
   const { data, error } = await supabase
     .from("patients")
     .insert({
+      clinic_id: clinicId,
       first_name: patient.firstName.trim(),
       sur_name: patient.surName.trim(),
       telephone: patient.address.telephone,
@@ -61,6 +69,8 @@ export async function createPatient(patient: PatientType, photo?: File) {
     .single()
 
   if (error) {
+    // não deixa foto órfã no Storage se o cadastro falhou
+    if (photoPath) await supabase.storage.from(PHOTO_BUCKET).remove([photoPath])
     throw new Error(error.message)
   }
 
@@ -88,33 +98,15 @@ export async function updatePatientProfile(
   let photoUrl: string | undefined
 
   if (photo) {
-    const extensionByType: Record<string, string> = {
-      "image/jpeg": "jpeg",
-      "image/png": "png",
-      "image/webp": "webp",
-    }
-    const extension = extensionByType[photo.type]
-    if (!extension) {
-      throw new Error("A foto deve estar no formato JPG, PNG ou WEBP.")
-    }
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-    if (authError || !user) throw new Error("Usuário não autenticado.")
-
-    const newPhotoPath = `${user.id}/${crypto.randomUUID()}.${extension}`
-    const { error: uploadError } = await supabase.storage
-      .from("patient-photos")
-      .upload(newPhotoPath, photo, { contentType: photo.type, upsert: false })
-    if (uploadError) throw new Error(uploadError.message)
+    const clinicId = getClinicId()
+    const newPhotoPath = await uploadPatientPhoto(supabase, clinicId, photo)
 
     const { data: signedUrl, error: signedUrlError } = await supabase.storage
-      .from("patient-photos")
+      .from(PHOTO_BUCKET)
       .createSignedUrl(newPhotoPath, 60 * 60)
+
     if (signedUrlError) {
-      await supabase.storage.from("patient-photos").remove([newPhotoPath])
+      await supabase.storage.from(PHOTO_BUCKET).remove([newPhotoPath])
       throw new Error(signedUrlError.message)
     }
 
@@ -263,7 +255,6 @@ export async function clearPatientTreatmentDraft(
   }
 }
 
-
 export async function getPatientById(id: string): Promise<PatientType | null> {
   const supabase = createClient()
 
@@ -361,13 +352,19 @@ export async function savePatientTreatment(
 
   if (
     form.selectService === "pacote" &&
-    (!Number.isInteger(form.totalSessions) || (form.totalSessions ?? 0) < 1 || (form.totalSessions ?? 0) > registerPatientLimits.packageSessions)
+    (!Number.isInteger(form.totalSessions) ||
+      (form.totalSessions ?? 0) < 1 ||
+      (form.totalSessions ?? 0) > registerPatientLimits.packageSessions)
   ) {
     throw new Error("Informe uma quantidade inteira de sessões maior que zero.")
   }
 
   const pricePerSession = Number(form.priceSession)
-  if (!Number.isFinite(pricePerSession) || pricePerSession < 0 || pricePerSession > registerPatientLimits.pricePerSession) {
+  if (
+    !Number.isFinite(pricePerSession) ||
+    pricePerSession < 0 ||
+    pricePerSession > registerPatientLimits.pricePerSession
+  ) {
     throw new Error("Informe um preço válido para a sessão.")
   }
 
@@ -399,6 +396,7 @@ export async function savePatientTreatment(
     .from("patient_treatments")
     .insert({
       id: crypto.randomUUID(),
+      clinic_id: getClinicId(),
       ...treatment,
       created_at: now,
     })

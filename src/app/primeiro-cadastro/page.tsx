@@ -1,10 +1,22 @@
 "use client"
 
-import { useFirstRegistration, type FirstRegistrationField } from "@/hook/useFirstRegistration"
+import {
+  useFirstRegistration,
+  type FirstRegistrationField,
+} from "@/components/firstRegistration/index"
+import Button from "@/components/ui/buttonCustom"
 
 function FirstRegistration() {
-  const { values, errors, formRef, handleChange, handleBlur, handleSubmit } =
-    useFirstRegistration()
+  const {
+    values,
+    errors,
+    formRef,
+    handleChange,
+    handleBlur,
+    handleSubmit,
+    isSubmitting,
+  } = useFirstRegistration()
+
   const labelClassName = "text-base text-[#FFA726] font-medium w-full pl-1"
   const baseInputClassName =
     "w-full border-2 rounded-md px-2 py-3 bg-[#EAE9E9] text-[#333] placeholder:text-gray-400 focus:outline-[#FFA726]"
@@ -57,14 +69,18 @@ function FirstRegistration() {
                 name="firstName"
                 id="firstName"
                 value={values.firstName}
-                onChange={(event) => handleChange("firstName", event.target.value)}
+                onChange={(event) =>
+                  handleChange("firstName", event.target.value)
+                }
                 onBlur={() => handleBlur("firstName")}
                 placeholder="Digite seu primeiro nome"
                 required
                 minLength={2}
                 maxLength={60}
                 aria-invalid={Boolean(errors.firstName)}
-                aria-describedby={errors.firstName ? "firstName-error" : undefined}
+                aria-describedby={
+                  errors.firstName ? "firstName-error" : undefined
+                }
                 data-error={Boolean(errors.firstName)}
                 className={inputClassName("firstName")}
               />
@@ -80,7 +96,9 @@ function FirstRegistration() {
                 name="surName"
                 id="surName"
                 value={values.surName}
-                onChange={(event) => handleChange("surName", event.target.value)}
+                onChange={(event) =>
+                  handleChange("surName", event.target.value)
+                }
                 onBlur={() => handleBlur("surName")}
                 placeholder="Digite seu sobrenome"
                 required
@@ -127,7 +145,9 @@ function FirstRegistration() {
                 name="password"
                 id="password"
                 value={values.password}
-                onChange={(event) => handleChange("password", event.target.value)}
+                onChange={(event) =>
+                  handleChange("password", event.target.value)
+                }
                 onBlur={() => handleBlur("password")}
                 placeholder="Digite sua senha"
                 autoComplete="new-password"
@@ -135,7 +155,9 @@ function FirstRegistration() {
                 minLength={8}
                 maxLength={64}
                 aria-invalid={Boolean(errors.password)}
-                aria-describedby={errors.password ? "password-error" : undefined}
+                aria-describedby={
+                  errors.password ? "password-error" : undefined
+                }
                 data-error={Boolean(errors.password)}
                 className={inputClassName("password")}
               />
@@ -151,7 +173,9 @@ function FirstRegistration() {
                 name="confirmPassword"
                 id="confirmPassword"
                 value={values.confirmPassword}
-                onChange={(event) => handleChange("confirmPassword", event.target.value)}
+                onChange={(event) =>
+                  handleChange("confirmPassword", event.target.value)
+                }
                 onBlur={() => handleBlur("confirmPassword")}
                 placeholder="Confirme sua senha"
                 autoComplete="new-password"
@@ -159,7 +183,9 @@ function FirstRegistration() {
                 minLength={8}
                 maxLength={64}
                 aria-invalid={Boolean(errors.confirmPassword)}
-                aria-describedby={errors.confirmPassword ? "confirmPassword-error" : undefined}
+                aria-describedby={
+                  errors.confirmPassword ? "confirmPassword-error" : undefined
+                }
                 data-error={Boolean(errors.confirmPassword)}
                 className={inputClassName("confirmPassword")}
               />
@@ -197,12 +223,13 @@ function FirstRegistration() {
           </div>
 
           <footer className="pt-1">
-            <button
+            <Button
+              variant="single"
               type="submit"
-              className="text-white text-xl font-bold bg-[#FFA726] rounded-md py-3 w-full md:w-75 block mx-auto my-2 cursor-pointer hover:opacity-80 active:opacity-60"
-            >
-              Cadastrar
-            </button>
+              textAlt="Cadastrar"
+              active
+              isSubmitting={isSubmitting}
+            />
           </footer>
         </form>
       </section>

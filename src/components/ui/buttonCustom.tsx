@@ -2,6 +2,8 @@ import { ProgressActionButton } from "./progressActionButton"
 
 type ButtonProps = {
   variant: "single" | "double" | "finish"
+  textAlt?: string
+  type?: "button" | "submit"
   onPrev?: () => void
   onRegisterAdd?: () => void
   onRegisterViewPatient?: () => void
@@ -12,6 +14,8 @@ type ButtonProps = {
 
 function Button({
   variant,
+  textAlt,
+  type = "button",
   onPrev,
   onRegisterAdd,
   onRegisterViewPatient,
@@ -27,7 +31,7 @@ function Button({
         {/*Botão anterior*/}
         {variant === "single" && (
           <ProgressActionButton
-            type="button"
+            type={type}
             onClick={onNext}
             disabled={isSubmitting}
             loading={isSubmitting}
@@ -35,7 +39,7 @@ function Button({
                       ${active ? "bg-[#FFA725] text-white" : "bg-[#FFCC80] text-[#E65100]"} disabled:cursor-wait disabled:opacity-60
 `}
           >
-            {isSubmitting ? "Salvando..." : "Próximo"}
+            {isSubmitting ? "Salvando..." : (textAlt ?? "Próximo")}
           </ProgressActionButton>
         )}
 
