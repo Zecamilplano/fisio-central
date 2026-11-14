@@ -160,6 +160,7 @@ function useFormTypeService() {
     serviceForm,
     setServiceForm,
     error,
+    setError,
     handleChange,
     validateFormTypeService,
     submitted,

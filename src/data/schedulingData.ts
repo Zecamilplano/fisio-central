@@ -24,6 +24,7 @@ const schedulingFormData: SchedulingForm = {
     startDate: null,
     defaultTime: "",
     paymentType: "integral",
+    paidSessionsCount: null,
     weeklyAmount: null,
     selectedDays: {},
     sessions: [],

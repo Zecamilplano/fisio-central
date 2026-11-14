@@ -1,6 +1,10 @@
 import type { NextConfig } from "next"
 
-function getSupabaseImagePattern() {
+type RemotePatterns = NonNullable<
+  NonNullable<NextConfig["images"]>["remotePatterns"]
+>
+
+function getSupabaseImagePattern(): RemotePatterns {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   if (!supabaseUrl) return []
 

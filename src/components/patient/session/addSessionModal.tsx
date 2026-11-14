@@ -5,7 +5,6 @@ import { addDays, format } from "date-fns"
 import { useEffect, useState } from "react"
 
 const weekDayNumber: Record<DayOfWeek, number> = {
-  Domingo: 0,
   Segunda: 1,
   Terça: 2,
   Quarta: 3,

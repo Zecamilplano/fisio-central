@@ -13,44 +13,47 @@ export function ClinicGate({ children }: { children: React.ReactNode }) {
 
   async function loadMembership() {
     setLoadError(false)
-    const supabase = createClient()
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    if (!user) {
-      router.replace("/entrar")
-      return
-    }
+    try {
+      const supabase = createClient()
 
-    // a equipe enxerga todos os membros da clínica, então filtra o próprio vínculo
-    const { data, error } = await supabase
-      .from("clinic_members")
-      .select("clinic_id, role")
-      .eq("user_id", user.id)
-      .eq("status", "active")
-      .limit(1)
-      .maybeSingle()
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser()
+      if (userError || !user) {
+        router.replace("/entrar")
+        return
+      }
 
-    if (error) {
-      console.error(error)
+      // a equipe enxerga todos os membros da clínica, então filtra o próprio vínculo
+      const { data, error } = await supabase
+        .from("clinic_members")
+        .select("clinic_id, role")
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .limit(1)
+        .maybeSingle()
+
+      if (error) throw error
+
+      if (!data) {
+        useClinicStore.getState().setNeedsClinic()
+        return
+      }
+
+      useClinicStore.getState().setReady(data.clinic_id, data.role)
+    } catch (error) {
+      // sem isso a tela ficava presa em "loading" (só o header aparecia)
+      console.error("ClinicGate: falha ao carregar o vínculo da clínica", error)
       setLoadError(true)
-      return
     }
-
-    if (!data) {
-      useClinicStore.getState().setNeedsClinic()
-      return
-    }
-
-    useClinicStore.getState().setReady(data.clinic_id, data.role)
   }
 
+  // carrega ao montar e de novo sempre que a store voltar para "loading" (ex.: após login/logout)
   useEffect(() => {
-    console.log("ClinicGate montou")
-    loadMembership()
-    return () => console.log("ClinicGate desmontou")
-  }, [])
+    if (status === "loading") loadMembership()
+  }, [status])
 
   if (loadError) {
     console.log("status da store:", status)

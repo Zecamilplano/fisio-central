@@ -21,6 +21,9 @@ function useFormProfile() {
   const [errorPatient, setErrorPatient] = useState<PatientOptionalType>({})
 
   const debounceRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
+  const pendingSavesRef = useRef<
+    Record<string, string | number | null | boolean>
+  >({})
 
   useEffect(() => {
     const persistentMessages = new Set([
@@ -93,28 +96,70 @@ function useFormProfile() {
       clearTimeout(debounceRef.current[field])
     }
 
-    debounceRef.current[field] = setTimeout(() => {
-      const dataSaved = JSON.parse(localStorage.getItem("formProfile") || "{}")
+    pendingSavesRef.current[field] = formatted
+    debounceRef.current[field] = setTimeout(() => saveField(field), 800)
+  }
 
+  // Grava no localStorage um campo que ainda estava esperando o debounce.
+  function saveField(field: ProfileField) {
+    if (!(field in pendingSavesRef.current)) return
+    const value = pendingSavesRef.current[field]
+    delete pendingSavesRef.current[field]
+    clearTimeout(debounceRef.current[field])
+    delete debounceRef.current[field]
+
+    try {
+      const dataSaved = JSON.parse(localStorage.getItem("formProfile") || "{}")
       const [savedSection, savedKey] = field.split(".")
       const newData =
         savedSection === "address"
           ? {
               ...dataSaved,
-              address: { ...dataSaved.address, [savedKey]: formatted },
+              address: { ...dataSaved.address, [savedKey]: value },
             }
-          : { ...dataSaved, [field]: formatted }
+          : { ...dataSaved, [field]: value }
 
       localStorage.setItem("formProfile", JSON.stringify(newData))
-
-      // console.log("Salvou", field, value)
-    }, 800)
+    } catch {
+      console.error("Erro ao salvar o rascunho do perfil.")
+    }
   }
+
+  // Grava na hora tudo que estava pendente (ao sair do campo ou da página).
+  function flushPendingSaves() {
+    for (const field of Object.keys(pendingSavesRef.current)) {
+      saveField(field as ProfileField)
+    }
+  }
+
+  const flushRef = useRef(flushPendingSaves)
+  flushRef.current = flushPendingSaves
+
+  useEffect(() => {
+    const flush = () => flushRef.current()
+    const flushWhenHidden = () => {
+      if (document.visibilityState === "hidden") flush()
+    }
+
+    window.addEventListener("pagehide", flush)
+    window.addEventListener("beforeunload", flush)
+    document.addEventListener("visibilitychange", flushWhenHidden)
+
+    return () => {
+      flush() // ao desmontar (trocar de etapa ou de rota)
+      window.removeEventListener("pagehide", flush)
+      window.removeEventListener("beforeunload", flush)
+      document.removeEventListener("visibilitychange", flushWhenHidden)
+    }
+  }, [])
 
   function handleErrors(
     field: ProfileField,
     value: string | number | null | boolean
   ) {
+    // handleErrors roda no onBlur: aproveita para gravar o campo sem esperar o debounce
+    saveField(field)
+
     const messages: Record<ProfileField, string> = {
       firstName: "Nome obrigatório",
       surName: "Sobrenome obrigatório",
@@ -238,6 +283,7 @@ function useFormProfile() {
   function resetPatient() {
     Object.values(debounceRef.current).forEach(clearTimeout)
     debounceRef.current = {}
+    pendingSavesRef.current = {}
 
     const emptyPatient: PatientType = {
       firstName: "",
