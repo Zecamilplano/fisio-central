@@ -47,25 +47,25 @@ export default function EvolutionIcon({
           d="M104 154l14 14 43-43"
           fill="none"
           stroke="#00C66B"
-          stroke-width="18"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="18"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         />
         <path
           d="M104 273l14 14 43-43"
           fill="none"
           stroke="#00C66B"
-          stroke-width="18"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="18"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         />
         <path
           d="M104 392l14 14 43-43"
           fill="none"
           stroke="#00C66B"
-          stroke-width="18"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="18"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         />
         <rect x="188" y="125" width="128" height="17" rx="9" fill="#3E5D6D" />
         <rect x="188" y="168" width="77" height="17" rx="9" fill="#3E5D6D" />

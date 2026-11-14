@@ -67,7 +67,7 @@ function ListPatient() {
           ) ??
           document.querySelector<HTMLButtonElement>("[data-patient-id]") ??
           document.querySelector<HTMLInputElement>("[data-patient-search]")
-        target?.focus()
+        target?.focus({ preventScroll: true })
       },
       reducedMotion ? 0 : 320
     )
@@ -268,7 +268,7 @@ function ListPatient() {
     window.requestAnimationFrame(() => {
       document
         .querySelector<HTMLButtonElement>("[data-patient-back]")
-        ?.focus()
+        ?.focus({ preventScroll: true })
     })
   }, [isCompactViewport, isShowingPatient, selectedPatientId])
 
@@ -284,7 +284,16 @@ function ListPatient() {
         <SubHeaderPatientList onSearchChange={setSearch} />
       </div>
 
-      <div className="relative pr-2 pb-2 flex min-h-0 flex-1 overflow-hidden lg:items-stretch lg:min-h-130">
+      {/* os painéis deslizam com translate; o container nunca deve rolar na horizontal.
+          Se algum foco/scrollIntoView rolar, volta para 0 (senão o painel fica deslocado). */}
+      <div
+        onScroll={(event) => {
+          if (event.currentTarget.scrollLeft !== 0) {
+            event.currentTarget.scrollLeft = 0
+          }
+        }}
+        className="relative pr-2 pb-2 flex min-h-0 flex-1 overflow-hidden lg:items-stretch lg:min-h-130"
+      >
         <div
           aria-hidden={isCompactViewport && isShowingPatient}
           inert={isCompactViewport && isShowingPatient}
