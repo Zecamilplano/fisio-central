@@ -1,4 +1,9 @@
-export function mapSignUpError(error: { code?: string }) {
+export function mapSignUpError(error: { code?: string; message?: string }) {
+  // bloqueio do trigger block_signup_after_first_user (o Auth devolve erro genérico de banco)
+  if (error.message?.includes("Database error saving new user")) {
+    return "O cadastro inicial já foi feito. Entre com sua conta."
+  }
+
   switch (error.code) {
     case "user_already_exists":
     case "email_exists":
