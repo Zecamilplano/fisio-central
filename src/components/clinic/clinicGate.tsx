@@ -23,10 +23,11 @@ export function ClinicGate({ children }: { children: React.ReactNode }) {
       return
     }
 
-    // o RLS já limita às linhas do próprio usuário
+    // a equipe enxerga todos os membros da clínica, então filtra o próprio vínculo
     const { data, error } = await supabase
       .from("clinic_members")
       .select("clinic_id, role")
+      .eq("user_id", user.id)
       .eq("status", "active")
       .limit(1)
       .maybeSingle()

@@ -1,5 +1,6 @@
 import type { EvolutionSaveData } from "@/components/patient/evolution"
 import { createClient } from "@/lib/supabase/client"
+import { getClinicId } from "@/lib/clinic/getClinicId"
 
 type SessionEvolutionRow = {
   session_id: string
@@ -34,6 +35,7 @@ export async function saveSessionEvolution(
     .upsert(
       {
         session_id: sessionId,
+        clinic_id: getClinicId(),
         data: evolution,
         updated_at: new Date().toISOString(),
       },

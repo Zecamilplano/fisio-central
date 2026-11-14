@@ -162,6 +162,7 @@ export async function savePackageSchedule(
 
     return {
       treatment_id: treatmentId,
+      clinic_id: clinicId,
       session_number: session.sessionNumber,
       session_date: sessionDate,
       session_time: session.time,
