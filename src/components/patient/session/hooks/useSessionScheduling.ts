@@ -2,6 +2,10 @@ import { useFisioStore } from "@/store/fisio/fisioStore"
 import type { DayOfWeek, ListPatient } from "@/types"
 import { addDays, format, getDay, parseISO } from "date-fns"
 import {
+  buildAdvanceUpdates,
+  buildPostponeUpdates,
+} from "@/utils/sessions/advanceSession"
+import {
   updatePendingTreatmentSessionTime,
   updateTreatmentPackageWeekDays,
   updateTreatmentSessionSchedule,
@@ -22,6 +26,7 @@ type UseSessionSchedulingProps = {
 }
 
 type ScheduleUpdate = { id: string; session_date: string }
+
 
 export function useSessionScheduling({ patient }: UseSessionSchedulingProps) {
   const rescheduleSessions = useFisioStore((state) => state.rescheduleSessions)
@@ -95,13 +100,45 @@ export function useSessionScheduling({ patient }: UseSessionSchedulingProps) {
     }
 
     const selectedDate = value.slice(0, 10)
-    const scheduleUpdates: ScheduleUpdate[] = [
-      { id: sessionId, session_date: selectedDate },
-    ]
+
+    // Adiantar ou adiar a próxima sessão do pacote recalcula as seguintes
+    const advance = buildAdvanceUpdates(patient, sessionId, selectedDate)
+    const postpone =
+      advance.kind === "none"
+        ? buildPostponeUpdates(patient, sessionId, selectedDate)
+        : ({ kind: "none" } as const)
+
+    for (const result of [advance, postpone]) {
+      if (result.kind === "error") {
+        toast.error(result.message)
+        return
+      }
+    }
+
+    const recalculation =
+      advance.kind === "advance"
+        ? { verb: "adiantada", updates: advance.updates }
+        : postpone.kind === "postpone"
+          ? { verb: "adiada", updates: postpone.updates }
+          : null
+
+    const scheduleUpdates: ScheduleUpdate[] = recalculation
+      ? recalculation.updates
+      : [{ id: sessionId, session_date: selectedDate }]
 
     try {
       await persistSchedule(scheduleUpdates)
-      toast.success("Data da sessão salva no servidor.")
+      if (recalculation) {
+        const recalculated = recalculation.updates.length - 1
+        toast.success(
+          `Sessão ${changedSession.number} ${recalculation.verb} para ${format(parseISO(selectedDate), "dd/MM")}.` +
+            (recalculated > 0
+              ? ` ${recalculated === 1 ? "A próxima sessão foi recalculada." : `As próximas ${recalculated} sessões foram recalculadas.`}`
+              : "")
+        )
+      } else {
+        toast.success("Data da sessão salva no servidor.")
+      }
     } catch (error) {
       toast.error(
         error instanceof Error
