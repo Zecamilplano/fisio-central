@@ -1,3 +1,4 @@
+import { assertCanEdit } from "@/lib/clinic/assertCanEdit"
 import { createClient } from "@/lib/supabase/client"
 import { registerPatientLimits } from "@/data/registerPatientLimits"
 import type {
@@ -41,6 +42,7 @@ export async function createPatient(
   patient: PatientType,
   photo?: File
 ): Promise<string> {
+  assertCanEdit()
   const clinicId = getClinicId()
   const supabase = createClient()
 
@@ -83,6 +85,7 @@ export async function updatePatientProfile(
   photo?: File,
   removePhoto = false
 ): Promise<{ photoUrl?: string | null }> {
+  assertCanEdit()
   const supabase = createClient()
   const { data: currentPatient, error: currentPatientError } = await supabase
     .from("patients")
@@ -161,6 +164,7 @@ export async function updatePatientProfile(
 export async function deletePatientPermanently(
   patientId: string
 ): Promise<{ photoCleanupError?: string }> {
+  assertCanEdit()
   const supabase = createClient()
   const { data: patient, error: patientError } = await supabase
     .from("patients")
@@ -198,6 +202,7 @@ export async function clearPatientTreatmentDraft(
   treatmentId: string,
   removeTreatment: boolean
 ): Promise<void> {
+  assertCanEdit()
   const supabase = createClient()
   const { data: treatment, error: treatmentLookupError } = await supabase
     .from("patient_treatments")
@@ -346,6 +351,7 @@ export async function savePatientTreatment(
   form: ServiceForm,
   treatmentId?: string | null
 ): Promise<string> {
+  assertCanEdit()
   if (!form.selectService) {
     throw new Error("Selecione o tipo de atendimento.")
   }

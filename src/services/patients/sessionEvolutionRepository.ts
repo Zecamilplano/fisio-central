@@ -1,3 +1,4 @@
+import { assertCanEdit } from "@/lib/clinic/assertCanEdit"
 import type { EvolutionSaveData } from "@/components/patient/evolution"
 import { createClient } from "@/lib/supabase/client"
 import { getClinicId } from "@/lib/clinic/getClinicId"
@@ -29,6 +30,7 @@ export async function saveSessionEvolution(
   sessionId: string,
   evolution: EvolutionSaveData
 ): Promise<void> {
+  assertCanEdit()
   const supabase = createClient()
   const { error } = await supabase
     .from("treatment_session_evolutions")

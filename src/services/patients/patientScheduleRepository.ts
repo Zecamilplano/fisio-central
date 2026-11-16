@@ -1,3 +1,4 @@
+import { assertCanEdit } from "@/lib/clinic/assertCanEdit"
 import { createClient } from "@/lib/supabase/client"
 import { registerPatientLimits } from "@/data/registerPatientLimits"
 import type { DayOfWeek, PaidKey, SchedulingForm } from "@/types"
@@ -36,6 +37,7 @@ export async function savePackageSchedule(
   form: SchedulingForm,
   plannedSessions: number
 ): Promise<void> {
+  assertCanEdit()
   const clinicId = getClinicId()
   const sessionsBeforeCurrentPackage = Number(form.totalSessions ?? 0)
   if (
@@ -206,6 +208,7 @@ export async function addSingleTreatmentSession(
   originPackageId?: string,
   time = "16:00"
 ): Promise<{ id: string; number: number; date: string }> {
+  assertCanEdit()
   const supabase = createClient()
   const { data: treatment, error: treatmentError } = await supabase
     .from("patient_treatments")
@@ -229,6 +232,7 @@ export async function addTreatmentSession(
   time = "16:00",
   originPackageId?: string
 ): Promise<{ id: string; number: number; date: string }> {
+  assertCanEdit()
   const supabase = createClient()
   const clinicId = getClinicId()
 
@@ -268,6 +272,7 @@ export async function addPackageSession(
   date: Date,
   time = "16:00"
 ): Promise<{ id: string; number: number; date: string }> {
+  assertCanEdit()
   const supabase = createClient()
   const { data: treatment, error: treatmentError } = await supabase
     .from("patient_treatments")
@@ -299,6 +304,7 @@ export async function restoreMissingPackageSessionsWithSchedule(
   time: string,
   fixedWeekDays: DayOfWeek[]
 ): Promise<Array<{ id: string; number: number; date: string; time: string }>> {
+  assertCanEdit()
   const allowedDays: DayOfWeek[] = [
     "Segunda",
     "Terça",
@@ -519,6 +525,7 @@ export async function addStandaloneSessionToPatient(
   time = "16:00",
   originPackageId?: string
 ): Promise<{ id: string; number: number; date: string }> {
+  assertCanEdit()
   const supabase = createClient()
   if (originPackageId) {
     await ensureNoPackageSessionAtTime(originPackageId, date, time)
@@ -590,6 +597,7 @@ export async function createNextPackageTreatment(data: {
   id: string
   sessions: Array<{ id: string; number: number; date: string; time: string }>
 }> {
+  assertCanEdit()
   const supabase = createClient()
   const { data: pendingExtraSession, error: pendingExtraError } = await supabase
     .from("treatment_sessions")
@@ -728,6 +736,7 @@ export async function updateTreatmentSessions(
     session_time?: string
   }
 ): Promise<void> {
+  assertCanEdit()
   if (sessionIds.length === 0) return
   const supabase = createClient()
   const { error } = await supabase
@@ -740,6 +749,7 @@ export async function updateTreatmentSessions(
 export async function updateTreatmentSessionSchedule(
   updates: Array<{ id: string; session_date: string }>
 ): Promise<void> {
+  assertCanEdit()
   const supabase = createClient()
   for (const { id, session_date } of updates) {
     const { data, error } = await supabase
@@ -762,6 +772,7 @@ export async function updatePendingTreatmentSessionTime(
   sessionId: string,
   session_time: string
 ): Promise<void> {
+  assertCanEdit()
   const supabase = createClient()
   const { data, error } = await supabase
     .from("treatment_sessions")
@@ -778,6 +789,7 @@ export async function updateTreatmentPackageWeekDays(
   treatmentId: string,
   fixedWeekDays: DayOfWeek[]
 ): Promise<void> {
+  assertCanEdit()
   const allowedDays: DayOfWeek[] = [
     "Segunda",
     "Terça",
@@ -825,6 +837,7 @@ export async function updateTreatmentPackageWeekDays(
 export async function deleteTreatmentSessions(
   sessionIds: string[]
 ): Promise<void> {
+  assertCanEdit()
   if (sessionIds.length === 0) return
   const supabase = createClient()
 

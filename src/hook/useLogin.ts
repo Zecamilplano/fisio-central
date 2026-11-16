@@ -65,7 +65,8 @@ export function useLogin() {
     // zera a store para o ClinicGate buscar o vínculo do usuário que entrou
     useClinicStore.getState().reset()
     toast.success("Bem-vindo de volta!")
-    router.replace("/cadastrar-pacientes") // troque pela rota real da área logada
+    // lista: a equipe vê todos os pacientes; o paciente vê só o próprio registro (RLS)
+    router.replace("/listar-pacientes")
     router.refresh()
   }
 
