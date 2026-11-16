@@ -1,10 +1,20 @@
 "use client"
 
+import { useEffect, useState } from "react"
+import Link from "next/link"
 import Button from "@/components/ui/buttonCustom"
 import { useLogin } from "@/hook/useLogin"
 import { cn } from "tailwind-variants"
 
 function Login() {
+  const [invalidLink, setInvalidLink] = useState(false)
+
+  // /entrar?motivo=link-invalido vem do link de redefinição de senha
+  useEffect(() => {
+    const motivo = new URLSearchParams(window.location.search).get("motivo")
+    setInvalidLink(motivo === "link-invalido")
+  }, [])
+
   const {
     values,
     errors,
@@ -17,12 +27,24 @@ function Login() {
 
   return (
     <section className=" w-full h-full flex justify-center items-center">
-      <section className="bg-white flex justify-center items-center flex-col px-3 w-full max-w-[90%] h-110 md:w-120 md:max-h-screen overflow-y-auto rounded-md shadow-2xl">
+      <section className="bg-white flex justify-center items-center flex-col px-3 py-4 w-full max-w-[90%] min-h-110 md:w-120 md:max-h-screen overflow-y-auto rounded-md shadow-2xl">
         <header>
           <h1 className="py-6 text-3xl font-montserrat font-bold tracking-tight text-[#FFA726]">
             Entrar
           </h1>
         </header>
+
+        {invalidLink && (
+          <p
+            role="alert"
+            className="font-open-sans mx-3 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800"
+          >
+            O link de redefinição de senha é inválido ou expirou.{" "}
+            <Link href="/esqueci-senha" className="underline underline-offset-2">
+              Pedir um novo link
+            </Link>
+          </p>
+        )}
 
         <form
           onSubmit={handleSubmit}
@@ -99,6 +121,14 @@ function Login() {
               isSubmitting={submitting}
               onNext={() => handleSubmit()}
             />
+            <p className="text-center">
+              <Link
+                href="/esqueci-senha"
+                className="text-sm text-[#E65100] underline underline-offset-2"
+              >
+                Esqueci minha senha
+              </Link>
+            </p>
           </footer>
         </form>
       </section>

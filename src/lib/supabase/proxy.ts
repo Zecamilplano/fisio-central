@@ -32,11 +32,22 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname
   const isPublic =
-    pathname.startsWith("/entrar") || pathname.startsWith("/primeiro-cadastro")
+    pathname.startsWith("/entrar") ||
+    pathname.startsWith("/primeiro-cadastro") ||
+    pathname.startsWith("/esqueci-senha") ||
+    pathname.startsWith("/auth/confirm") // link dos e-mails do Supabase
 
   // 1. deslogado em rota protegida -> /entrar
   if (!user && !isPublic) {
     const url = request.nextUrl.clone()
+    // /redefinir-senha sem sessão = link do e-mail inválido ou expirado
+    if (pathname.startsWith("/redefinir-senha")) {
+      url.pathname = "/entrar"
+      url.search = "?motivo=link-invalido"
+      const redirect = NextResponse.redirect(url)
+      supabaseResponse.cookies.getAll().forEach((c) => redirect.cookies.set(c))
+      return redirect
+    }
     url.pathname = "/entrar"
     const redirect = NextResponse.redirect(url)
     supabaseResponse.cookies.getAll().forEach((c) => redirect.cookies.set(c))
