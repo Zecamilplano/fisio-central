@@ -37,18 +37,11 @@ export function useLogin() {
   }
 
   async function handleSubmit(event?: FormEvent<HTMLFormElement>) {
-    console.log("Antes do preventDefault")
     event?.preventDefault()
-    console.log("Depois do preventDefault")
     if (submitting) return
-    console.log("Depois do if")
 
     setAttempted(true)
-    console.log("values:", values)
-    console.log("validation:", validation)
     if (validation.email || validation.password) return
-
-    console.log("Validação passou")
 
     setSubmitting(true)
     setSubmitError(null)

@@ -35,6 +35,13 @@ export function applyPaymentToSessions(
   }))
 }
 
+// O input type="date" entrega "yyyy-MM-dd". new Date("2026-11-17") lê como UTC,
+// que no Brasil (UTC-3) vira 16/11 21h -> a 1ª sessão caía um dia antes.
+// parseISO lê "yyyy-MM-dd" no fuso local; Date e ISO completo seguem iguais.
+function toLocalStartOfDay(value: Date | string): Date {
+  return fn.startOfDay(typeof value === "string" ? fn.parseISO(value) : value)
+}
+
 export function buildSessions(
   activeDays: string[],
   scheduledCount: number,
@@ -48,7 +55,7 @@ export function buildSessions(
   const newSessions: Session_[] = []
 
   const activeDayNumbers = activeDays.map((day) => dayMap[day])
-  let currentDate = fn.startOfDay(new Date(startDate))
+  let currentDate = toLocalStartOfDay(startDate)
 
   while (newSessions.length < sessionsToAdd) {
     const currentDayNumber = currentDate.getDay()

@@ -355,13 +355,14 @@ export async function restoreMissingPackageSessionsWithSchedule(
     throw new Error("Este pacote já tem todas as sessões cadastradas.")
   }
 
+  // mesma numeração do getDay() do date-fns (domingo = 0)
   const weekDayNumbers: Record<DayOfWeek, number> = {
-    Segunda: 0,
-    Terça: 1,
-    Quarta: 2,
-    Quinta: 3,
-    Sexta: 4,
-    Sábado: 5,
+    Segunda: 1,
+    Terça: 2,
+    Quarta: 3,
+    Quinta: 4,
+    Sexta: 5,
+    Sábado: 6,
   }
   const selectedWeekDayNumbers = new Set(
     fixedWeekDays.map((day) => weekDayNumbers[day])
