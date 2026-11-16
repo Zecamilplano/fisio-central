@@ -4,7 +4,10 @@ export function Logo({ className }: { className?: string }) {
       xmlns="http://www.w3.org/2000/svg"
       width={264}
       height={90}
+      viewBox="0 0 264 90"
       fill="none"
+      role="img"
+      aria-label="FisioCentral"
       className={className}
     >
       <g opacity={0.9}>

@@ -5,7 +5,14 @@ import { compressPatientPhoto } from "@/utils/patient/compressPatientPhoto"
 
 const supportedImageTypes = ["image/jpeg", "image/png", "image/webp"]
 
-function useImageInput() {
+function formatSize(bytes: number) {
+  return bytes >= 1024 * 1024
+    ? `${(bytes / 1024 / 1024).toFixed(1)} MB`
+    : `${Math.max(1, Math.round(bytes / 1024))} KB`
+}
+
+// prepare: como otimizar a imagem (padrão: foto de paciente, comprime acima de 5 MB)
+function useImageInput(prepare: (file: File) => Promise<File> = compressPatientPhoto) {
   const [isDragging, setIsDragging] = useState(false)
   const [isCompressing, setIsCompressing] = useState(false)
   const [error, setError] = useState("")
@@ -24,7 +31,7 @@ function useImageInput() {
     setCompressionMessage("")
     setIsCompressing(true)
     try {
-      const preparedPhoto = await compressPatientPhoto(file)
+      const preparedPhoto = await prepare(file)
       setImage((current) => {
         current.forEach((item) => URL.revokeObjectURL(item.preview))
         return [
@@ -37,7 +44,7 @@ function useImageInput() {
       })
       if (preparedPhoto.size < file.size) {
         setCompressionMessage(
-          `Foto otimizada: ${(file.size / 1024 / 1024).toFixed(1)} MB → ${(preparedPhoto.size / 1024 / 1024).toFixed(1)} MB.`
+          `Foto otimizada: ${formatSize(file.size)} → ${formatSize(preparedPhoto.size)}.`
         )
       }
     } catch (cause) {

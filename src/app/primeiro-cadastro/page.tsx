@@ -6,6 +6,7 @@ import {
   type FirstRegistrationField,
 } from "@/components/firstRegistration/index"
 import Button from "@/components/ui/buttonCustom"
+import { Camera, X } from "lucide-react"
 
 function FirstRegistration() {
   const {
@@ -16,7 +17,9 @@ function FirstRegistration() {
     handleBlur,
     handleSubmit,
     isSubmitting,
+    photo,
   } = useFirstRegistration()
+  const selectedPhoto = photo.image[0]
 
   const labelClassName = "text-base text-[#FFA726] font-medium w-full pl-1"
   const baseInputClassName =
@@ -60,6 +63,74 @@ function FirstRegistration() {
           onSubmit={handleSubmit}
           className="font-open-sans py-2 px-3 w-full max-w-150 mx-auto flex flex-col gap-5"
         >
+          {/* Foto de perfil (opcional) */}
+          <div className="flex flex-col items-center">
+            {selectedPhoto ? (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element -- preview local (blob:) */}
+                <img
+                  src={selectedPhoto.preview}
+                  alt="Sua foto de perfil"
+                  className="size-24 rounded-full object-cover ring-2 ring-[#FFA726]"
+                />
+                <button
+                  type="button"
+                  onClick={photo.removeImage}
+                  className="mt-3 flex items-center gap-2 rounded-lg bg-[#FBBF24] px-3 py-2 text-sm font-medium text-[#78350F] transition cursor-pointer hover:opacity-80 active:scale-95 active:opacity-60"
+                >
+                  <X size={16} aria-hidden="true" /> Remover foto
+                </button>
+              </>
+            ) : (
+              <>
+                <label
+                  {...photo.dragEvents}
+                  htmlFor="profile-photo"
+                  className={`group flex size-24 cursor-pointer items-center justify-center rounded-full bg-[#FFE0B2] transition hover:bg-[#FFCC80] active:scale-95 active:bg-[#FFB74D] focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[#FFA726] ${
+                    photo.isDragging ? "opacity-50" : ""
+                  } ${photo.error ? "ring-2 ring-red-500" : ""}`}
+                >
+                  <Camera
+                    size={36}
+                    aria-hidden="true"
+                    className="text-[#F57C00] transition-colors group-hover:text-[#EF6C00]"
+                  />
+                  <span className="sr-only">Adicionar sua foto de perfil, opcional</span>
+                  <input
+                    type="file"
+                    id="profile-photo"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={photo.handleFileChange}
+                    disabled={photo.isCompressing}
+                    className="sr-only"
+                  />
+                </label>
+                <p className="mt-2 text-sm font-medium text-[#8C7B6B]">
+                  Foto de perfil (opcional)
+                </p>
+              </>
+            )}
+
+            <div className="mt-1 text-center" aria-live="polite">
+              <p className="text-xs text-[#8C7B6B]">
+                JPG, PNG ou WEBP. Fotos grandes são otimizadas automaticamente.
+              </p>
+              {photo.isCompressing && (
+                <p role="status" className="mt-1 text-sm text-slate-500">
+                  Otimizando foto...
+                </p>
+              )}
+              {photo.compressionMessage && !photo.error && (
+                <p className="mt-1 text-sm text-emerald-700">{photo.compressionMessage}</p>
+              )}
+              {photo.error && (
+                <p role="alert" className="mt-1 text-sm text-red-600">
+                  {photo.error}
+                </p>
+              )}
+            </div>
+          </div>
+
           <fieldset className="flex flex-col md:flex-row w-full gap-4 border-0 p-0 m-0">
             <div className="flex w-full flex-col gap-1">
               <label htmlFor="firstName" className={labelClassName}>

@@ -14,6 +14,12 @@ import {
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { toast } from "react-toastify"
+import useImageInput from "@/hook/useImageInput"
+import { prepareAvatarPhoto } from "@/utils/image/prepareAvatarPhoto"
+import {
+  savePendingProfilePhoto,
+  uploadProfilePhoto,
+} from "@/lib/profile/profilePhoto"
 
 export function useFirstRegistration() {
   const [values, setValues] = useState<FirstRegistrationValues>(initialValues)
@@ -25,6 +31,8 @@ export function useFirstRegistration() {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  // foto de perfil opcional, otimizada para avatar (512 px) quando necessário
+  const photo = useImageInput(prepareAvatarPhoto)
 
   useEffect(() => {
     if (!shouldFocusFirstError) return
@@ -66,7 +74,7 @@ export function useFirstRegistration() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (isSubmitting) return
+    if (isSubmitting || photo.isCompressing) return
     setHasAttemptedSubmit(true)
 
     const nextErrors = validateForm(values)
@@ -101,6 +109,21 @@ export function useFirstRegistration() {
       return
     }
 
+    const photoFile = photo.image[0]?.file
+    if (photoFile) {
+      if (data.session && data.user) {
+        // já logado (sem confirmação de e-mail): envia agora
+        try {
+          await uploadProfilePhoto(data.user.id, photoFile)
+        } catch {
+          toast.warn("Cadastro feito, mas a foto não foi enviada. Tente de novo depois.")
+        }
+      } else {
+        // envia automaticamente no primeiro login, depois de confirmar o e-mail
+        await savePendingProfilePhoto(values.email, photoFile)
+      }
+    }
+
     if (data.session) {
       toast.success("Cadastro concluído!")
       router.replace("/cadastrar-pacientes")
@@ -120,5 +143,6 @@ export function useFirstRegistration() {
     handleBlur,
     handleSubmit,
     isSubmitting,
+    photo,
   }
 }
