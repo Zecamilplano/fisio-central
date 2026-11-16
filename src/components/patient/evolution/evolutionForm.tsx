@@ -24,6 +24,7 @@ function EvolutionForm({
   onSave,
   onUnchanged,
   onCancel,
+  onDirtyChange,
   patient,
   session,
   defaultTime,
@@ -58,6 +59,7 @@ function EvolutionForm({
     mode,
     onSave,
     onUnchanged,
+    onDirtyChange,
   })
 
   return (

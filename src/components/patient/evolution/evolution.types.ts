@@ -70,6 +70,8 @@ export type EvolutionFormProps = {
   onCancel: () => void
   onSave: (data: EvolutionSaveData) => void | Promise<void>
   onUnchanged: () => void
+  // avisa o pai quando o formulário tem alterações não salvas
+  onDirtyChange?: (dirty: boolean) => void
 }
 
 // Use evolution form
@@ -84,7 +86,7 @@ export type ExerciseField = "name" | "details"
 
 export type UseEvolutionFormParams = Pick<
   EvolutionFormProps,
-  "initialData" | "mode" | "onSave" | "onUnchanged"
+  "initialData" | "mode" | "onSave" | "onUnchanged" | "onDirtyChange"
 >
 
 export type WarningField =

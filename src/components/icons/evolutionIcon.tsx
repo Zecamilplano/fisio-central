@@ -1,20 +1,34 @@
 type EvolutionIconProps = {
   hasEvolution?: boolean
+  // sessão ainda não realizada: não dá para registrar evolução
+  disabled?: boolean
   onclick: () => void
 }
 
 export default function EvolutionIcon({
   hasEvolution,
+  disabled = false,
   onclick,
 }: EvolutionIconProps) {
-  const label = hasEvolution ? "Visualizar evolução" : "Adicionar evolução"
+  const label = hasEvolution
+    ? "Visualizar evolução"
+    : disabled
+      ? "Evolução disponível depois que a sessão for realizada"
+      : "Adicionar evolução"
 
   return (
+    // aria-disabled (e não disabled) para o clique ainda mostrar o aviso explicando o motivo
     <button
       type="button"
       onClick={onclick}
       title={label}
-      className="flex size-8 items-center justify-center rounded-md transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 cursor-pointer"
+      aria-label={label}
+      aria-disabled={disabled || undefined}
+      className={`flex size-8 items-center justify-center rounded-md transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+        disabled
+          ? "cursor-not-allowed opacity-40"
+          : "cursor-pointer hover:bg-slate-100 active:scale-90 active:bg-slate-200"
+      }`}
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -24,7 +38,7 @@ export default function EvolutionIcon({
         role="img"
         aria-labelledby="title desc"
         className={` transition-all duration-200
-          ${hasEvolution ? "opacity-100" : "grayscale opacity-45 hover:opacity-70"}
+          ${hasEvolution ? "opacity-100" : disabled ? "grayscale opacity-45" : "grayscale opacity-45 hover:opacity-70"}
         `}
       >
         <title id="title">

@@ -13,11 +13,13 @@ import {
 
 import type { EvolutionFormData } from "./evolution.types"
 import type { ListPatient, Session } from "@/types"
+import type { EvolutionAuthor } from "@/services/patients/sessionEvolutionRepository"
 import { format, parseISO } from "date-fns"
 import { ptBR } from "date-fns/locale"
 
 type EvolutionViewProps = {
   evolution: EvolutionFormData
+  author: EvolutionAuthor | null
   patient: Pick<ListPatient, "firstName" | "surName" | "typeService">
   session: Pick<Session, "date" | "time">
   defaultTime: string
@@ -26,6 +28,7 @@ type EvolutionViewProps = {
 
 export default function EvolutionView({
   evolution,
+  author,
   patient,
   session,
   defaultTime,
@@ -295,12 +298,16 @@ export default function EvolutionView({
               <p className="text-sm text-slate-500">Profissional responsável</p>
 
               <h3 className="text-lg font-semibold text-slate-800">
-                Dra. Ana Carolina
+                {author?.name
+                  ? [author.title, author.name].filter(Boolean).join(" ")
+                  : "Profissional não identificado"}
               </h3>
 
               <p className="text-sm text-slate-600">Fisioterapeuta</p>
 
-              <p className="text-xs text-slate-400">CREFITO 123456-F</p>
+              {author?.crefito && (
+                <p className="text-xs text-slate-400">CREFITO {author.crefito}</p>
+              )}
             </div>
           </div>
         </section>

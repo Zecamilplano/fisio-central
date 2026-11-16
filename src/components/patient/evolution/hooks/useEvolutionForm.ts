@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 
 import type { FormEvent, KeyboardEvent } from "react"
 
@@ -25,11 +25,26 @@ export function useEvolutionForm({
   mode,
   onSave,
   onUnchanged,
+  onDirtyChange,
 }: UseEvolutionFormParams) {
   const [form, setForm] = useState<EvolutionFormData>(() =>
     initialData ? structuredClone(initialData) : createEmptyEvolution()
   )
   const [errors, setErrors] = useState<EvolutionFormErrors>({})
+
+  // compara com o conteúdo inicial (ou com o formulário vazio, na criação)
+  const isDirty = useMemo(
+    () =>
+      !hasSameEvolutionContent(
+        normalizeEvolutionData(form),
+        normalizeEvolutionData(initialData ?? createEmptyEvolution())
+      ),
+    [form, initialData]
+  )
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty)
+  }, [isDirty, onDirtyChange])
   const [isSaving, setIsSaving] = useState(false)
 
   const [temporaryWarning, setTemporaryError] =
@@ -37,7 +52,6 @@ export function useEvolutionForm({
   const errorTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   function showWarning(field: WarningField, message: string, duration = 5000) {
-    console.log(field, message)
     setTemporaryError({ field, message })
 
     if (errorTimeoutRef.current) {
@@ -375,7 +389,6 @@ export function useEvolutionForm({
   const PROGRESS_MAX_LENGTH = 2000
 
   function updateProgress(value: string) {
-    console.log("teste")
     const maxLength = value.length > PROGRESS_MAX_LENGTH
 
     if (maxLength) {

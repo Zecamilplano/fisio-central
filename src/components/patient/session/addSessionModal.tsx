@@ -194,7 +194,7 @@ export function AddSessionModal({
     document.body.style.overflow = "hidden"
 
     return () => {
-      document.addEventListener("keydown", handleEscape)
+      document.removeEventListener("keydown", handleEscape)
       document.body.style.overflow = ""
     }
   }, [isOpen, onClose])

@@ -17,7 +17,7 @@ import { ptBR } from "date-fns/locale"
 import { Check, ChevronDown } from "lucide-react"
 import { SessionOptions } from "./sessionOptions"
 import EvolutionIcon from "@/components/icons/evolutionIcon"
-import { useState } from "react"
+import { useCallback, useRef, useState } from "react"
 import EvolutionView from "../evolution/evolutionView"
 import Modal from "@/components/ui/modal"
 import { EvolutionFormData, EvolutionSaveData } from "../evolution"
@@ -60,10 +60,35 @@ export function SessionCard({
   onChangeSession,
 }: SessionCardProps) {
   const [evolutionMode, setEvolutionMode] = useState<EvolutionMode>(null)
+  // alterações não salvas no formulário de evolução (criar/editar)
+  const isEvolutionDirty = useRef(false)
+  const handleEvolutionDirtyChange = useCallback((dirty: boolean) => {
+    isEvolutionDirty.current = dirty
+  }, [])
+
+  // sai do formulário (fechar modal ou cancelar) pedindo confirmação se houver alterações
+  function leaveEvolutionForm(next: EvolutionMode) {
+    const isEditing = evolutionMode === "create" || evolutionMode === "edit"
+    if (
+      isEditing &&
+      isEvolutionDirty.current &&
+      !window.confirm(
+        "Há alterações não salvas nesta evolução. Deseja sair e descartar as alterações?"
+      )
+    ) {
+      return
+    }
+    isEvolutionDirty.current = false
+    setEvolutionMode(next)
+  }
   const evolution = useFisioStore(
     (state) => state.evolutions[session.id] ?? null
   )
   const saveEvolution = useFisioStore((state) => state.saveEvolution)
+  const evolutionAuthor = useFisioStore(
+    (state) => state.evolutionAuthors[session.id] ?? null
+  )
+  const setEvolutionAuthor = useFisioStore((state) => state.setEvolutionAuthor)
 
   const convertDate = parseISO(session.date)
 
@@ -260,6 +285,7 @@ export function SessionCard({
 
                 <EvolutionIcon
                   hasEvolution={Boolean(evolution)}
+                  disabled={!evolution && session.finish !== "realizado"}
                   onclick={handleOpenEvolution}
                 />
               </div>
@@ -278,6 +304,7 @@ export function SessionCard({
               </span>
               <EvolutionIcon
                 hasEvolution={Boolean(evolution)}
+                disabled={!evolution && session.finish !== "realizado"}
                 onclick={handleOpenEvolution}
               />
             </div>
@@ -322,12 +349,14 @@ export function SessionCard({
       </li>
 
       <Modal
+        size="large"
         isOpen={evolutionMode !== null}
-        onClose={() => setEvolutionMode(null)}
+        onClose={() => leaveEvolutionForm(null)}
       >
         {evolutionMode === "view" && evolution && (
           <EvolutionView
             evolution={normalizeEvolutionForForm(evolution)}
+            author={evolutionAuthor}
             patient={patient}
             session={session}
             defaultTime={defaultTime}
@@ -346,22 +375,18 @@ export function SessionCard({
                 ? normalizeEvolutionForForm(evolution)
                 : undefined
             }
-            onCancel={() => {
-              if (evolution) {
-                setEvolutionMode("view")
-                return
-              }
-
-              setEvolutionMode(null)
-            }}
+            onDirtyChange={handleEvolutionDirtyChange}
+            onCancel={() => leaveEvolutionForm(evolution ? "view" : null)}
             onUnchanged={() => {
               setEvolutionMode("view")
               toast.info("Não houve alterações para salvar.")
             }}
             onSave={async (data) => {
               try {
-                await saveSessionEvolution(session.id, data)
+                const author = await saveSessionEvolution(session.id, data)
                 saveEvolution(session.id, data)
+                setEvolutionAuthor(session.id, author)
+                isEvolutionDirty.current = false
                 setEvolutionMode("view")
                 toast.success("Evolução salva no servidor.")
               } catch (error) {
