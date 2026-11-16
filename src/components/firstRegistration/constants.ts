@@ -7,6 +7,7 @@ export const initialValues: FirstRegistrationValues = {
   password: "",
   confirmPassword: "",
   crefito: "",
+  title: "",
 }
 
 export const fieldOrder: FirstRegistrationField[] = [
@@ -16,4 +17,11 @@ export const fieldOrder: FirstRegistrationField[] = [
   "password",
   "confirmPassword",
   "crefito",
+  "title",
 ]
+
+export const titleOptions = [
+  { value: "Dra.", label: "Dra." },
+  { value: "Dr.", label: "Dr." },
+  { value: "", label: "Sem título" },
+] as const

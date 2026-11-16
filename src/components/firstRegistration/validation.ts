@@ -59,5 +59,9 @@ export function validateForm(
     errors.crefito = "Use no máximo 30 caracteres."
   }
 
+  if (!["", "Dr.", "Dra."].includes(values.title)) {
+    errors.title = "Escolha uma das opções."
+  }
+
   return errors
 }

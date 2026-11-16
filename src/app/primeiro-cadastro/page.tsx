@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  titleOptions,
   useFirstRegistration,
   type FirstRegistrationField,
 } from "@/components/firstRegistration/index"
@@ -221,6 +222,45 @@ function FirstRegistration() {
             />
             {errorMessage("crefito")}
           </div>
+
+          <fieldset
+            className="flex w-full flex-col gap-1 border-0 p-0 m-0"
+            aria-describedby="title-hint"
+            data-error={Boolean(errors.title)}
+          >
+            <legend className={labelClassName}>
+              Como prefere ser chamado(a) nos registros?
+            </legend>
+            <p id="title-hint" className="pl-1 text-sm text-[#8C7B6B]">
+              Aparece antes do seu nome nas evoluções dos pacientes.
+            </p>
+            <div className="mt-1 flex flex-wrap gap-2">
+              {titleOptions.map((option) => {
+                const selected = values.title === option.value
+                return (
+                  <label
+                    key={option.label}
+                    className={`cursor-pointer select-none rounded-md border-2 px-4 py-2 transition focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[#FFA726] active:scale-95 ${
+                      selected
+                        ? "border-[#FFA726] bg-[#FFF5EA] text-[#E65100] hover:bg-[#FFEBD6]"
+                        : "border-[#D0D7DE]/60 bg-[#EAE9E9] text-[#333] hover:border-[#FFA726]/60 hover:bg-[#F5EFE8]"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="title"
+                      value={option.value}
+                      checked={selected}
+                      onChange={() => handleChange("title", option.value)}
+                      className="sr-only"
+                    />
+                    {option.label}
+                  </label>
+                )
+              })}
+            </div>
+            {errorMessage("title")}
+          </fieldset>
 
           <footer className="pt-1">
             <Button

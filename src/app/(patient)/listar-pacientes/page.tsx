@@ -32,6 +32,7 @@ function ListPatient() {
   const listPatient = useFisioStore((state) => state.patients)
   const setListPatients = useFisioStore((state) => state.setListPatients)
   const setEvolutions = useFisioStore((state) => state.setEvolutions)
+  const setEvolutionAuthors = useFisioStore((state) => state.setEvolutionAuthors)
 
   const [currentPackageIndex, setCurrentPackageIndex] = useState(0)
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(
@@ -130,7 +131,8 @@ function ListPatient() {
       .then(([patients, evolutions]) => {
         if (cancelled) return
         setListPatients(patients)
-        setEvolutions(evolutions)
+        setEvolutions(evolutions.evolutions)
+        setEvolutionAuthors(evolutions.authors)
         const requestedPatientId = new URLSearchParams(
           window.location.search
         ).get("patientId")
@@ -191,7 +193,7 @@ function ListPatient() {
     return () => {
       cancelled = true
     }
-  }, [handlePopState, setEvolutions, setListPatients])
+  }, [handlePopState, setEvolutions, setEvolutionAuthors, setListPatients])
 
   const findPatient =
     search.length > 1

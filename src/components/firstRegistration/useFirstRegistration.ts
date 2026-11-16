@@ -90,6 +90,7 @@ export function useFirstRegistration() {
           first_name: values.firstName.trim(),
           sur_name: values.surName.trim(),
           crefito: values.crefito.trim(),
+          title: values.title || null,
         },
       },
     })
