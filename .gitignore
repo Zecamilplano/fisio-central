@@ -45,3 +45,6 @@ next-env.d.ts
 # gerados localmente (grafo do código e cache da CLI do Supabase)
 graphify-out/
 supabase/.temp/
+
+# relatórios de auditoria de segurança (local)
+audit/
