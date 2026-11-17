@@ -18,15 +18,18 @@ Aplicação web desenvolvida para auxiliar fisioterapeutas no gerenciamento de p
 - React
 - TypeScript
 - Tailwind CSS
+- Supabase (Auth, Postgres, Storage)
+- Zustand
 - Date-fns
 - Lucide React
+- ESLint e Vitest
 
 ## Requisitos
 
 Antes de iniciar, certifique-se de possuir instalado:
 
 - Node.js 20+
-- npm ou yarn
+- yarn 1.x (o projeto usa `yarn.lock`; não use `npm install`, para não gerar um segundo lockfile)
 
 ## Instalação
 
@@ -45,7 +48,7 @@ cd fisio-central
 Instale as dependências:
 
 ```bash
-npm install
+yarn install
 ```
 
 ## Executando o Projeto
@@ -53,7 +56,7 @@ npm install
 Inicie o servidor de desenvolvimento:
 
 ```bash
-npm run dev
+yarn dev
 ```
 
 A aplicação estará disponível em:
@@ -62,19 +65,32 @@ A aplicação estará disponível em:
 http://localhost:3000
 ```
 
-````
+## Scripts
+
+| Comando | O que faz |
+|---|---|
+| `yarn dev` | servidor de desenvolvimento |
+| `yarn build` | build de produção |
+| `yarn lint` | ESLint |
+| `yarn typecheck` | checagem de tipos (`tsc --noEmit`) |
+| `yarn test` | testes (Vitest) |
+| `yarn test:watch` | testes em modo observação |
+
 ## Estrutura do Projeto
 
 ```text
 src/
-├── app/
-├── components/
-├── data/
-├── hooks/
-├── types/
-├── utils/
-└── styles/
-````
+├── app/          # rotas (App Router)
+├── components/   # componentes de tela
+├── data/         # constantes e dados iniciais de formulários
+├── hook/         # hooks de formulário e fluxo
+├── lib/          # Supabase, autenticação, perfil e regras da clínica
+├── services/     # acesso ao banco (repositórios)
+├── store/        # estado global (Zustand)
+├── types/        # tipos TypeScript
+└── utils/        # funções puras (datas, agenda, imagens)
+supabase/migrations/  # migrations do banco
+```
 
 ## Autor
 

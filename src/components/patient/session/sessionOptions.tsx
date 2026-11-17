@@ -120,7 +120,7 @@ export function SessionOptions({
             </h4>
 
             <div className="grid min-w-0 grid-cols-2 gap-2 min-[420px]:grid-cols-3 sm:grid-cols-2 lg:grid-cols-3">
-              {Object.values(pagamentoConfig).map((pay: any) => {
+              {Object.values(pagamentoConfig).map((pay) => {
                 const isActive = session.paid === pay.value
 
                 return (

@@ -1,6 +1,6 @@
 import { Dumbbell, Plus, Trash2 } from "lucide-react"
 
-import type { Exercise, WarningField } from "../evolution.types"
+import type { Exercise } from "../evolution.types"
 import EvolutionSection from "./evolutionSection"
 import React, { useEffect, useRef, useState } from "react"
 import { normalizeText } from "@/utils/text/normalizeText"

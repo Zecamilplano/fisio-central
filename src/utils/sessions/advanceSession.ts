@@ -1,6 +1,6 @@
 import { WEEKDAY_NUMBER } from "@/utils/date/weekdays"
 import { addDays, format, getDay, parseISO } from "date-fns"
-import type { DayOfWeek, ListPatient } from "@/types"
+import type { ListPatient } from "@/types"
 
 type ScheduleUpdate = { id: string; session_date: string }
 

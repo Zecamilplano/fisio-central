@@ -151,7 +151,7 @@ export function PackageHistoryModal({
 
           {isPackageListOpen && (
             <ol className="flex flex-col gap-3">
-              {packages.map((pkg, index) => {
+              {packages.map((pkg) => {
                 const packageNumber =
                   patient.packages.findIndex((item) => item.id === pkg.id) + 1
                 const packageSessions = sessions.filter(

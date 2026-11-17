@@ -595,11 +595,11 @@ export function useSchedulingSessions(
     updateSingleSession,
   }
 
-  function handleChange(field: keyof typeof handlers, value?: any) {
+  function handleChange(field: keyof typeof handlers, value?: unknown) {
     const handler = handlers[field as keyof typeof handlers]
 
     if (!handler) return
-    ;(handler as (value?: any) => void)(value)
+    ;(handler as (value?: unknown) => void)(value)
   }
 
   return {
