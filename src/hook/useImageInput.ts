@@ -11,7 +11,7 @@ function formatSize(bytes: number) {
     : `${Math.max(1, Math.round(bytes / 1024))} KB`
 }
 
-// prepare: como otimizar a imagem (padrão: foto de paciente, comprime acima de 5 MB)
+// prepare: como otimizar a imagem (padrão: foto de paciente, reduzida para até 1024 px / ~400 KB)
 function useImageInput(prepare: (file: File) => Promise<File> = compressPatientPhoto) {
   const [isDragging, setIsDragging] = useState(false)
   const [isCompressing, setIsCompressing] = useState(false)

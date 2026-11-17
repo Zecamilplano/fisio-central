@@ -62,7 +62,7 @@ export function PatientPhotoField({
           />
         </label>
         <p className="mt-1 text-xs text-slate-500">
-          JPG, PNG ou WEBP. Fotos acima de 5 MB serão comprimidas.
+          JPG, PNG ou WEBP. A foto é otimizada automaticamente.
         </p>
         {(hasNewPhoto || removePhoto || error) && (
           <button

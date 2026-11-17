@@ -76,7 +76,7 @@ function SubHeaderFormRegister({
         {icon === "person" && (
           <div className="mt-2 text-center">
             <p className="text-sm text-[#8C7B6B]">
-              JPG, PNG ou WEBP. Fotos acima de 5 MB serão comprimidas.
+              JPG, PNG ou WEBP. A foto é otimizada automaticamente.
             </p>
             {img?.isCompressing && (
               <p role="status" className="mt-1 text-sm text-slate-500">
