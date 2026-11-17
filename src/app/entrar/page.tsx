@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import Button from "@/components/ui/buttonCustom"
+import { ShowPasswordToggle } from "@/components/ui/showPasswordToggle"
 import { useLogin } from "@/hook/useLogin"
 import { cn } from "tailwind-variants"
 
 function Login() {
   const [invalidLink, setInvalidLink] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   // /entrar?motivo=link-invalido vem do link de redefinição de senha
   useEffect(() => {
@@ -99,11 +101,16 @@ function Login() {
 
             <input
               id="password"
-              type="password"
+              type={showPassword ? "text" : "password"}
               name="password"
               onChange={(e) => handleChange("password", e.target.value)}
               placeholder="Digite sua senha:"
               className="w-full border-2 border-[#FFA726]/40 focus:outline-[#FFA726] rounded-md px-2 py-3 bg-[#EAE9E9] text-gray-600 placeholder:text-gray-400"
+            />
+            <ShowPasswordToggle
+              visible={showPassword}
+              onToggle={() => setShowPassword((v) => !v)}
+              controls="password"
             />
           </section>
 

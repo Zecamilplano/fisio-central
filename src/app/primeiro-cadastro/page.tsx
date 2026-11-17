@@ -6,6 +6,8 @@ import {
   type FirstRegistrationField,
 } from "@/components/firstRegistration/index"
 import Button from "@/components/ui/buttonCustom"
+import { ShowPasswordToggle } from "@/components/ui/showPasswordToggle"
+import { useState } from "react"
 import { Camera, X } from "lucide-react"
 
 function FirstRegistration() {
@@ -20,6 +22,7 @@ function FirstRegistration() {
     photo,
   } = useFirstRegistration()
   const selectedPhoto = photo.image[0]
+  const [showPassword, setShowPassword] = useState(false)
 
   const labelClassName = "text-base text-[#FFA726] font-medium w-full pl-1"
   const baseInputClassName =
@@ -213,7 +216,7 @@ function FirstRegistration() {
                 Senha
               </label>
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 name="password"
                 id="password"
                 value={values.password}
@@ -241,7 +244,7 @@ function FirstRegistration() {
                 Confirme sua senha
               </label>
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 name="confirmPassword"
                 id="confirmPassword"
                 value={values.confirmPassword}
@@ -264,6 +267,13 @@ function FirstRegistration() {
               {errorMessage("confirmPassword")}
             </div>
           </fieldset>
+          <div className="-mt-3 flex">
+            <ShowPasswordToggle
+              visible={showPassword}
+              onToggle={() => setShowPassword((v) => !v)}
+              controls="password confirmPassword"
+            />
+          </div>
 
           <div
             role="separator"
