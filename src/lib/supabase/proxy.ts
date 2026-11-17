@@ -1,5 +1,10 @@
 import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
+import {
+  LAST_SEEN_COOKIE,
+  decideIdle,
+  formatLastSeen,
+} from "@/lib/auth/idleSession"
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -31,6 +36,40 @@ export async function updateSession(request: NextRequest) {
   const user = data?.claims
 
   const pathname = request.nextUrl.pathname
+
+  // logout por inatividade (2 semanas sem navegar): regra em lib/auth/idleSession
+  if (user) {
+    const now = Date.now()
+    const sessionId = typeof user.session_id === "string" ? user.session_id : ""
+    const decision = decideIdle(
+      request.cookies.get(LAST_SEEN_COOKIE)?.value,
+      sessionId,
+      now
+    )
+
+    if (decision === "logout") {
+      // encerra só esta sessão (os outros aparelhos seguem com a contagem deles)
+      await supabase.auth.signOut({ scope: "local" })
+      const url = request.nextUrl.clone()
+      url.pathname = "/entrar"
+      url.search = "?motivo=inatividade"
+      const redirect = NextResponse.redirect(url)
+      supabaseResponse.cookies.getAll().forEach((c) => redirect.cookies.set(c))
+      redirect.cookies.delete(LAST_SEEN_COOKIE)
+      return redirect
+    }
+
+    if (decision === "touch") {
+      supabaseResponse.cookies.set(LAST_SEEN_COOKIE, formatLastSeen(sessionId, now), {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 60, // 60 dias (maior que o limite de inatividade)
+      })
+    }
+  }
+
   const isPublic =
     pathname.startsWith("/entrar") ||
     pathname.startsWith("/primeiro-cadastro") ||

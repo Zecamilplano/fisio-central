@@ -9,12 +9,15 @@ import { cn } from "tailwind-variants"
 
 function Login() {
   const [invalidLink, setInvalidLink] = useState(false)
+  const [idleLogout, setIdleLogout] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
   // /entrar?motivo=link-invalido vem do link de redefinição de senha
   useEffect(() => {
     const motivo = new URLSearchParams(window.location.search).get("motivo")
     setInvalidLink(motivo === "link-invalido")
+    // /entrar?motivo=inatividade vem do logout automático (2 semanas sem uso)
+    setIdleLogout(motivo === "inatividade")
   }, [])
 
   const {
@@ -35,6 +38,15 @@ function Login() {
             Entrar
           </h1>
         </header>
+
+        {idleLogout && (
+          <p
+            role="status"
+            className="font-open-sans mx-3 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800"
+          >
+            Sua sessão foi encerrada após 2 semanas sem uso. Entre novamente.
+          </p>
+        )}
 
         {invalidLink && (
           <p
