@@ -199,8 +199,11 @@ export function useSessionCreation({
     totalSessions: number
     valueSession: number
     fixedWeekDays: DayOfWeek[]
+    time?: string
   }): Promise<boolean> {
     if (patient.typeService !== "Pacote" || !currentPackage) return false
+    // horário escolhido no modal; senão o do pacote atual (antes era sempre 16:00)
+    const sessionTime = (data.time || currentPackage.defaultTime || "16:00").slice(0, 5)
     const hasPendingExtraSession = patient.session.some(
       (session) =>
         session.originPackageId === currentPackage.id &&
@@ -245,7 +248,7 @@ export function useSessionCreation({
         fixedWeekDays: data.fixedWeekDays,
         sessions: newPackageSessions.map((session) => ({
           date: parseISO(session.date),
-          time: "16:00",
+          time: sessionTime,
         })),
       })
 
@@ -256,7 +259,7 @@ export function useSessionCreation({
         migratedSessions: 0,
         valueSession: data.valueSession,
         fixedWeekDays: data.fixedWeekDays,
-        defaultTime: "16:00",
+        defaultTime: sessionTime,
         current: true,
       }
       const persistedSessions = newPackageSessions.map((session, index) => ({

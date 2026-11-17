@@ -118,6 +118,15 @@ export function PatientDetails({
     changePackageWeekDays: packageSession.sessionActions.changePackageWeekDays,
   }
 
+  // Volta para o pacote atual só quando troca o paciente ou o pacote atual muda
+  // (ex.: novo pacote criado). Antes dependia do objeto `patient` inteiro e
+  // qualquer alteração (status, pagamento, data) tirava o usuário do pacote antigo.
+  const packageCount = patient.typeService === "Pacote" ? patient.packages.length : 0
+  const currentPackageId =
+    patient.typeService === "Pacote"
+      ? patient.packages.find((item) => item.current)?.id
+      : undefined
+
   useEffect(() => {
     if (patient.typeService !== "Pacote") {
       setCurrentPackageIndex(0)
@@ -129,7 +138,8 @@ export function PatientDetails({
     setCurrentPackageIndex(
       currentIndex >= 0 ? currentIndex : patient.packages.length - 1
     )
-  }, [patient])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- ver comentário acima
+  }, [patient.id, currentPackageId, packageCount])
 
   return (
     <section className="font-open-sans flex h-full min-h-0 w-full flex-col gap-6 overflow-y-hidden rounded-md bg-[#F4F6F5] md:rounded-l-none md:rounded-r-md lg:overflow-y-auto">

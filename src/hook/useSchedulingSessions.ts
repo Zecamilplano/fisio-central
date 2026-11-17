@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
+import { addDays } from "date-fns"
 import {
   Package,
   PaymentType,
@@ -378,8 +379,10 @@ export function useSchedulingSessions(
       return
     }
 
+    // completar a agenda começa no dia seguinte à última sessão
+    // (antes contava o próprio dia e criava uma sessão duplicada)
     const lastDate = getLastDate(sessions)
-    const firstSessionDate = lastDate ?? startDate
+    const firstSessionDate = lastDate ? addDays(lastDate, 1) : startDate
 
     if (!firstSessionDate) return
 

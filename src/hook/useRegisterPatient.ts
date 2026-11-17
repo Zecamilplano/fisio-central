@@ -12,6 +12,7 @@ import {
   getPatientServiceById,
   savePatientTreatment,
   createPatient,
+  updatePatientProfile,
 } from "@/services/patients/patientRepository"
 // import { createPatient } from "@/lib/patients/createPatient"
 import { toast } from "react-toastify"
@@ -156,6 +157,28 @@ function useRegisterPatient() {
       }
 
       if (patientCreated.current) {
+        // paciente já salvo: grava o que foi alterado na etapa 1 (antes as
+        // mudanças e a foto nova eram ignoradas e o banco ficava com os dados antigos)
+        const createdPatientId = localStorage.getItem("createdPatientId")
+        if (createdPatientId) {
+          if (creatingPatient.current) return
+          creatingPatient.current = true
+          setIsSavingPatient(true)
+          try {
+            await updatePatientProfile(createdPatientId, formProfile.patient, photo)
+          } catch (error) {
+            toast.error(
+              error instanceof Error
+                ? error.message
+                : "Não foi possível salvar as alterações do paciente."
+            )
+            return
+          } finally {
+            creatingPatient.current = false
+            setIsSavingPatient(false)
+          }
+        }
+
         setStep((prev) => ({
           ...prev,
           step1: { ...prev.step1, active: false, completed: true },

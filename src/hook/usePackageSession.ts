@@ -166,6 +166,8 @@ function usePackageSession({
       ...(treatmentId ? { packageId: treatmentId } : {}),
       number: sessions.length + 1,
       date: format(nextDate, "yyyy-MM-dd"),
+      // mantém o horário da última sessão (antes caía no padrão 16:00)
+      ...(lastSession.time ? { time: lastSession.time.slice(0, 5) } : {}),
       finish: "pendente",
       paid: "pendente",
     }

@@ -41,6 +41,7 @@ type AddSessionModalProps = {
     totalSessions: number
     valueSession: number
     fixedWeekDays: DayOfWeek[]
+    time: string
   }) => void | Promise<boolean>
 }
 
@@ -137,6 +138,8 @@ export function AddSessionModal({
     }
   }
 
+  const suggestedStartTime = suggestedPackageStartDate.getTime()
+
   async function handleCreateNextPackage() {
     setIsSaving(true)
     try {
@@ -145,6 +148,7 @@ export function AddSessionModal({
         totalSessions: packageTotalSessions,
         valueSession: packageValueSession,
         fixedWeekDays: packageWeekDays,
+        time: selectedTime,
       })
       if (created !== false) handleSaveComplete()
     } finally {
@@ -160,17 +164,19 @@ export function AddSessionModal({
     )
     setSelectedDate(new Date())
     setSelectedTime((currentPackage?.defaultTime ?? "16:00").slice(0, 5))
-  }, [isOpen, patientType, initialMode, currentPackage])
+    // depende só de valores primitivos: antes, qualquer atualização da store
+    // recriava `currentPackage` e apagava o que o usuário tinha digitado
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, patientType, initialMode, currentPackage?.id])
 
   useEffect(() => {
     if (!isOpen) return
 
     if (patientType === "Pacote" && currentPackage) {
-      const initialStartDate = Number.isFinite(currentPackage.startDate.getTime())
-        ? currentPackage.startDate
-        : Number.isFinite(suggestedPackageStartDate.getTime())
-          ? suggestedPackageStartDate
-          : new Date()
+      // novo pacote começa depois da última sessão do atual (não no início dele)
+      const initialStartDate = Number.isFinite(suggestedPackageStartDate.getTime())
+        ? suggestedPackageStartDate
+        : new Date()
       setPackageStartDate(initialStartDate)
 
       setPackageTotalSessions(currentPackage.totalSessions)
@@ -179,7 +185,8 @@ export function AddSessionModal({
 
       setPackageWeekDays(currentPackage.fixedWeekDays)
     }
-  }, [isOpen, currentPackage, patientType, suggestedPackageStartDate])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- ver comentário acima
+  }, [isOpen, currentPackage?.id, patientType, suggestedStartTime])
 
   useEffect(() => {
     if (!isOpen) return
@@ -468,6 +475,16 @@ export function AddSessionModal({
                   setDate={(date) => setPackageStartDate(date)}
                 />
               </div>
+
+              <label className="block text-sm font-medium text-[#344054]">
+                Horário das sessões
+                <input
+                  type="time"
+                  value={selectedTime}
+                  onChange={(event) => setSelectedTime(event.target.value)}
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800"
+                />
+              </label>
 
               <button
                 type="button"
