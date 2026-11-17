@@ -1,4 +1,4 @@
-import { PaidKey } from "@/types"
+import type { PaidKey } from "@/types"
 
 export type StatusSessaoKey = "realizado" | "pendente" | "cancelado"
 

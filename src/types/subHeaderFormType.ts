@@ -1,4 +1,4 @@
-import useImageInput from "@/hook/useImageInput"
+import type useImageInput from "@/hook/useImageInput"
 
 // Header form
 export type SubHeaderFormRegisterType = {

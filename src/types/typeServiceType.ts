@@ -1,6 +1,6 @@
-import { totalNumberSession } from "@/data/registerPatientData"
-import { LucideIcon } from "lucide-react"
-import { Dispatch, SetStateAction } from "react"
+import type { totalNumberSession } from "@/data/registerPatientData"
+import type { LucideIcon } from "lucide-react"
+import type { Dispatch, SetStateAction } from "react"
 
 export type TypeServiceType = "pacote" | "sessoes"
 

@@ -1,4 +1,4 @@
-import { TypeServiceType } from "./typeServiceType"
+import type { TypeServiceType } from "./typeServiceType"
 import type { Session } from "./session"
 
 export type summaryCardType = {

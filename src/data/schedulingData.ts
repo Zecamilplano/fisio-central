@@ -1,6 +1,6 @@
 import * as fn from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { SchedulingErrorForm, SchedulingForm } from "@/types"
+import type { SchedulingErrorForm, SchedulingForm } from "@/types"
 
 const currentDate = fn.format(new Date(), "dd/MM/yyyy")
 const currentWeekDay = fn.format(new Date(), "EEEE", { locale: ptBR })

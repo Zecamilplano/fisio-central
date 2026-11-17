@@ -1,7 +1,8 @@
 import type { ListPatient, SessionController } from "@/types"
 import { ArrowLeft, PencilLine } from "lucide-react"
 import { CurrentPackageCard } from "../package/currentPackageCard"
-import { PatientContactGrid, SeparateSessionInfoCard } from "./"
+import { PatientContactGrid } from "./patientContactGrid"
+import { SeparateSessionInfoCard } from "./separateSessionInfoCard"
 import { PackageSession } from "../session/packageSession"
 import { useEffect } from "react"
 import {

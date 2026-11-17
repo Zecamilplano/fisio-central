@@ -1,5 +1,5 @@
-import { daysOfWeek } from "@/data"
-import { Session } from "./session"
+import type { daysOfWeek } from "@/data"
+import type { Session } from "./session"
 import type { PatientType } from "./registerPatientsTypes"
 
 export type TypeService = "Pacote" | "Sessão avulsa"

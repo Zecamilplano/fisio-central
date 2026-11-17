@@ -2,15 +2,14 @@ import { useEffect, useRef, useState, type FormEvent } from "react"
 
 import { scrollToFirstError } from "@/utils/form/scrollToFirstError"
 
-import {
-  initialValues,
-  fieldOrder,
+import { initialValues, fieldOrder } from "./constants"
+import { validateForm } from "./validation"
+import { mapSignUpError } from "./error"
+import type {
   FirstRegistrationErrors,
   FirstRegistrationField,
   FirstRegistrationValues,
-  validateForm,
-  mapSignUpError,
-} from "./index"
+} from "./types"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { toast } from "react-toastify"

@@ -1,5 +1,5 @@
-import { StepType, summaryCardType } from "@/types/"
-import {
+import type { StepType, summaryCardType } from "@/types/"
+import type {
   serviceTypeOptionsDataType,
   totalNumberSessionType,
 } from "@/types/typeServiceType"

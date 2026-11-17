@@ -1,10 +1,10 @@
-import { Evolution } from "@/components/patient/evolution"
-import {
+import type { Evolution } from "@/components/patient/evolution"
+import type {
   SelectedSessionsActionHandlers,
   SelectedSessionsStatus,
 } from "@/components/patient/session/selectedSessionsActions"
 import type { DayOfWeek } from "./listPatientType"
-import { StatusSessaoKey } from "@/data/optionsSessionsData"
+import type { StatusSessaoKey } from "@/data/optionsSessionsData"
 
 export type PaidKey = "pendente" | "realizado" | "cancelado"
 export type SessionChangeField = "finish" | "paid" | "date" | "time"
