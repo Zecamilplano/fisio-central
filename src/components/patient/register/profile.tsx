@@ -449,6 +449,7 @@ function Profile({ form }: ProfileProps) {
           rows={5}
           maxLength={registerPatientLimits.referenceHouse}
           placeholder="Ponto de referência"
+          value={patient.address.referenceHouse}
           onKeyDown={(event) => preventTextLimitExceeded(event, patient.address.referenceHouse, registerPatientLimits.referenceHouse, "referenceHouse", `Limite de ${registerPatientLimits.referenceHouse} caracteres atingido.`)}
           onPaste={(event) => preventOversizedPaste(event, patient.address.referenceHouse, registerPatientLimits.referenceHouse, "referenceHouse", `Limite de ${registerPatientLimits.referenceHouse} caracteres atingido.`)}
           onChange={(e) => {
