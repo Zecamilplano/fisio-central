@@ -54,7 +54,7 @@ export function CreateClinicModal({ onCreated }: { onCreated: () => void }) {
     <Modal
       isOpen={true}
       size="small"
-      onClose={() => console.log()}
+      onClose={() => {}} // obrigatório: o modal não fecha sem criar a clínica
       hiddenClose={true}
     >
       <form
@@ -82,7 +82,6 @@ export function CreateClinicModal({ onCreated }: { onCreated: () => void }) {
             id="name-clinic"
             value={name}
             onChange={(e) => {
-              console.log(e.target.value)
               setName(e.target.value)
               setError(null)
             }}

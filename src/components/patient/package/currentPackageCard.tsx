@@ -66,14 +66,11 @@ export function CurrentPackageCard({
   useEffect(() => {
     const currentIndex = patient.packages.findIndex((item) => item.current)
 
-    // console.log("packages:", patient.packages)
-    // console.log("currentIndex:", currentIndex)
 
     setCurrentPackageIndex(
       currentIndex >= 0 ? currentIndex : patient.packages.length - 1
     )
 
-    // console.log("packages mudou", patient.packages.length)
   }, [patient.packages])
 
   return (

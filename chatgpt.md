@@ -53,6 +53,6 @@ O fluxo costuma ser: **página → componente → hook → serviço/repositório
 | Migrações do banco | `supabase/migrations/` |
 | Estilos globais e específicos | `src/app/globals.css` e `src/styles/` |
 
-Os arquivos de serviço mais centrais são [patientRepository.ts](/home/ezequiel/programação/JavaScript/react/fisio-central/src/services/patients/patientRepository.ts), [patientListRepository.ts](/home/ezequiel/programação/JavaScript/react/fisio-central/src/services/patients/patientListRepository.ts) e [patientScheduleRepository.ts](/home/ezequiel/programação/JavaScript/react/fisio-central/src/services/patients/patientScheduleRepository.ts). Eles concentram operações de pacientes, listagem e agenda/sessões.
+Os arquivos de serviço mais centrais são [patientRepository.ts](src/services/patients/patientRepository.ts), [patientListRepository.ts](src/services/patients/patientListRepository.ts) e [patientScheduleRepository.ts](src/services/patients/patientScheduleRepository.ts). Eles concentram operações de pacientes, listagem e agenda/sessões.
 
-As dependências e comandos estão em [package.json](/home/ezequiel/programação/JavaScript/react/fisio-central/package.json). Ele define `dev`, `build` e `start`; não há script de testes configurado ali.
+As dependências e comandos estão em [package.json](package.json). Ele define `dev`, `build` e `start`; não há script de testes configurado ali.

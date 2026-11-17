@@ -141,7 +141,6 @@ function useRegisterPatient() {
   }, [steps])
 
   async function handleNext(step: StepKey, photo?: File) {
-    // console.log("step recebido", step, typeof step)
 
     if (step === "step1") {
       if (restoreStatus !== "ready") return
@@ -193,7 +192,6 @@ function useRegisterPatient() {
 
       try {
         const patientId = await createPatient(formProfile.patient, photo)
-        console.log("banco passou")
 
         localStorage.setItem("createdPatientId", patientId)
 

@@ -9,15 +9,6 @@ export function getNextDateForDay(dayName: string, afterDate: Date): Date {
   return fn.nextDay(afterDate, targetIndex)
 }
 
-const dayMap: Record<string, number> = {
-  Segunda: 1,
-  Terça: 2,
-  Quarta: 3,
-  Quinta: 4,
-  Sexta: 5,
-  Sábado: 6,
-}
-
 export function applyPaymentToSessions(
   sessions: Session_[],
   paymentType: PaymentType,
@@ -54,7 +45,7 @@ export function buildSessions(
   const sessionsToAdd = totalSessions - scheduledCount
   const newSessions: Session_[] = []
 
-  const activeDayNumbers = activeDays.map((day) => dayMap[day])
+  const activeDayNumbers = activeDays.map((day) => dayToIndex[day])
   let currentDate = toLocalStartOfDay(startDate)
 
   while (newSessions.length < sessionsToAdd) {

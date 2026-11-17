@@ -1,3 +1,4 @@
+import { WEEKDAY_NUMBER } from "@/utils/date/weekdays"
 import { addDays, format, getDay, parseISO } from "date-fns"
 import type { DayOfWeek, ListPatient } from "@/types"
 
@@ -72,15 +73,6 @@ export type PostponeResult =
   | { kind: "error"; message: string }
   | { kind: "postpone"; updates: ScheduleUpdate[] }
 
-const weekDayNumber: Record<DayOfWeek, number> = {
-  Segunda: 1,
-  Terça: 2,
-  Quarta: 3,
-  Quinta: 4,
-  Sexta: 5,
-  Sábado: 6,
-}
-
 function toDateKey(date: Date) {
   return format(date, "yyyy-MM-dd")
 }
@@ -116,7 +108,7 @@ export function buildPostponeUpdates(
     (item) => item.id === session.packageId
   )
   const allowedDays = treatmentPackage?.fixedWeekDays?.length
-    ? treatmentPackage.fixedWeekDays.map((day) => weekDayNumber[day])
+    ? treatmentPackage.fixedWeekDays.map((day) => WEEKDAY_NUMBER[day])
     : [...new Set(packageSessions.map((item) => getDay(parseISO(item.date))))].filter(
         (day) => day !== 0
       )

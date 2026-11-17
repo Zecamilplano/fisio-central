@@ -23,7 +23,6 @@ function Button({
   active,
   isSubmitting = false,
 }: ButtonProps) {
-  // console.log(active)
   return (
     <>
       {/*Botões anterior e próximo*/}

@@ -41,3 +41,7 @@ yarn-error.log*
 next-env.d.ts
 
 .mcp.json
+
+# gerados localmente (grafo do código e cache da CLI do Supabase)
+graphify-out/
+supabase/.temp/

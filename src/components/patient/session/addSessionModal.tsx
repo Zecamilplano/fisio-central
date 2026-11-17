@@ -1,17 +1,9 @@
+import { WEEKDAY_NUMBER } from "@/utils/date/weekdays"
 import { DatePicker } from "@/components/ui/datePicker"
 import { daysOfWeek } from "@/data"
 import { DayOfWeek, Session, TreatmentPackage } from "@/types"
 import { addDays, format } from "date-fns"
 import { useEffect, useState } from "react"
-
-const weekDayNumber: Record<DayOfWeek, number> = {
-  Segunda: 1,
-  Terça: 2,
-  Quarta: 3,
-  Quinta: 4,
-  Sexta: 5,
-  Sábado: 6,
-}
 
 type AddSessionModalProps = {
   isOpen: boolean
@@ -89,7 +81,7 @@ export function AddSessionModal({
     let alignedDate = packageStartDate
     while (
       !packageWeekDays.some(
-        (day) => weekDayNumber[day] === alignedDate.getDay()
+        (day) => WEEKDAY_NUMBER[day] === alignedDate.getDay()
       )
     ) {
       alignedDate = addDays(alignedDate, 1)

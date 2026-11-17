@@ -1,3 +1,4 @@
+import { WEEKDAY_NUMBER } from "@/utils/date/weekdays"
 import { assertCanEdit } from "@/lib/clinic/assertCanEdit"
 import { createClient } from "@/lib/supabase/client"
 import { registerPatientLimits } from "@/data/registerPatientLimits"
@@ -355,17 +356,8 @@ export async function restoreMissingPackageSessionsWithSchedule(
     throw new Error("Este pacote já tem todas as sessões cadastradas.")
   }
 
-  // mesma numeração do getDay() do date-fns (domingo = 0)
-  const weekDayNumbers: Record<DayOfWeek, number> = {
-    Segunda: 1,
-    Terça: 2,
-    Quarta: 3,
-    Quinta: 4,
-    Sexta: 5,
-    Sábado: 6,
-  }
   const selectedWeekDayNumbers = new Set(
-    fixedWeekDays.map((day) => weekDayNumbers[day])
+    fixedWeekDays.map((day) => WEEKDAY_NUMBER[day])
   )
   const existingDateTimes = new Set(
     [...existing, ...(extraSessions ?? [])].map(

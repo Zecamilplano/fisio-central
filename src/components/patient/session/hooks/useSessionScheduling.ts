@@ -1,3 +1,4 @@
+import { WEEKDAY_NUMBER } from "@/utils/date/weekdays"
 import { useFisioStore } from "@/store/fisio/fisioStore"
 import type { DayOfWeek, ListPatient } from "@/types"
 import { addDays, format, getDay, parseISO } from "date-fns"
@@ -11,15 +12,6 @@ import {
   updateTreatmentSessionSchedule,
 } from "@/services/patients/patientScheduleRepository"
 import { toast } from "react-toastify"
-
-const weekDayMap: Record<DayOfWeek, number> = {
-  Segunda: 1,
-  Terça: 2,
-  Quarta: 3,
-  Quinta: 4,
-  Sexta: 5,
-  Sábado: 6,
-}
 
 type UseSessionSchedulingProps = {
   patient: ListPatient
@@ -48,7 +40,7 @@ export function useSessionScheduling({ patient }: UseSessionSchedulingProps) {
   }
 
   function getNextPackageDate(lastDate: Date, fixedWeekDays: DayOfWeek[]) {
-    const allowedDays = fixedWeekDays.map((day) => weekDayMap[day])
+    const allowedDays = fixedWeekDays.map((day) => WEEKDAY_NUMBER[day])
     if (allowedDays.length === 0) throw new Error("Selecione os dias do pacote.")
 
     let nextDate = addDays(lastDate, 1)
@@ -59,7 +51,7 @@ export function useSessionScheduling({ patient }: UseSessionSchedulingProps) {
   }
 
   function getFirstPackageDate(startDate: Date, fixedWeekDays: DayOfWeek[]) {
-    const allowedDays = fixedWeekDays.map((day) => weekDayMap[day])
+    const allowedDays = fixedWeekDays.map((day) => WEEKDAY_NUMBER[day])
     if (allowedDays.length === 0) throw new Error("Selecione os dias do pacote.")
 
     let firstDate = new Date(startDate)

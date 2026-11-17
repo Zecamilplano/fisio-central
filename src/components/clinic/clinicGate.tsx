@@ -56,7 +56,6 @@ export function ClinicGate({ children }: { children: React.ReactNode }) {
   }, [status])
 
   if (loadError) {
-    console.log("status da store:", status)
     return (
       <div role="alert">
         <p>Não foi possível carregar os dados da clínica.</p>
