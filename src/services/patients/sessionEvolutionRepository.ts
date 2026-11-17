@@ -2,6 +2,7 @@ import { assertCanEdit } from "@/lib/clinic/assertCanEdit"
 import type { EvolutionSaveData } from "@/components/patient/evolution"
 import { createClient } from "@/lib/supabase/client"
 import { getClinicId } from "@/lib/clinic/getClinicId"
+import { fetchAllRows } from "@/lib/supabase/fetchAllRows"
 
 // Profissional que registrou a evolução. Preenchido pelo banco (trigger
 // set_evolution_author) a partir do perfil de quem estava logado; o app só lê.
@@ -24,10 +25,16 @@ export async function getSessionEvolutions(): Promise<{
   authors: Record<string, EvolutionAuthor>
 }> {
   const supabase = createClient()
-  const { data, error } = await supabase
-    .from("treatment_session_evolutions")
-    .select("session_id, data, author_title, author_name, author_crefito")
-    .eq("clinic_id", getClinicId()) // defesa extra além da RLS
+  const clinicId = getClinicId()
+  // em páginas, para não perder evoluções acima do limite de 1000 do Supabase
+  const { data, error } = await fetchAllRows((from, to) =>
+    supabase
+      .from("treatment_session_evolutions")
+      .select("session_id, data, author_title, author_name, author_crefito")
+      .eq("clinic_id", clinicId) // defesa extra além da RLS
+      .order("session_id")
+      .range(from, to)
+  )
 
   if (error) throw new Error(error.message)
 

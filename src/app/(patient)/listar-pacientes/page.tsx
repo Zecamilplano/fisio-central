@@ -6,7 +6,15 @@ import {
   PatientEmptyState,
 } from "@/components/patient/list"
 import { useFisioStore } from "@/store/fisio/fisioStore"
-import { getPatientsForList } from "@/services/patients/patientListRepository"
+import {
+  getIncompleteRegistrations,
+  getPatientsForList,
+  type IncompleteRegistration,
+} from "@/services/patients/patientListRepository"
+import { deletePatientPermanently } from "@/services/patients/patientRepository"
+import { IncompleteRegistrations } from "@/components/patient/list/incompleteRegistrations"
+import { useClinicStore } from "@/store/clinic/clinicStore"
+import { useRouter } from "next/navigation"
 import { getSessionEvolutions } from "@/services/patients/sessionEvolutionRepository"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "react-toastify"
@@ -33,6 +41,56 @@ function ListPatient() {
   const setListPatients = useFisioStore((state) => state.setListPatients)
   const setEvolutions = useFisioStore((state) => state.setEvolutions)
   const setEvolutionAuthors = useFisioStore((state) => state.setEvolutionAuthors)
+  const role = useClinicStore((state) => state.role)
+  const router = useRouter()
+  const [incompleteRegistrations, setIncompleteRegistrations] = useState<
+    IncompleteRegistration[]
+  >([])
+
+  // cadastros abandonados depois da etapa 1 (só a equipe vê/gerencia)
+  useEffect(() => {
+    if (!role || role === "patient") return
+    let cancelled = false
+    getIncompleteRegistrations()
+      .then((items) => {
+        if (!cancelled) setIncompleteRegistrations(items)
+      })
+      .catch(() => {
+        // não bloqueia a lista principal
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [role])
+
+  function handleContinueRegistration(patientId: string) {
+    // o cadastro restaura o paciente pelo createdPatientId e segue na etapa 2
+    try {
+      ;["formProfile", "typeServiceForm", "schedulingForm"].forEach((key) =>
+        localStorage.removeItem(key)
+      )
+      localStorage.setItem("createdPatientId", patientId)
+      localStorage.setItem("patientRegistrationStep", "step2")
+    } catch {
+      toast.error("Não foi possível retomar o cadastro neste navegador.")
+      return
+    }
+    router.push("/cadastrar-pacientes")
+  }
+
+  async function handleDeleteRegistration(registration: IncompleteRegistration) {
+    try {
+      await deletePatientPermanently(registration.id)
+      setIncompleteRegistrations((items) =>
+        items.filter((item) => item.id !== registration.id)
+      )
+      toast.success("Cadastro incompleto excluído.")
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Não foi possível excluir o cadastro."
+      )
+    }
+  }
 
   const [currentPackageIndex, setCurrentPackageIndex] = useState(0)
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(
@@ -309,12 +367,21 @@ function ListPatient() {
               Carregando pacientes...
             </div>
           ) : (
-            <PatientSidebar
-              patients={findPatient}
-              search={search}
-              selectedPatientId={selectedPatientId}
-              onSelectPatient={handleSelectPatient}
-            />
+            <div className="flex h-full min-h-0 flex-col">
+              <IncompleteRegistrations
+                registrations={incompleteRegistrations}
+                onContinue={handleContinueRegistration}
+                onDelete={handleDeleteRegistration}
+              />
+              <div className="min-h-0 flex-1">
+                <PatientSidebar
+                  patients={findPatient}
+                  search={search}
+                  selectedPatientId={selectedPatientId}
+                  onSelectPatient={handleSelectPatient}
+                />
+              </div>
+            </div>
           )}
         </div>
 

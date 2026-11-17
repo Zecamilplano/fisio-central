@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client"
+import { fetchAllRows } from "@/lib/supabase/fetchAllRows"
 import type { DayOfWeek, ListPatient, Session } from "@/types"
 
 type PatientRow = {
@@ -110,30 +111,48 @@ function getFixedWeekDays(sessions: Session[]): DayOfWeek[] {
 export async function getPatientsForList(): Promise<ListPatient[]> {
   const supabase = createClient()
   const [patientsResult, treatmentsResult, sessionsResult, profilesResult] =
+    // fetchAllRows: busca em páginas para não perder linhas acima do limite
+    // de 1000 do Supabase; "id" no fim garante uma ordem estável entre páginas
     await Promise.all([
-      supabase
-        .from("patients")
-        .select(
-          "id, first_name, sur_name, telephone, street, address_number, no_number, neighborhood, reference_house, photo_path, created_at"
-        )
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("patient_treatments")
-        .select(
-          "id, patient_id, treatment_type, price_per_session, planned_sessions, status, package_start_date, fixed_week_days, created_at"
-        )
-        .order("created_at", { ascending: true }),
-      supabase
-        .from("treatment_sessions")
-        .select(
-          "id, treatment_id, origin_package_id, is_extra, session_number, session_date, session_time, finish_status, paid_status"
-        )
-        .order("session_date", { ascending: true }),
-      supabase
-        .from("patient_treatment_profiles")
-        .select(
-          "patient_id, initial_start_date, sessions_before_current_package"
-        ),
+      fetchAllRows((from, to) =>
+        supabase
+          .from("patients")
+          .select(
+            "id, first_name, sur_name, telephone, street, address_number, no_number, neighborhood, reference_house, photo_path, created_at"
+          )
+          .order("created_at", { ascending: false })
+          .order("id")
+          .range(from, to)
+      ),
+      fetchAllRows((from, to) =>
+        supabase
+          .from("patient_treatments")
+          .select(
+            "id, patient_id, treatment_type, price_per_session, planned_sessions, status, package_start_date, fixed_week_days, created_at"
+          )
+          .order("created_at", { ascending: true })
+          .order("id")
+          .range(from, to)
+      ),
+      fetchAllRows((from, to) =>
+        supabase
+          .from("treatment_sessions")
+          .select(
+            "id, treatment_id, origin_package_id, is_extra, session_number, session_date, session_time, finish_status, paid_status"
+          )
+          .order("session_date", { ascending: true })
+          .order("id")
+          .range(from, to)
+      ),
+      fetchAllRows((from, to) =>
+        supabase
+          .from("patient_treatment_profiles")
+          .select(
+            "patient_id, initial_start_date, sessions_before_current_package"
+          )
+          .order("patient_id")
+          .range(from, to)
+      ),
     ])
 
   const queryError =
@@ -285,4 +304,54 @@ export async function getPatientsForList(): Promise<ListPatient[]> {
       },
     ]
   })
+}
+
+export type IncompleteRegistration = {
+  id: string
+  name: string
+  createdAt: string
+}
+
+/**
+ * Pacientes salvos na etapa 1 do cadastro, mas sem atendimento (cadastro
+ * abandonado). Não aparecem na lista normal, então são listados à parte
+ * para a clínica continuar ou excluir.
+ */
+export async function getIncompleteRegistrations(): Promise<IncompleteRegistration[]> {
+  const supabase = createClient()
+  const [patientsResult, treatmentsResult] = await Promise.all([
+    fetchAllRows((from, to) =>
+      supabase
+        .from("patients")
+        .select("id, first_name, sur_name, created_at")
+        .order("created_at", { ascending: false })
+        .order("id")
+        .range(from, to)
+    ),
+    fetchAllRows((from, to) =>
+      supabase.from("patient_treatments").select("patient_id").order("id").range(from, to)
+    ),
+  ])
+
+  const error = patientsResult.error ?? treatmentsResult.error
+  if (error) throw new Error(error.message)
+
+  const withTreatment = new Set(
+    (treatmentsResult.data as { patient_id: string }[]).map((row) => row.patient_id)
+  )
+
+  return (
+    patientsResult.data as {
+      id: string
+      first_name: string
+      sur_name: string
+      created_at: string
+    }[]
+  )
+    .filter((patient) => !withTreatment.has(patient.id))
+    .map((patient) => ({
+      id: patient.id,
+      name: `${patient.first_name} ${patient.sur_name}`.trim(),
+      createdAt: patient.created_at,
+    }))
 }

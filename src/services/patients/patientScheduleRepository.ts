@@ -751,21 +751,21 @@ export async function updateTreatmentSessionSchedule(
   updates: Array<{ id: string; session_date: string }>
 ): Promise<void> {
   assertCanEdit()
+  if (updates.length === 0) return
+
+  // uma transação no banco: ou todas as datas mudam, ou nenhuma
+  // (antes eram vários UPDATEs; uma falha no meio deixava a agenda pela metade)
   const supabase = createClient()
-  for (const { id, session_date } of updates) {
-    const { data, error } = await supabase
-      .from("treatment_sessions")
-      .update({ session_date, updated_at: new Date().toISOString() })
-      .eq("id", id)
-      .eq("finish_status", "pendente")
-      .select("id")
-      .maybeSingle()
-    if (error) throw new Error(error.message)
-    if (!data) {
-      throw new Error(
-        "Uma das sessões não está mais pendente e não foi alterada."
-      )
-    }
+  const { error } = await supabase.rpc("reschedule_pending_sessions", {
+    p_updates: updates.map(({ id, session_date }) => ({ id, session_date })),
+  })
+
+  if (error) {
+    throw new Error(
+      error.code === "P0002"
+        ? "Uma das sessões não está mais pendente. Nenhuma data foi alterada."
+        : "Não foi possível salvar a nova agenda. Nenhuma data foi alterada."
+    )
   }
 }
 
