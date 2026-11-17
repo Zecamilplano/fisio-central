@@ -116,6 +116,15 @@ function useFormTypeService() {
 
       const newError = validateFormTypeService(newData)
 
+      // "selecione o tipo" / "escolha a quantidade" só depois de clicar em
+      // Prosseguir; erros de formato (quantidade/preço inválidos) aparecem na hora
+      if (!submitted) {
+        newError.service = ""
+        if (newError.package === "Escolha a quantidade de sessões") {
+          newError.package = ""
+        }
+      }
+
       setError(newError)
       return newData
     })

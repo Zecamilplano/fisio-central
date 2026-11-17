@@ -19,6 +19,16 @@ function Profile({ form }: ProfileProps) {
     handleErrors,
   } = form
 
+  // Enquanto digita, só revalida se o campo já mostra um erro (para ele sumir
+  // assim que for corrigido). A validação completa acontece ao sair do campo.
+  function revalidateWhileTyping(
+    field: Parameters<typeof handleErrors>[0],
+    errorKey: keyof typeof errorPatient,
+    value: Parameters<typeof handleErrors>[1]
+  ) {
+    if (errorPatient[errorKey]) handleErrors(field, value)
+  }
+
   function handleLimitedTextChange(
     field: "firstName" | "surName" | "address.street" | "address.neighborhood" | "address.referenceHouse",
     errorKey: keyof typeof errorPatient,
@@ -43,7 +53,7 @@ function Profile({ form }: ProfileProps) {
         [errorKey]: `Limite de ${maxLength} caracteres atingido.`,
       }))
     } else {
-      handleErrors(field, sanitizedValue)
+      revalidateWhileTyping(field, errorKey, sanitizedValue)
     }
   }
 
@@ -201,7 +211,7 @@ function Profile({ form }: ProfileProps) {
           onPaste={(event) => preventOversizedPaste(event, patient.address.telephone, registerPatientLimits.telephoneFormatted, "telephone", `Limite de ${registerPatientLimits.telephoneDigits} números atingido.`)}
           onChange={(e) => {
             handleChange("address.telephone", e.target.value)
-            handleErrors("address.telephone", e.target.value)
+            revalidateWhileTyping("address.telephone", "telephone", e.target.value)
             if (unformatPhone(e.target.value).length >= registerPatientLimits.telephoneDigits) {
               setErrorPatient((previous) => ({
                 ...previous,
@@ -331,8 +341,9 @@ function Profile({ form }: ProfileProps) {
                   "address.addressNumber",
                   parsedValue
                 )
-                handleErrors(
+                revalidateWhileTyping(
                   "address.addressNumber",
+                  "addressNumber",
                   parsedValue
                 )
               }}

@@ -1,4 +1,5 @@
 import { InitialStep } from "@/data/registerPatientData"
+import { clearRegistrationDraft } from "@/lib/drafts/registrationDraft"
 import { StepKey, StepType } from "@/types/registerPatientsTypes"
 import { useEffect, useRef, useState } from "react"
 import { useFormProfile } from "@/hook/useFormProfile"
@@ -98,7 +99,11 @@ function useRegisterPatient() {
 
         formProfile.setPatient(patient)
         treatmentId.current = treatment.treatmentId
-        formTypeService.setServiceForm(treatment.serviceForm)
+        // o rascunho local da etapa 2 é o mais recente (o banco só recebe ao
+        // avançar); sem ele, usa o que já foi salvo no banco
+        if (!localStorage.getItem("typeServiceForm")) {
+          formTypeService.setServiceForm(treatment.serviceForm)
+        }
         localStorage.setItem("formProfile", JSON.stringify(patient))
         setStep({
           step1: {
@@ -129,6 +134,10 @@ function useRegisterPatient() {
   }, [formProfile.setPatient, formTypeService.setServiceForm])
 
   useEffect(() => {
+    // enquanto a restauração não termina, "steps" ainda é a etapa inicial:
+    // gravar agora sobrescreveria a etapa salva antes de ela ser lida
+    if (restoreStatus !== "ready") return
+
     const activeStep = (Object.keys(steps) as StepKey[]).find(
       (step) => steps[step].active
     )
@@ -138,7 +147,7 @@ function useRegisterPatient() {
     } else if (activeStep) {
       localStorage.setItem("patientRegistrationStep", activeStep)
     }
-  }, [steps])
+  }, [steps, restoreStatus])
 
   async function handleNext(step: StepKey, photo?: File) {
 
@@ -165,6 +174,7 @@ function useRegisterPatient() {
           setIsSavingPatient(true)
           try {
             await updatePatientProfile(createdPatientId, formProfile.patient, photo)
+            if (photo) toast.success("Foto do paciente salva com sucesso!")
           } catch (error) {
             toast.error(
               error instanceof Error
@@ -335,6 +345,12 @@ function useRegisterPatient() {
     localStorage.removeItem("patientRegistrationStep")
   }
 
+  // Descarta o cadastro inteiro: estado, formulários e rascunhos locais.
+  function discardRegistration() {
+    resetRegistration()
+    clearRegistrationDraft()
+  }
+
   async function clearCurrentStep(): Promise<{
     resetAll: boolean
     photoCleanupError?: string
@@ -344,7 +360,7 @@ function useRegisterPatient() {
     if (step1.active) {
       if (patientId) {
         const result = await deletePatientPermanently(patientId)
-        resetRegistration()
+        discardRegistration()
         return { resetAll: true, photoCleanupError: result.photoCleanupError }
       }
 
@@ -435,6 +451,7 @@ function useRegisterPatient() {
     handleNext,
     handleSavePackageSchedule,
     resetRegistration,
+    discardRegistration,
     clearCurrentStep,
     handleStepClick,
     goToFirstStep,

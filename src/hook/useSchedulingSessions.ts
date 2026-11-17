@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { addDays } from "date-fns"
 import {
   Package,
@@ -30,7 +30,7 @@ function buildInitialSchedulingForm(
     package: {
       startDate: null,
       defaultTime: "16:00",
-      paymentType: "metade",
+      paymentType: null, // sem pré-seleção: a fisio escolhe
       paidSessionsCount: null,
 
       weeklyAmount: null,
@@ -46,6 +46,57 @@ function buildInitialSchedulingForm(
   }
 }
 
+// Lê o rascunho da etapa 3 do localStorage, ajustado ao tipo e à quantidade atuais.
+function loadSchedulingForm(
+  totalSessions: number,
+  serviceType: TypeServiceType | null
+): SchedulingForm {
+  const initial = buildInitialSchedulingForm(totalSessions, serviceType)
+  // tipo de atendimento ainda desconhecido (etapa 2 carregando): não dá para
+  // conferir a quantidade do pacote, então não restaura nem descarta nada agora
+  if (serviceType === null) return initial
+
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (!stored) return initial
+
+    const parsed = JSON.parse(stored)
+    const savedTotalSessions = parsed.package?.summary?.find(
+      (item: { label: string }) => item.label === "Total"
+    )?.value
+    const packageQuantityChanged =
+      typeof savedTotalSessions === "number" &&
+      savedTotalSessions !== totalSessions
+    const restoredSessions = packageQuantityChanged
+      ? []
+      : (parsed.package?.sessions ?? [])
+
+    return {
+      ...initial,
+      ...parsed,
+      serviceType,
+      package: {
+        ...initial.package,
+        ...parsed.package,
+        sessions: restoredSessions,
+        paidSessionsCount: packageQuantityChanged
+          ? null
+          : (parsed.package?.paidSessionsCount ?? null),
+        summary: [
+          { label: "Agendadas", value: restoredSessions.length },
+          {
+            label: "Restante",
+            value: totalSessions - restoredSessions.length,
+          },
+          { label: "Total", value: totalSessions },
+        ],
+      },
+    }
+  } catch {
+    return initial
+  }
+}
+
 export function useSchedulingSessions(
   totalSessions: number,
   serviceType: TypeServiceType | null = null
@@ -53,7 +104,7 @@ export function useSchedulingSessions(
   const [isHalfPaymentModalOpen, setIsHalfPaymentModalOpen] = useState(false)
   const [isSavingSchedule, setIsSavingSchedule] = useState(false)
   const [schedulingForm, setSchedulingForm] = useState<SchedulingForm>(() =>
-    buildInitialSchedulingForm(totalSessions, serviceType)
+    loadSchedulingForm(totalSessions, serviceType)
   )
 
   const [schedulingFormErrors, setSchedulingFormErrors] =
@@ -112,58 +163,22 @@ export function useSchedulingSessions(
   const maxDaysReached =
     weeklyAmount !== null && activeDays.length >= weeklyAmount
 
+  // recarrega o rascunho só quando o tipo/quantidade realmente mudam (não na
+  // montagem: o estado já nasce do rascunho, e reler aqui pegaria o valor que o
+  // efeito de salvar acabou de gravar)
+  const loadedKeyRef = useRef(`${serviceType}|${totalSessions}`)
   useEffect(() => {
-    const initial = buildInitialSchedulingForm(totalSessions, serviceType)
-
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY)
-
-      if (!stored) {
-        setSchedulingForm(initial)
-        return
-      }
-
-      const parsed = JSON.parse(stored)
-      const savedTotalSessions = parsed.package?.summary?.find(
-        (item: { label: string }) => item.label === "Total"
-      )?.value
-      const packageQuantityChanged =
-        typeof savedTotalSessions === "number" &&
-        savedTotalSessions !== totalSessions
-      const restoredSessions = packageQuantityChanged
-        ? []
-        : (parsed.package?.sessions ?? [])
-
-      setSchedulingForm({
-        ...initial,
-        ...parsed,
-        serviceType,
-        package: {
-          ...initial.package,
-          ...parsed.package,
-          sessions: restoredSessions,
-          paidSessionsCount: packageQuantityChanged
-            ? null
-            : (parsed.package?.paidSessionsCount ?? null),
-          summary: [
-            {
-              label: "Agendadas",
-              value: restoredSessions.length,
-            },
-            {
-              label: "Restante",
-              value: totalSessions - restoredSessions.length,
-            },
-            { label: "Total", value: totalSessions },
-          ],
-        },
-      })
-    } catch {
-      setSchedulingForm(initial)
-    }
+    const key = `${serviceType}|${totalSessions}`
+    if (loadedKeyRef.current === key) return
+    loadedKeyRef.current = key
+    setSchedulingForm(loadSchedulingForm(totalSessions, serviceType))
   }, [serviceType, totalSessions])
 
   useEffect(() => {
+    // sem tipo de atendimento o formulário ainda não foi restaurado: gravar agora
+    // apagaria as sessões do rascunho (a limpeza explícita fica no resetScheduling)
+    if (serviceType === null) return
+
     try {
       const hasDraft =
         schedulingForm.serviceType !== null ||
@@ -182,10 +197,16 @@ export function useSchedulingSessions(
     } catch {
       console.error("Erro ao salvar no localStorage.")
     }
-  }, [schedulingForm])
+  }, [schedulingForm, serviceType])
 
   function resetScheduling(nextServiceType: TypeServiceType | null = null) {
-    setSchedulingForm(buildInitialSchedulingForm(0, nextServiceType))
+    // mantém o total do pacote atual (antes zerava o resumo "Total/Restante")
+    setSchedulingForm(buildInitialSchedulingForm(totalSessions, nextServiceType))
+    try {
+      localStorage.removeItem(STORAGE_KEY)
+    } catch {
+      // localStorage indisponível: nada a limpar
+    }
     setSchedulingFormErrors(initialErrors)
     setIsHalfPaymentModalOpen(false)
     setIsSavingSchedule(false)
@@ -356,6 +377,9 @@ export function useSchedulingSessions(
     if (!weeklyAmount) {
       newErrors.weeklyAmount.push("Selecione quantas vezes na semana.")
     }
+    if (!paymentType) {
+      newErrors.paymentType.push("Selecione o pagamento inicial.")
+    }
     if (weeklyAmount && activeDays.length !== weeklyAmount) {
       newErrors.selectedDays.push(
         "Selecione a mesma quantidade de dias definida para a semana."
@@ -386,7 +410,7 @@ export function useSchedulingSessions(
     const lastDate = getLastDate(sessions)
     const firstSessionDate = lastDate ? addDays(lastDate, 1) : startDate
 
-    if (!firstSessionDate) return
+    if (!firstSessionDate || !paymentType) return
 
     const newSessions = buildSessions(
       activeDays,
@@ -478,6 +502,7 @@ export function useSchedulingSessions(
   }
 
   function handlePaymentType(paymentType: PaymentType) {
+    setSchedulingFormErrors((prev) => ({ ...prev, paymentType: [] }))
     if (paymentType === "metade") {
       setSchedulingForm((prev) => ({
         ...prev,

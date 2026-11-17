@@ -23,7 +23,7 @@ export type SummaryItem = {
 export type Package = {
   startDate: Date | null
   defaultTime: string
-  paymentType: PaymentType
+  paymentType: PaymentType | null // null = ainda não escolhido
   paidSessionsCount: number | null
 
   weeklyAmount: number | null

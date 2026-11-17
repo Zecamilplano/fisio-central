@@ -247,17 +247,12 @@ function useFormProfile() {
       return hasError
     }
 
-    if (hasError) {
-      setErrorPatient((prev) => ({
-        ...prev,
-        [field]: message,
-      }))
-    } else {
-      setErrorPatient((prev) => ({
-        ...prev,
-        [field]: "",
-      }))
-    }
+    // a tela lê os erros pela chave curta ("street"), não por "address.street"
+    const errorKey = field.split(".").pop() as keyof PatientOptionalType
+    setErrorPatient((prev) => ({
+      ...prev,
+      [errorKey]: hasError ? message : "",
+    }))
 
     return hasError
   }

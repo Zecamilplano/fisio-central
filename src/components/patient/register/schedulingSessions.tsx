@@ -57,6 +57,31 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
 
   const { serviceType } = schedulingForm
 
+  // ordem obrigatória do pacote: data inicial + horário → vezes na semana →
+  // dias da semana → gerar sessões (cada passo só libera depois do anterior)
+  const activeDaysCount = Object.values(selectedDays).filter(Boolean).length
+  const canPickWeeklyAmount =
+    Boolean(schedulingForm.package.startDate) &&
+    Boolean(schedulingForm.package.defaultTime.trim())
+  const canPickDays = canPickWeeklyAmount && weeklyAmount !== null
+  const daysComplete = canPickDays && activeDaysCount === weeklyAmount
+  // depois de geradas, os botões aplicam o pagamento às sessões existentes
+  const canPickPayment = daysComplete || sessions.length > 0
+  const paymentType = schedulingForm.package.paymentType
+  const canGenerateSessions =
+    daysComplete &&
+    paymentType !== null &&
+    (summary.find((item) => item.label === "Restante")?.value ?? 0) > 0
+  const generateHint = !canPickWeeklyAmount
+    ? "Escolha a data inicial e o horário primeiro."
+    : weeklyAmount === null
+      ? "Escolha quantas vezes na semana."
+      : activeDaysCount !== weeklyAmount
+        ? `Selecione ${weeklyAmount} ${weeklyAmount === 1 ? "dia" : "dias"} da semana.`
+        : paymentType === null
+          ? "Escolha o pagamento inicial."
+          : "Todas as sessões do pacote já foram geradas."
+
   useEffect(() => {
     if (!form.isHalfPaymentModalOpen) return
 
@@ -250,6 +275,9 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
             <legend className="text-lg text-[#FFA726] text-center font-semibold">
               Quantas vezes na semana
             </legend>
+            {!canPickWeeklyAmount && (
+              <p className="sr-only">Escolha a data inicial e o horário primeiro.</p>
+            )}
 
             {Array.from({ length: 5 }, (_, i) => {
               const value = i + 1
@@ -265,6 +293,7 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
                         ? "bg-[#FFA726] text-white"
                         : "bg-[#D9D9D9] text-[#2D2D2D]"
                     }
+                    ${canPickWeeklyAmount ? "cursor-pointer" : "opacity-40 cursor-not-allowed"}
                   `}
                 >
                   {value}
@@ -273,6 +302,8 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
                     id={`vezes-${value}`}
                     name="times"
                     value={value}
+                    checked={weeklyAmount === value}
+                    disabled={!canPickWeeklyAmount}
                     onChange={(e) =>
                       handleChange(
                         "package.summary.weeklyAmount",
@@ -285,6 +316,11 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
               )
             })}
           </fieldset>
+          {!canPickWeeklyAmount && (
+            <p aria-hidden="true" className="flex justify-center text-sm text-[#8C7B6B]">
+              Escolha a data inicial e o horário primeiro.
+            </p>
+          )}
           {schedulingFormErrors.weeklyAmount.map((error, index) => (
             <p key={index} role="alert" aria-live="polite" className="text-red-600 text-sm flex justify-center">
               {error}
@@ -296,10 +332,15 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
             <legend className="text-lg text-[#FFA726] text-center font-semibold mb-3">
               Dias das sessões na semana
             </legend>
+            {canPickWeeklyAmount && !canPickDays && (
+              <p className="flex w-full justify-center text-sm text-[#8C7B6B]">
+                Escolha quantas vezes na semana primeiro.
+              </p>
+            )}
 
             {daysOfWeek.map((day) => {
               const isSelected = selectedDays[day]
-              const isDisabled = maxDaysReached && !isSelected
+              const isDisabled = !canPickDays || (maxDaysReached && !isSelected)
 
               return (
                 <label
@@ -317,6 +358,7 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
                     id={day}
                     name="dia"
                     value={day}
+                    checked={Boolean(isSelected)}
                     disabled={isDisabled}
                     onChange={() =>
                       handleChange("package.summary.selectedDays", day)
@@ -342,19 +384,27 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
                 ? "Aplicar pagamento às sessões"
                 : "Pagamento inicial"}
             </legend>
+            {!canPickPayment && (
+              <p className="text-sm text-[#8C7B6B]">
+                Selecione os dias da semana primeiro.
+              </p>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
               {paymentInitialOptions.map((payment) => (
                 <button
                   key={payment.value}
                   type="button"
+                  disabled={!canPickPayment}
+                  aria-pressed={paymentType === payment.value}
                   onClick={() =>
                     handleChange("package.paymentType", payment.value)
                   }
                   className={`
                       rounded-lg py-3 px-4 text-center border-2 transition
+                      disabled:cursor-not-allowed disabled:opacity-40
                       ${
-                        schedulingForm.package.paymentType === payment.value
+                        paymentType === payment.value
                           ? "bg-[#FFA726] text-white border-[#FFA726]"
                           : "bg-[#D9D9D9] text-[#2D2D2D] border-transparent"
                       }
@@ -367,6 +417,12 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
                 </button>
               ))}
             </div>
+
+            {schedulingFormErrors.paymentType.map((error, index) => (
+              <p key={index} role="alert" aria-live="polite" className="text-sm text-red-600">
+                {error}
+              </p>
+            ))}
 
             {form.isHalfPaymentModalOpen && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -491,11 +547,13 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
                 <div className="flex justify-between">
                   <span className="text-[#8C7B6B]">Pagamento inicial</span>
                   <strong className="text-[#2D2D2D]">
-                    {schedulingForm.package.paymentType === "metade"
+                    {paymentType === "metade"
                       ? "50% agora"
-                      : schedulingForm.package.paymentType === "integral"
+                      : paymentType === "integral"
                         ? "Integral"
-                        : "Depois"}
+                        : paymentType === "depois"
+                          ? "Depois"
+                          : "Não escolhido"}
                   </strong>
                 </div>
 
@@ -645,10 +703,17 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
           <button
             type="button"
             onClick={() => handleChange("handleAddSessions")}
-            className="hover:text-[#F59E0B] active:text-[#D97706] hover:bg-[#FFF3E0] active:bg-[#FFE0B2]  text-center text-[#FFA726] text-xl align-middle border-2 border-solid border-[#FFA726]/30 py-3 rounded-md cursor-pointer"
+            disabled={!canGenerateSessions}
+            aria-describedby={!canGenerateSessions ? "generate-sessions-hint" : undefined}
+            className="hover:text-[#F59E0B] active:text-[#D97706] hover:bg-[#FFF3E0] active:bg-[#FFE0B2]  text-center text-[#FFA726] text-xl align-middle border-2 border-solid border-[#FFA726]/30 py-3 rounded-md cursor-pointer disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[#FFA726]"
           >
             Gerar sessões
           </button>
+          {!canGenerateSessions && (
+            <p id="generate-sessions-hint" className="-mt-2 text-center text-sm text-[#8C7B6B]">
+              {generateHint}
+            </p>
+          )}
         </>
       )}
 
