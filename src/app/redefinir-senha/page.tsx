@@ -1,12 +1,22 @@
 "use client"
 
-import { useState, type FormEvent } from "react"
+import { useEffect, useState, type FormEvent } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { toast } from "react-toastify"
 import { cn } from "tailwind-variants"
 import { createClient } from "@/lib/supabase/client"
 import { useClinicStore } from "@/store/clinic/clinicStore"
 import Button from "@/components/ui/buttonCustom"
+import { hasRecentEmailProof } from "@/lib/auth/recoverySession"
+import { ShowPasswordToggle } from "@/components/ui/showPasswordToggle"
+
+// a sessão precisa ter vindo do link de "Esqueci minha senha" há pouco tempo
+async function canChangePassword() {
+  const supabase = createClient()
+  const { data } = await supabase.auth.getClaims()
+  return hasRecentEmailProof(data?.claims?.amr, Math.floor(Date.now() / 1000))
+}
 
 type Field = "password" | "confirmPassword"
 type Errors = Partial<Record<Field, string>>
@@ -44,6 +54,18 @@ function ResetPassword() {
   const [errors, setErrors] = useState<Errors>({})
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [access, setAccess] = useState<"checking" | "allowed" | "blocked">("checking")
+
+  useEffect(() => {
+    let active = true
+    canChangePassword()
+      .then((ok) => active && setAccess(ok ? "allowed" : "blocked"))
+      .catch(() => active && setAccess("blocked"))
+    return () => {
+      active = false
+    }
+  }, [])
 
   async function handleSubmit(event?: FormEvent) {
     event?.preventDefault()
@@ -56,6 +78,13 @@ function ResetPassword() {
     setSubmitting(true)
     setSubmitError(null)
 
+    // confere de novo na hora de salvar (a janela pode ter expirado com a tela aberta)
+    if (!(await canChangePassword())) {
+      setAccess("blocked")
+      setSubmitting(false)
+      return
+    }
+
     const supabase = createClient()
     const { error } = await supabase.auth.updateUser({ password })
 
@@ -64,6 +93,9 @@ function ResetPassword() {
       setSubmitting(false)
       return
     }
+
+    // encerra as outras sessões desta conta (outros aparelhos/navegadores)
+    await supabase.auth.signOut({ scope: "others" }).catch(() => {})
 
     // recarrega o vínculo da clínica para o usuário desta sessão
     useClinicStore.getState().reset()
@@ -93,6 +125,28 @@ function ResetPassword() {
           </p>
         </header>
 
+        {access === "checking" && (
+          <p role="status" className="font-open-sans py-6 text-sm text-slate-500">
+            Verificando o link...
+          </p>
+        )}
+
+        {access === "blocked" && (
+          <div className="font-open-sans w-full px-3 pt-6 text-center">
+            <p role="alert" className="rounded-md bg-amber-50 px-3 py-4 text-amber-800">
+              Por segurança, a senha só pode ser trocada pelo link enviado ao seu
+              e-mail, e o link vale por 15 minutos depois de aberto.
+            </p>
+            <Link
+              href="/esqueci-senha"
+              className="mt-6 inline-block text-[#E65100] underline underline-offset-2 transition hover:opacity-80 active:opacity-60"
+            >
+              Pedir o link em &quot;Esqueci minha senha&quot;
+            </Link>
+          </div>
+        )}
+
+        {access === "allowed" && (
         <form noValidate onSubmit={handleSubmit} className="font-open-sans py-2 px-3 w-full">
           <section className="mt-4">
             <label htmlFor="password" className="pb-2 text-lg text-[#FFA726] font-medium block">
@@ -100,7 +154,7 @@ function ResetPassword() {
             </label>
             <input
               id="password"
-              type="password"
+              type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="new-password"
@@ -124,7 +178,7 @@ function ResetPassword() {
             </label>
             <input
               id="confirmPassword"
-              type="password"
+              type={showPassword ? "text" : "password"}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               autoComplete="new-password"
@@ -139,6 +193,11 @@ function ResetPassword() {
                 {errors.confirmPassword}
               </span>
             )}
+            <ShowPasswordToggle
+              visible={showPassword}
+              onToggle={() => setShowPassword((v) => !v)}
+              controls="password confirmPassword"
+            />
           </section>
 
           {submitError && (
@@ -155,6 +214,7 @@ function ResetPassword() {
             isSubmitting={submitting}
           />
         </form>
+        )}
       </section>
     </section>
   )
