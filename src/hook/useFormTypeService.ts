@@ -1,6 +1,7 @@
 import { ErrorTypeService, ServiceForm } from "@/types"
 import { registerPatientLimits } from "@/data/registerPatientLimits"
 import { useEffect, useRef, useState } from "react"
+import { touchRegistrationDraft } from "@/lib/drafts/registrationDraft"
 
 const serviceFormData: ServiceForm = {
   selectService: null,
@@ -72,6 +73,7 @@ function useFormTypeService() {
 
       if (hasDraft) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(serviceForm))
+        touchRegistrationDraft()
       } else {
         localStorage.removeItem(STORAGE_KEY)
       }

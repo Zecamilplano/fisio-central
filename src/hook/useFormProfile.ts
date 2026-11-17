@@ -4,6 +4,7 @@ import { formatTelephone, unformatPhone } from "@/utils/form/phone"
 import { registerPatientLimits } from "@/data/registerPatientLimits"
 import { useState, useRef, useEffect } from "react"
 import { usePatientForm } from "./usePatientForm"
+import { touchRegistrationDraft } from "@/lib/drafts/registrationDraft"
 
 function useFormProfile() {
   const [patient, setPatient] = useState<PatientType>({
@@ -120,6 +121,7 @@ function useFormProfile() {
           : { ...dataSaved, [field]: value }
 
       localStorage.setItem("formProfile", JSON.stringify(newData))
+      touchRegistrationDraft()
     } catch {
       console.error("Erro ao salvar o rascunho do perfil.")
     }

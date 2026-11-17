@@ -15,6 +15,7 @@ import {
   buildSessions,
   getLastDate,
 } from "@/utils/form"
+import { touchRegistrationDraft } from "@/lib/drafts/registrationDraft"
 
 const STORAGE_KEY = "schedulingForm"
 
@@ -174,6 +175,7 @@ export function useSchedulingSessions(
 
       if (hasDraft) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(schedulingForm))
+        touchRegistrationDraft()
       } else {
         localStorage.removeItem(STORAGE_KEY)
       }

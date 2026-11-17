@@ -11,6 +11,7 @@ import {
   getProfilePhotoUrl,
   uploadPendingProfilePhoto,
 } from "@/lib/profile/profilePhoto"
+import { endRegistrationDraftSession } from "@/lib/drafts/registrationDraft"
 
 type UserInfo = {
   displayName: string // com título, ex.: "Dra. Monique Fisio"
@@ -113,6 +114,8 @@ export function UserMenu() {
 
     async function refresh(session: { user: { id: string; email?: string } } | null) {
       if (!session) {
+        // sessão terminou por qualquer motivo (expirou, revogada, logout em outra aba)
+        endRegistrationDraftSession()
         if (active) setUser(null)
         return
       }

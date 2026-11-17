@@ -2,15 +2,8 @@ import { createClient } from "@/lib/supabase/client"
 import { useClinicStore } from "@/store/clinic/clinicStore"
 import { usePatientFormStore } from "@/store/clinic/patientFormStore"
 import { useFisioStore } from "@/store/fisio/fisioStore"
+import { endRegistrationDraftSession } from "@/lib/drafts/registrationDraft"
 
-// rascunhos do cadastro de paciente (incluem dados pessoais e de saúde)
-const DRAFT_STORAGE_KEYS = [
-  "createdPatientId",
-  "patientRegistrationStep",
-  "formProfile",
-  "typeServiceForm",
-  "schedulingForm",
-]
 
 export async function signOutAndCleanUp() {
   const supabase = createClient()
@@ -25,9 +18,6 @@ export async function signOutAndCleanUp() {
   fisio.setEvolutions({})
   fisio.setEvolutionAuthors({})
 
-  try {
-    DRAFT_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key))
-  } catch {
-    // localStorage indisponível (modo privado/bloqueado): nada a limpar
-  }
+  // rascunhos do cadastro de paciente (incluem dados pessoais)
+  endRegistrationDraftSession()
 }

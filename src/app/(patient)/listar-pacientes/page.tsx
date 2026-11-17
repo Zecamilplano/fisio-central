@@ -18,6 +18,7 @@ import { useRouter } from "next/navigation"
 import { getSessionEvolutions } from "@/services/patients/sessionEvolutionRepository"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "react-toastify"
+import { touchRegistrationDraft } from "@/lib/drafts/registrationDraft"
 
 type PatientHistoryState = {
   __fisioPatientDetailEntry?: boolean
@@ -71,6 +72,7 @@ function ListPatient() {
       )
       localStorage.setItem("createdPatientId", patientId)
       localStorage.setItem("patientRegistrationStep", "step2")
+      touchRegistrationDraft()
     } catch {
       toast.error("Não foi possível retomar o cadastro neste navegador.")
       return

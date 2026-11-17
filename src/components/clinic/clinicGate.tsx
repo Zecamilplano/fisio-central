@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { useClinicStore } from "@/store/clinic/clinicStore"
 import { CreateClinicModal } from "./createClinicModal"
+import { ensureRegistrationDraftOwner } from "@/lib/drafts/registrationDraft"
 
 export function ClinicGate({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -25,6 +26,10 @@ export function ClinicGate({ children }: { children: React.ReactNode }) {
         router.replace("/entrar")
         return
       }
+
+      // rascunho de cadastro de outro usuário ou vencido (1 h) é descartado antes
+      // de qualquer tela restaurá-lo (as telas só montam depois do setReady)
+      ensureRegistrationDraftOwner(user.id)
 
       // a equipe enxerga todos os membros da clínica, então filtra o próprio vínculo
       const { data, error } = await supabase
