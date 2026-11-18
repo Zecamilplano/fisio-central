@@ -12,9 +12,29 @@ import { useRegisterPatient } from "@/hook/useRegisterPatient"
 import useImageInput from "@/hook/useImageInput"
 import { deletePatientPermanently } from "@/services/patients/patientRepository"
 import { ProgressActionButton } from "@/components/ui/progressActionButton"
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "react-toastify"
+
+// campo onde o teclado já tem função própria (digitar, mover o cursor,
+// trocar a opção marcada): nesses casos as setas não trocam de etapa
+function isFormControl(target: EventTarget | null) {
+  return (
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement ||
+    target instanceof HTMLSelectElement ||
+    (target instanceof HTMLElement && target.isContentEditable)
+  )
+}
+
+// campo de texto com conteúdo: Ctrl+Backspace ali apaga a palavra anterior
+// (comportamento nativo), então o atalho de limpar não é acionado
+function isTextFieldWithContent(target: EventTarget | null) {
+  if (target instanceof HTMLTextAreaElement) return target.value.length > 0
+  if (!(target instanceof HTMLInputElement)) return false
+  const nonText = ["checkbox", "radio", "button", "submit", "file", "range", "color"]
+  return !nonText.includes(target.type) && target.value.length > 0
+}
 
 type ClearMode =
   | { kind: "all" }
@@ -167,6 +187,90 @@ function RegisterPatient() {
     )
   }
 
+  // Atalhos do cadastro (funcionam com o foco em qualquer lugar, inclusive campos):
+  //   Ctrl+Enter              → etapas 1 e 2: avança | etapa 3: cadastrar e adicionar
+  //   Ctrl+Shift+Enter        → etapa 3: cadastrar e ver paciente
+  //   Ctrl+← / Ctrl+→         → etapa anterior / próxima
+  //   Ctrl+Backspace          → limpar o formulário atual (abre a confirmação)
+  //   Ctrl+Shift+Backspace    → limpar todo o cadastro (abre a confirmação)
+  //   Enter                   → dentro de um campo: submit do form (avança / cadastra e vê)
+  const shortcutRef = useRef<(event: KeyboardEvent) => void>(() => {})
+  function handleShortcut(event: KeyboardEvent) {
+    // com modal aberto, salvando, limpando ou restaurando, o teclado é do modal/espera
+    if (
+      clearMode ||
+      formScheduling.isHalfPaymentModalOpen ||
+      isBusy ||
+      isRestoring ||
+      isClearingRegistration ||
+      event.altKey ||
+      event.metaKey
+    ) {
+      return
+    }
+
+    if (event.key === "Backspace" && event.ctrlKey) {
+      if (event.shiftKey) {
+        event.preventDefault()
+        setClearMode({ kind: "all" })
+      } else if (!isTextFieldWithContent(event.target)) {
+        event.preventDefault()
+        openCurrentCleanup()
+      }
+      return
+    }
+
+    if (event.key === "Enter" && event.ctrlKey) {
+      // impede também o submit implícito do form
+      event.preventDefault()
+      if (step1.active) void handleNext("step1", imageInput.image[0]?.file)
+      else if (step2.active) void handleNext("step2")
+      else if (event.shiftKey) void handleRegisterAndViewPatient()
+      else void handleRegisterAndAdd()
+      return
+    }
+
+    // Enter sem foco em campo ou botão (ex.: depois de clicar numa área vazia)
+    // também avança; dentro de um campo quem trata é o submit do form
+    if (
+      event.key === "Enter" &&
+      !event.ctrlKey &&
+      !event.shiftKey &&
+      !isFormControl(event.target) &&
+      !(event.target instanceof HTMLButtonElement) &&
+      !(event.target instanceof HTMLAnchorElement)
+    ) {
+      event.preventDefault()
+      formRef.current?.requestSubmit()
+      return
+    }
+
+    if (
+      (event.key === "ArrowLeft" || event.key === "ArrowRight") &&
+      event.ctrlKey &&
+      !event.shiftKey
+    ) {
+      const order = ["step1", "step2", "step3"] as const
+      const current = step1.active ? 0 : step2.active ? 1 : 2
+      const next = current + (event.key === "ArrowRight" ? 1 : -1)
+      if (next < 0 || next > 2) return
+      event.preventDefault()
+      // mesma regra dos círculos de etapa: só avança se a etapa atual estiver completa
+      handleStepClick(order[next])
+    }
+  }
+
+  // a ref sempre aponta para a versão mais recente (com o estado atual)
+  useEffect(() => {
+    shortcutRef.current = handleShortcut
+  })
+
+  useEffect(() => {
+    const listener = (event: KeyboardEvent) => shortcutRef.current(event)
+    window.addEventListener("keydown", listener)
+    return () => window.removeEventListener("keydown", listener)
+  }, [])
+
   return (
     <section className=" flex justify-center items-center">
       <section
@@ -203,6 +307,20 @@ function RegisterPatient() {
             </ol>
           </nav>
         </div>
+
+        <details className="mt-2 w-full max-w-180 px-3 font-open-sans text-xs text-[#8C7B6B]">
+          <summary className="cursor-pointer select-none text-center hover:text-[#FFA726]">
+            Atalhos de teclado
+          </summary>
+          <ul className="mt-2 grid gap-1 rounded-md bg-[#FFF7ED] p-3 sm:grid-cols-2">
+            <li><kbd className="font-semibold">Ctrl + Enter</kbd> avança (etapa 3: cadastrar e adicionar)</li>
+            <li><kbd className="font-semibold">Ctrl + Shift + Enter</kbd> etapa 3: cadastrar e ver</li>
+            <li><kbd className="font-semibold">Ctrl + ← →</kbd> navega entre as etapas</li>
+            <li><kbd className="font-semibold">Ctrl + Backspace</kbd> limpa o formulário atual</li>
+            <li><kbd className="font-semibold">Ctrl + Shift + Backspace</kbd> limpa todo o cadastro</li>
+            <li><kbd className="font-semibold">Enter</kbd> num campo também avança</li>
+          </ul>
+        </details>
 
         <form
           ref={formRef}
@@ -323,6 +441,12 @@ function RegisterPatient() {
           <section
             role="alertdialog"
             aria-modal="true"
+            onKeyDown={(event) => {
+              if (event.key === "Escape" && !isClearingRegistration) {
+                event.preventDefault()
+                setClearMode(null)
+              }
+            }}
             aria-labelledby="clear-registration-title"
             aria-describedby="clear-registration-description"
             className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl"
@@ -353,6 +477,7 @@ function RegisterPatient() {
             <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <button
                 type="button"
+                autoFocus // ação destrutiva: o foco começa no Cancelar (Tab + Enter confirma)
                 onClick={() => setClearMode(null)}
                 disabled={isClearingRegistration}
                 className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
