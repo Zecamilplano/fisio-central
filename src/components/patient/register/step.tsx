@@ -14,6 +14,7 @@ function StepBall({ number, step, onClick, disabled = false }: StepBallTypes) {
   return (
     <li>
       <button
+        type="button"
         onClick={onClick}
         disabled={disabled}
         className={`

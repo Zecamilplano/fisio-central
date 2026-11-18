@@ -198,6 +198,26 @@ export function AddSessionModal({
     }
   }, [isOpen, onClose])
 
+  // Enter num campo (horário, quantidade) confirma a ação da tela aberta,
+  // respeitando as mesmas condições que desabilitam o botão
+  function handleEnterKey(event: React.KeyboardEvent<HTMLDivElement>) {
+    if (event.key !== "Enter" || !(event.target instanceof HTMLInputElement)) return
+    event.preventDefault()
+    if (isSaving) return
+
+    if (mode === "separate-session" && !hasPackageScheduleConflict) {
+      void handleConfirmSeparateSession()
+    } else if (
+      mode === "restore-session" &&
+      packageWeekDays.length > 0 &&
+      selectedTime
+    ) {
+      void handleRestoreMissingPackageSession()
+    } else if (mode === "next-package") {
+      void handleCreateNextPackage()
+    }
+  }
+
   if (!isOpen) return null
 
   return (
@@ -207,6 +227,7 @@ export function AddSessionModal({
     >
       <div
         onClick={(event) => event.stopPropagation()}
+        onKeyDown={handleEnterKey}
         className="mx-4 w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg"
       >
         <h3 className="text-lg font-semibold text-[#344054]">

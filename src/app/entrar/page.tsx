@@ -136,6 +136,7 @@ function Login() {
             <Button
               variant="single"
               textAlt="Entrar"
+              type="submit"
               active={true}
               isSubmitting={submitting}
               onNext={() => handleSubmit()}

@@ -88,6 +88,11 @@ export function DeletePatientDialog({
             autoFocus
             value={confirmationInput}
             onChange={(event) => onConfirmationInputChange(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key !== "Enter") return
+              event.preventDefault()
+              if (canConfirm && !isDeleting) onConfirm()
+            }}
             disabled={isDeleting}
             className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 disabled:bg-slate-100"
             autoComplete="off"

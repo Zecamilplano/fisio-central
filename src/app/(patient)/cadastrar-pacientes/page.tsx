@@ -204,7 +204,23 @@ function RegisterPatient() {
           </nav>
         </div>
 
-        <form ref={formRef} className="flex flex-col gap-6 px-2">
+        <form
+          ref={formRef}
+          noValidate
+          onSubmit={(event) => {
+            // Enter = botão principal da etapa: "Próximo" nas etapas 1 e 2 e
+            // "Cadastrar e ver paciente" na 3 (cada um passa pelas validações)
+            event.preventDefault()
+            if (isBusy || isRestoring || isClearingRegistration) return
+            if (step1.active) void handleNext("step1", imageInput.image[0]?.file)
+            else if (step2.active) void handleNext("step2")
+            // com o modal de "50% agora" aberto, o Enter pertence ao modal
+            else if (step3.active && !formScheduling.isHalfPaymentModalOpen) {
+              void handleRegisterAndViewPatient()
+            }
+          }}
+          className="flex flex-col gap-6 px-2"
+        >
           {step1.active && (
             <>
               <header>
@@ -222,7 +238,7 @@ function RegisterPatient() {
                 {renderCleanupActions()}
                 <Button
                   variant="single"
-                  onNext={() => handleNext("step1", imageInput.image[0]?.file)}
+                  type="submit"
                   active={isFormValid}
                   isSubmitting={isSavingPatient}
                 />
@@ -246,8 +262,8 @@ function RegisterPatient() {
                 {renderCleanupActions()}
                 <Button
                   variant="double"
+                  type="submit"
                   onPrev={() => handlePrev("step2", "step1")}
-                  onNext={() => handleNext("step2")}
                   active={isNextActive}
                   isSubmitting={isSavingService}
                 />
@@ -279,6 +295,7 @@ function RegisterPatient() {
                 {renderCleanupActions()}
                 <Button
                   variant="finish"
+                  type="submit"
                   onPrev={() => handlePrev("step3", "step2")}
                   onRegisterAdd={handleRegisterAndAdd}
                   onRegisterViewPatient={handleRegisterAndViewPatient}

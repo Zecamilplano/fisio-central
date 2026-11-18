@@ -106,6 +106,7 @@ export function CreateClinicModal({ onCreated }: { onCreated: () => void }) {
           <Button
             variant="single"
             textAlt="Criar clínica"
+            type="submit"
             active={isValid}
             isSubmitting={loading}
             onNext={() => handleSubmit()}

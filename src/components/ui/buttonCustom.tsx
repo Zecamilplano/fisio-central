@@ -3,6 +3,8 @@ import { ProgressActionButton } from "./progressActionButton"
 type ButtonProps = {
   variant: "single" | "double" | "finish"
   textAlt?: string
+  // "submit": o botão principal envia o formulário (Enter funciona) e quem
+  // trata a ação é o onSubmit do <form>, então o onNext não é chamado no clique
   type?: "button" | "submit"
   onPrev?: () => void
   onRegisterAdd?: () => void
@@ -31,7 +33,7 @@ function Button({
         {variant === "single" && (
           <ProgressActionButton
             type={type}
-            onClick={onNext}
+            onClick={type === "submit" ? undefined : onNext}
             disabled={isSubmitting}
             loading={isSubmitting}
             className={` text-xl  font-open-sans  rounded-md py-3 w-full  my-6 cursor-pointer hover:opacity-80 active:opacity-60
@@ -54,8 +56,8 @@ function Button({
             </button>
 
             <ProgressActionButton
-              type="button"
-              onClick={onNext}
+              type={type}
+              onClick={type === "submit" ? undefined : onNext}
               disabled={isSubmitting}
               loading={isSubmitting}
               className={` text-xl  font-open-sans  rounded-md py-3 w-full  my-6 cursor-pointer hover:opacity-80 active:opacity-60
@@ -90,9 +92,10 @@ function Button({
               {isSubmitting ? "Salvando..." : "Cadastrar e adicionar"}
             </ProgressActionButton>
 
+            {/* com type="submit", Enter na etapa 3 equivale a este botão */}
             <ProgressActionButton
-              type="button"
-              onClick={onRegisterViewPatient}
+              type={type}
+              onClick={type === "submit" ? undefined : onRegisterViewPatient}
               disabled={isSubmitting}
               loading={isSubmitting}
               className={` text-lg  font-open-sans  rounded-md py-3 w-full  my-6 cursor-pointer hover:opacity-80 active:opacity-60
