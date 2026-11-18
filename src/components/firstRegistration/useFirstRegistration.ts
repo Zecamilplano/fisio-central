@@ -13,6 +13,7 @@ import type {
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { toast } from "react-toastify"
+import { PENDING_CONFIRMATION_EMAIL_KEY } from "@/lib/auth/emailConfirmation"
 import useImageInput from "@/hook/useImageInput"
 import { prepareAvatarPhoto } from "@/utils/image/prepareAvatarPhoto"
 import {
@@ -127,10 +128,14 @@ export function useFirstRegistration() {
       toast.success("Cadastro concluído!")
       router.replace("/cadastrar-pacientes")
     } else {
-      toast.success("Enviamos um link de confirmação para o seu e-mail.", {
-        autoClose: 8000,
-      })
-      router.replace("/entrar")
+      // a tela de login mostra um aviso fixo (com reenvio) usando este e-mail;
+      // fica no sessionStorage para não ir parar na URL/histórico
+      try {
+        sessionStorage.setItem(PENDING_CONFIRMATION_EMAIL_KEY, values.email.trim())
+      } catch {
+        // sem sessionStorage o aviso aparece sem o e-mail
+      }
+      router.replace("/entrar?motivo=confirmar-email")
     }
   }
 

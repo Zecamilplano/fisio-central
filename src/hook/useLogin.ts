@@ -6,6 +6,7 @@ import { signInWithEmail } from "@/lib/auth/login"
 import { validateLogin, type LoginField } from "@/lib/validators/login"
 import { useClinicStore } from "@/store/clinic/clinicStore"
 import { toast } from "react-toastify"
+import { PENDING_CONFIRMATION_EMAIL_KEY } from "@/lib/auth/emailConfirmation"
 
 export function useLogin() {
   const router = useRouter()
@@ -18,6 +19,8 @@ export function useLogin() {
   const [attempted, setAttempted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  // e-mail que tentou entrar sem ter confirmado a conta (mostra o aviso de reenvio)
+  const [unconfirmedEmail, setUnconfirmedEmail] = useState<string | null>(null)
 
   const validation = validateLogin(values)
 
@@ -46,13 +49,25 @@ export function useLogin() {
     setSubmitting(true)
     setSubmitError(null)
 
-    const { error } = await signInWithEmail(values.email, values.password)
+    const { error, code } = await signInWithEmail(values.email, values.password)
 
     if (error) {
-      setSubmitError(error)
+      if (code === "email_not_confirmed") {
+        setUnconfirmedEmail(values.email.trim())
+        setSubmitError(null) // o aviso de confirmação já explica
+      } else {
+        setSubmitError(error)
+      }
       setValues((prev) => ({ ...prev, password: "" }))
       setSubmitting(false)
       return
+    }
+
+    // conta confirmada e logada: o aviso de confirmação não é mais necessário
+    try {
+      sessionStorage.removeItem(PENDING_CONFIRMATION_EMAIL_KEY)
+    } catch {
+      // sessionStorage indisponível: nada a limpar
     }
 
     // zera a store para o ClinicGate buscar o vínculo do usuário que entrou
@@ -68,6 +83,7 @@ export function useLogin() {
     errors,
     submitting,
     submitError,
+    unconfirmedEmail,
     handleChange,
     handleBlur,
     handleSubmit,

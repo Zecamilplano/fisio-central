@@ -4,12 +4,16 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import Button from "@/components/ui/buttonCustom"
 import { ShowPasswordToggle } from "@/components/ui/showPasswordToggle"
+import { EmailConfirmationNotice } from "@/components/auth/emailConfirmationNotice"
+import { PENDING_CONFIRMATION_EMAIL_KEY } from "@/lib/auth/emailConfirmation"
 import { useLogin } from "@/hook/useLogin"
 import { cn } from "tailwind-variants"
 
 function Login() {
   const [invalidLink, setInvalidLink] = useState(false)
   const [idleLogout, setIdleLogout] = useState(false)
+  // após o primeiro cadastro: e-mail que precisa ser confirmado
+  const [signupEmail, setSignupEmail] = useState<string | null | undefined>(undefined)
   const [showPassword, setShowPassword] = useState(false)
 
   // /entrar?motivo=link-invalido vem do link de redefinição de senha
@@ -18,6 +22,16 @@ function Login() {
     setInvalidLink(motivo === "link-invalido")
     // /entrar?motivo=inatividade vem do logout automático (2 semanas sem uso)
     setIdleLogout(motivo === "inatividade")
+    // /entrar?motivo=confirmar-email vem do primeiro cadastro
+    if (motivo === "confirmar-email") {
+      let email: string | null = null
+      try {
+        email = sessionStorage.getItem(PENDING_CONFIRMATION_EMAIL_KEY)
+      } catch {
+        // sem sessionStorage: aviso sem o e-mail
+      }
+      setSignupEmail(email)
+    }
   }, [])
 
   const {
@@ -25,6 +39,7 @@ function Login() {
     errors,
     submitting,
     submitError,
+    unconfirmedEmail,
     handleChange,
     handleBlur,
     handleSubmit,
@@ -38,6 +53,14 @@ function Login() {
             Entrar
           </h1>
         </header>
+
+        {unconfirmedEmail ? (
+          <EmailConfirmationNotice key={unconfirmedEmail} email={unconfirmedEmail} reason="login" />
+        ) : (
+          signupEmail !== undefined && (
+            <EmailConfirmationNotice email={signupEmail} reason="signup" />
+          )
+        )}
 
         {idleLogout && (
           <p

@@ -13,16 +13,19 @@ function mapLoginError(error: { code?: string }) {
   }
 }
 
-// devolve a mensagem de erro já traduzida, ou null se deu certo
+// devolve a mensagem de erro já traduzida (e o código, para a tela reagir),
+// ou null se deu certo
 export async function signInWithEmail(
   email: string,
   password: string
-): Promise<{ error: string | null }> {
+): Promise<{ error: string | null; code?: string }> {
   const supabase = createClient()
   const { error } = await supabase.auth.signInWithPassword({
     email: email.trim(),
     password,
   })
 
-  return { error: error ? mapLoginError(error) : null }
+  return error
+    ? { error: mapLoginError(error), code: error.code }
+    : { error: null }
 }
