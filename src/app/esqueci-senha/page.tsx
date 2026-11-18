@@ -8,6 +8,13 @@ import Button from "@/components/ui/buttonCustom"
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+function validateEmail(value: string) {
+  const trimmed = value.trim()
+  if (!trimmed) return "Informe seu e-mail."
+  if (!EMAIL_REGEX.test(trimmed)) return "E-mail inválido."
+  return null
+}
+
 function ForgotPassword() {
   const [email, setEmail] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -19,8 +26,8 @@ function ForgotPassword() {
     if (submitting) return
 
     const trimmed = email.trim()
-    if (!trimmed) return setError("Informe seu e-mail.")
-    if (!EMAIL_REGEX.test(trimmed)) return setError("E-mail inválido.")
+    const validationError = validateEmail(email)
+    if (validationError) return setError(validationError)
 
     setSubmitting(true)
     setError(null)
@@ -86,8 +93,10 @@ function ForgotPassword() {
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value)
-                  setError(null)
+                  // erro já visível é revalidado (some quando corrigido)
+                  if (error) setError(validateEmail(e.target.value))
                 }}
+                onBlur={() => setError(validateEmail(email))}
                 autoComplete="email"
                 maxLength={254}
                 placeholder="Digite seu email:"

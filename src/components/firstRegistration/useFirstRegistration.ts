@@ -50,12 +50,15 @@ export function useFirstRegistration() {
       return
     }
 
+    // antes de tentar enviar: enquanto digita não surge erro novo; só um erro
+    // já visível é revalidado (some quando corrigido). O erro completo vem no blur.
     const fieldErrors = validateForm(nextValues)
     setErrors((previous) => ({
       ...previous,
-      [field]: fieldErrors[field] ?? "",
-      ...(field === "confirmPassword" ||
-      (field === "password" && nextValues.confirmPassword)
+      ...(previous[field] ? { [field]: fieldErrors[field] ?? "" } : {}),
+      // trocar a senha pode resolver (ou quebrar) a confirmação já acusada
+      ...((field === "password" || field === "confirmPassword") &&
+      previous.confirmPassword
         ? { confirmPassword: fieldErrors.confirmPassword ?? "" }
         : {}),
     }))

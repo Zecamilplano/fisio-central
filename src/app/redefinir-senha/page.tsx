@@ -67,6 +67,21 @@ function ResetPassword() {
     }
   }, [])
 
+  // erro aparece ao sair do campo ou ao enviar; enquanto digita, só os erros
+  // já visíveis são revalidados (e somem quando corrigidos)
+  function revalidateShown(nextPassword: string, nextConfirm: string) {
+    const next = validate(nextPassword, nextConfirm)
+    setErrors((prev) => ({
+      password: prev.password ? next.password : undefined,
+      confirmPassword: prev.confirmPassword ? next.confirmPassword : undefined,
+    }))
+  }
+
+  function validateOnBlur(field: Field) {
+    const next = validate(password, confirmPassword)
+    setErrors((prev) => ({ ...prev, [field]: next[field] }))
+  }
+
   async function handleSubmit(event?: FormEvent) {
     event?.preventDefault()
     if (submitting) return
@@ -156,7 +171,11 @@ function ResetPassword() {
               id="password"
               type={showPassword ? "text" : "password"}
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value)
+                revalidateShown(e.target.value, confirmPassword)
+              }}
+              onBlur={() => validateOnBlur("password")}
               autoComplete="new-password"
               maxLength={64}
               autoFocus
@@ -180,7 +199,11 @@ function ResetPassword() {
               id="confirmPassword"
               type={showPassword ? "text" : "password"}
               value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              onChange={(e) => {
+                setConfirmPassword(e.target.value)
+                revalidateShown(password, e.target.value)
+              }}
+              onBlur={() => validateOnBlur("confirmPassword")}
               autoComplete="new-password"
               maxLength={64}
               placeholder="Repita a nova senha"

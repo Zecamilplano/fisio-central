@@ -12,11 +12,9 @@ export function useLogin() {
   const router = useRouter()
 
   const [values, setValues] = useState({ email: "", password: "" })
-  const [touched, setTouched] = useState<Record<LoginField, boolean>>({
-    email: false,
-    password: false,
-  })
-  const [attempted, setAttempted] = useState(false)
+  // erros visíveis: aparecem ao sair do campo ou ao enviar; enquanto digita
+  // não surge erro novo, mas um erro já visível é revalidado e some
+  const [errors, setErrors] = useState<Partial<Record<LoginField, string>>>({})
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   // e-mail que tentou entrar sem ter confirmado a conta (mostra o aviso de reenvio)
@@ -24,26 +22,24 @@ export function useLogin() {
 
   const validation = validateLogin(values)
 
-  // só mostra o erro depois que o campo foi tocado ou houve tentativa de envio
-  const errors = {
-    email: touched.email || attempted ? validation.email : undefined,
-    password: touched.password || attempted ? validation.password : undefined,
-  }
-
   function handleChange(field: LoginField, value: string) {
-    setValues((prev) => ({ ...prev, [field]: value }))
+    const nextValues = { ...values, [field]: value }
+    setValues(nextValues)
     setSubmitError(null)
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: validateLogin(nextValues)[field] }))
+    }
   }
 
   function handleBlur(field: LoginField) {
-    setTouched((prev) => ({ ...prev, [field]: true }))
+    setErrors((prev) => ({ ...prev, [field]: validation[field] }))
   }
 
   async function handleSubmit(event?: FormEvent<HTMLFormElement>) {
     event?.preventDefault()
     if (submitting) return
 
-    setAttempted(true)
+    setErrors(validation)
     if (validation.email || validation.password) return
 
     setSubmitting(true)

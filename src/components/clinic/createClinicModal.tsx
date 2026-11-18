@@ -14,17 +14,19 @@ export function CreateClinicModal({ onCreated }: { onCreated: () => void }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const [touched, setTouched] = useState(false)
+  // erro de validação visível: aparece ao sair do campo ou ao enviar; enquanto
+  // digita não surge erro novo, mas um erro já visível é revalidado e some
+  const [fieldError, setFieldError] = useState<string | null>(null)
 
   const validationError = validateClinicName(name)
   const isValid = validationError === null
-  const visibleError = (touched && validationError) || error
+  const visibleError = fieldError || error
 
   async function handleSubmit(e?: React.FormEvent) {
     e?.preventDefault()
     if (loading) return
 
-    setTouched(true)
+    setFieldError(validationError)
     if (validationError) return
 
     setLoading(true)
@@ -84,16 +86,17 @@ export function CreateClinicModal({ onCreated }: { onCreated: () => void }) {
             onChange={(e) => {
               setName(e.target.value)
               setError(null)
+              if (fieldError) setFieldError(validateClinicName(e.target.value))
             }}
-            onBlur={() => setTouched(true)}
+            onBlur={() => setFieldError(validationError)}
             maxLength={100}
             placeholder="Digite o nome da clínica"
             autoFocus
-            aria-invalid={touched && !isValid}
+            aria-invalid={Boolean(fieldError)}
             aria-describedby={visibleError ? "clinic-name-error" : undefined}
             className={cn(
               "w-full border-2 rounded-md px-2 py-3 ",
-              touched && !isValid
+              fieldError
                 ? "border-red-500 focus:outline-red-500"
                 : "border-[#D0D7DE]/40 focus:outline-[#FFA726]"
             )}
