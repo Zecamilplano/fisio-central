@@ -38,6 +38,38 @@ function getRoleLabel(role: string | null, title: string | null) {
   }
 }
 
+// Paciente com acesso de visualização: nome e foto vêm do cadastro do paciente
+// ligado a ele (fonte única, mantida pela clínica), não do perfil.
+async function loadLinkedPatientInfo(userId: string): Promise<{
+  name: string
+  photoUrl: string | null
+} | null> {
+  const supabase = createClient()
+  const { data: patient } = await supabase
+    .from("patients")
+    .select("first_name, sur_name, photo_path")
+    .eq("auth_user_id", userId)
+    .limit(1)
+    .maybeSingle()
+
+  if (!patient) return null
+
+  let photoUrl: string | null = null
+  if (patient.photo_path) {
+    const { data } = await supabase.storage
+      .from("patient-photos")
+      .createSignedUrl(patient.photo_path, 60 * 60)
+    photoUrl = data?.signedUrl ?? null
+  }
+
+  const name = [patient.first_name, patient.sur_name]
+    .map((part) => part?.trim())
+    .filter(Boolean)
+    .join(" ")
+
+  return { name, photoUrl }
+}
+
 async function loadUserInfo(userId: string, email: string): Promise<UserInfo> {
   const supabase = createClient()
   const [{ data: profile }, { data: membership }] = await Promise.all([
@@ -55,6 +87,20 @@ async function loadUserInfo(userId: string, email: string): Promise<UserInfo> {
       .maybeSingle(),
   ])
 
+  const role = membership?.role ?? null
+
+  if (role === "patient") {
+    const linked = await loadLinkedPatientInfo(userId).catch(() => null)
+    // sem cadastro ligado ainda: mostra o e-mail (como antes)
+    const patientName = linked?.name || email.split("@")[0]
+    return {
+      photoUrl: linked?.photoUrl ?? null,
+      displayName: patientName,
+      initials: getInitialLetters(patientName) || "?",
+      roleLabel: getRoleLabel(role, null),
+    }
+  }
+
   const name = [profile?.first_name, profile?.sur_name]
     .map((part) => part?.trim())
     .filter(Boolean)
@@ -71,7 +117,7 @@ async function loadUserInfo(userId: string, email: string): Promise<UserInfo> {
     photoUrl: await getProfilePhotoUrl(avatarPath),
     displayName: [profile?.title, fallbackName].filter(Boolean).join(" "),
     initials: getInitialLetters(fallbackName) || "?",
-    roleLabel: getRoleLabel(membership?.role ?? null, profile?.title ?? null),
+    roleLabel: getRoleLabel(role, profile?.title ?? null),
   }
 }
 
