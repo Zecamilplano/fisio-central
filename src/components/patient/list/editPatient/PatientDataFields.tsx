@@ -1,5 +1,5 @@
 import type { PatientType } from "@/types/registerPatientsTypes"
-import { formatTelephone, unformatPhone } from "@/utils/form/phone"
+import { formatTelephone, mergePastedPhone, unformatPhone } from "@/utils/form/phone"
 import { characterLimits, fieldClass, type FormErrors } from "./editPatientHelpers"
 import { registerPatientLimits } from "@/data/fieldLimits"
 
@@ -62,6 +62,19 @@ export function PatientDataFields({
           onChange={(event) =>
             onAddressChange("telephone", formatTelephone(event.target.value))
           }
+          // colar usa só os dígitos (o maxLength cortaria "+55 (11) ..." antes
+          // de tirar a formatação e o número ficaria errado)
+          onPaste={(event) => {
+            event.preventDefault()
+            const input = event.currentTarget
+            const { formatted } = mergePastedPhone(
+              input.value,
+              input.selectionStart ?? input.value.length,
+              input.selectionEnd ?? input.value.length,
+              event.clipboardData.getData("text")
+            )
+            onAddressChange("telephone", formatted)
+          }}
           aria-invalid={Boolean(errors.telephone)}
         />
         {errors.telephone && <span className="text-xs text-red-600">{errors.telephone}</span>}

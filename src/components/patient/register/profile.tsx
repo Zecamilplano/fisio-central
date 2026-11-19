@@ -2,7 +2,7 @@
 import { Bookmark, MapPinHouse, Phone } from "lucide-react"
 import { useFormProfile } from "@/hook/useFormProfile"
 import { registerPatientLimits } from "@/data/fieldLimits"
-import { unformatPhone } from "@/utils/form/phone"
+import { mergePastedPhone, unformatPhone } from "@/utils/form/phone"
 import type { ClipboardEvent, KeyboardEvent } from "react"
 
 type ProfileProps = {
@@ -82,20 +82,52 @@ function Profile({ form }: ProfileProps) {
     setErrorPatient((previous) => ({ ...previous, [errorKey]: message }))
   }
 
-  function preventOversizedPaste(
+  // Colar: em vez de recusar o texto inteiro quando passa do limite, tira os
+  // espaços das pontas do que foi colado, encaixa no lugar do cursor/seleção
+  // e corta o que sobrar (o aviso de limite aparece pelo handleLimitedTextChange)
+  function pasteWithinLimit(
     event: ClipboardEvent<HTMLInputElement | HTMLTextAreaElement>,
-    value: string,
-    maxLength: number,
+    field: Parameters<typeof handleLimitedTextChange>[0],
     errorKey: keyof typeof errorPatient,
-    message: string
+    maxLength: number,
+    isPersonName = false
   ) {
+    event.preventDefault()
     const input = event.currentTarget
-    const selectedLength = input.selectionEnd! - input.selectionStart!
-    const pastedText = event.clipboardData.getData("text")
+    const start = input.selectionStart ?? input.value.length
+    const end = input.selectionEnd ?? start
+    let pasted = event.clipboardData.getData("text").trim()
+    // campo de uma linha: quebras de linha viram espaço (como o navegador faria)
+    if (input instanceof HTMLInputElement) pasted = pasted.replace(/\s*\r?\n\s*/g, " ")
 
-    if (value.length - selectedLength + pastedText.length > maxLength) {
-      event.preventDefault()
-      setErrorPatient((previous) => ({ ...previous, [errorKey]: message }))
+    const combined = input.value.slice(0, start) + pasted + input.value.slice(end)
+    handleLimitedTextChange(
+      field,
+      errorKey,
+      combined.slice(0, maxLength),
+      maxLength,
+      isPersonName
+    )
+  }
+
+  // Colar telefone: usa só os dígitos (espaços, parênteses, +55 etc. não contam)
+  function pastePhone(event: ClipboardEvent<HTMLInputElement>) {
+    event.preventDefault()
+    const input = event.currentTarget
+    const { formatted, overflow } = mergePastedPhone(
+      input.value,
+      input.selectionStart ?? input.value.length,
+      input.selectionEnd ?? input.value.length,
+      event.clipboardData.getData("text")
+    )
+    handleChange("address.telephone", formatted)
+    if (overflow) {
+      setErrorPatient((previous) => ({
+        ...previous,
+        telephone: `Limite de ${registerPatientLimits.telephoneDigits} números atingido.`,
+      }))
+    } else {
+      revalidateWhileTyping("address.telephone", "telephone", formatted)
     }
   }
 
@@ -120,7 +152,7 @@ function Profile({ form }: ProfileProps) {
             placeholder="Digite seu nome primeiro nome"
             value={patient.firstName}
             onKeyDown={(event) => preventTextLimitExceeded(event, patient.firstName, registerPatientLimits.firstName, "firstName", `Limite de ${registerPatientLimits.firstName} caracteres atingido.`)}
-            onPaste={(event) => preventOversizedPaste(event, patient.firstName, registerPatientLimits.firstName, "firstName", `Limite de ${registerPatientLimits.firstName} caracteres atingido.`)}
+            onPaste={(event) => pasteWithinLimit(event, "firstName", "firstName", registerPatientLimits.firstName, true)}
             onChange={(e) => {
               handleLimitedTextChange(
                 "firstName",
@@ -164,7 +196,7 @@ function Profile({ form }: ProfileProps) {
             placeholder="Digite seu sobrenome"
             value={patient.surName}
             onKeyDown={(event) => preventTextLimitExceeded(event, patient.surName, registerPatientLimits.surName, "surName", `Limite de ${registerPatientLimits.surName} caracteres atingido.`)}
-            onPaste={(event) => preventOversizedPaste(event, patient.surName, registerPatientLimits.surName, "surName", `Limite de ${registerPatientLimits.surName} caracteres atingido.`)}
+            onPaste={(event) => pasteWithinLimit(event, "surName", "surName", registerPatientLimits.surName, true)}
             onChange={(e) => {
               handleLimitedTextChange(
                 "surName",
@@ -208,7 +240,7 @@ function Profile({ form }: ProfileProps) {
           value={patient.address.telephone}
           maxLength={registerPatientLimits.telephoneFormatted}
           onKeyDown={(event) => preventTextLimitExceeded(event, patient.address.telephone, registerPatientLimits.telephoneFormatted, "telephone", `Limite de ${registerPatientLimits.telephoneDigits} números atingido.`)}
-          onPaste={(event) => preventOversizedPaste(event, patient.address.telephone, registerPatientLimits.telephoneFormatted, "telephone", `Limite de ${registerPatientLimits.telephoneDigits} números atingido.`)}
+          onPaste={pastePhone}
           onChange={(e) => {
             handleChange("address.telephone", e.target.value)
             revalidateWhileTyping("address.telephone", "telephone", e.target.value)
@@ -256,7 +288,7 @@ function Profile({ form }: ProfileProps) {
               placeholder="Digite o nome da rua"
               value={patient.address.street}
               onKeyDown={(event) => preventTextLimitExceeded(event, patient.address.street, registerPatientLimits.street, "street", `Limite de ${registerPatientLimits.street} caracteres atingido.`)}
-              onPaste={(event) => preventOversizedPaste(event, patient.address.street, registerPatientLimits.street, "street", `Limite de ${registerPatientLimits.street} caracteres atingido.`)}
+              onPaste={(event) => pasteWithinLimit(event, "address.street", "street", registerPatientLimits.street)}
               onChange={(e) => {
                 handleLimitedTextChange(
                   "address.street",
@@ -418,7 +450,7 @@ function Profile({ form }: ProfileProps) {
               id="neighborhood"
               value={patient.address.neighborhood}
               onKeyDown={(event) => preventTextLimitExceeded(event, patient.address.neighborhood, registerPatientLimits.neighborhood, "neighborhood", `Limite de ${registerPatientLimits.neighborhood} caracteres atingido.`)}
-              onPaste={(event) => preventOversizedPaste(event, patient.address.neighborhood, registerPatientLimits.neighborhood, "neighborhood", `Limite de ${registerPatientLimits.neighborhood} caracteres atingido.`)}
+              onPaste={(event) => pasteWithinLimit(event, "address.neighborhood", "neighborhood", registerPatientLimits.neighborhood)}
               onChange={(e) => {
                 handleLimitedTextChange(
                   "address.neighborhood",
@@ -462,7 +494,7 @@ function Profile({ form }: ProfileProps) {
           placeholder="Ponto de referência"
           value={patient.address.referenceHouse}
           onKeyDown={(event) => preventTextLimitExceeded(event, patient.address.referenceHouse, registerPatientLimits.referenceHouse, "referenceHouse", `Limite de ${registerPatientLimits.referenceHouse} caracteres atingido.`)}
-          onPaste={(event) => preventOversizedPaste(event, patient.address.referenceHouse, registerPatientLimits.referenceHouse, "referenceHouse", `Limite de ${registerPatientLimits.referenceHouse} caracteres atingido.`)}
+          onPaste={(event) => pasteWithinLimit(event, "address.referenceHouse", "referenceHouse", registerPatientLimits.referenceHouse)}
           onChange={(e) => {
             handleLimitedTextChange(
               "address.referenceHouse",
