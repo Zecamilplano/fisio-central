@@ -2,7 +2,11 @@ import type { EmailOtpType } from "@supabase/supabase-js"
 import { NextResponse, type NextRequest } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 
-const ALLOWED_NEXT = new Set(["/redefinir-senha", "/listar-pacientes"])
+const ALLOWED_NEXT = new Set([
+  "/redefinir-senha",
+  "/listar-pacientes",
+  "/cadastrar-pacientes", // depois de confirmar o e-mail do cadastro
+])
 
 // Recebe o link dos e-mails do Supabase (ex.: redefinição de senha) e segue para "next".
 // Aceita os dois formatos:
@@ -38,6 +42,15 @@ export async function GET(request: NextRequest) {
     if (!error) {
       return NextResponse.redirect(new URL(safeNext, request.url))
     }
+  }
+
+  // confirmação de cadastro aberta em outro navegador/aparelho: o Supabase já
+  // confirmou o e-mail antes de chegar aqui, só não dá para abrir a sessão
+  // (PKCE exige o mesmo navegador do cadastro). Então pede para entrar.
+  if (safeNext === "/cadastrar-pacientes") {
+    return NextResponse.redirect(
+      new URL("/entrar?motivo=email-confirmado", request.url)
+    )
   }
 
   return NextResponse.redirect(

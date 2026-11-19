@@ -23,7 +23,11 @@ export function ClinicGate({ children }: { children: React.ReactNode }) {
         error: userError,
       } = await supabase.auth.getUser()
       if (userError || !user) {
-        router.replace("/entrar")
+        // sessão no cookie mas usuário inexistente/inválido (ex.: banco resetado
+        // ou usuário apagado): o token ainda passa no proxy até expirar, então
+        // sem limpar o cookie o proxy devolvia para cá e a tela ficava em branco
+        await supabase.auth.signOut({ scope: "local" }).catch(() => {})
+        router.replace("/entrar?motivo=sessao-invalida")
         return
       }
 

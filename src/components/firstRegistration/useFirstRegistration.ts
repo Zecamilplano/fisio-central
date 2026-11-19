@@ -13,13 +13,41 @@ import type {
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { toast } from "react-toastify"
-import { PENDING_CONFIRMATION_EMAIL_KEY } from "@/lib/auth/emailConfirmation"
+import {
+  PENDING_CONFIRMATION_EMAIL_KEY,
+  emailConfirmationRedirectUrl,
+} from "@/lib/auth/emailConfirmation"
+import { profileLimits } from "@/data/fieldLimits"
+import {
+  FIRST_REGISTRATION_DRAFT_KEY,
+  hasDraftContent,
+  parseDraft,
+  serializeDraft,
+} from "./draft"
 import useImageInput from "@/hook/useImageInput"
 import { prepareAvatarPhoto } from "@/utils/image/prepareAvatarPhoto"
 import {
   savePendingProfilePhoto,
   uploadProfilePhoto,
 } from "@/lib/profile/profilePhoto"
+
+// o maxLength dos inputs impede passar do limite, então a validação de
+// "máximo" nunca dispara: ao atingir o limite mostramos um aviso na hora
+const FIELD_LIMITS: Partial<Record<FirstRegistrationField, number>> = {
+  firstName: profileLimits.firstName,
+  surName: profileLimits.surName,
+  email: profileLimits.email,
+  password: profileLimits.passwordMax,
+  confirmPassword: profileLimits.passwordMax,
+  crefito: profileLimits.crefito,
+}
+
+function limitNotice(field: FirstRegistrationField, value: string) {
+  const limit = FIELD_LIMITS[field]
+  return limit && value.length >= limit
+    ? `Limite de ${limit} caracteres atingido.`
+    : null
+}
 
 export function useFirstRegistration() {
   const [values, setValues] = useState<FirstRegistrationValues>(initialValues)
@@ -34,6 +62,39 @@ export function useFirstRegistration() {
   // foto de perfil opcional, otimizada para avatar (512 px) quando necessário
   const photo = useImageInput(prepareAvatarPhoto)
 
+  // rascunho (sem senha): carrega depois de montar, porque a página também é
+  // renderizada no servidor (lá não existe localStorage)
+  const [draftLoaded, setDraftLoaded] = useState(false)
+  useEffect(() => {
+    try {
+      const draft = parseDraft(
+        localStorage.getItem(FIRST_REGISTRATION_DRAFT_KEY),
+        Date.now()
+      )
+      if (draft) setValues((current) => ({ ...current, ...draft }))
+      else localStorage.removeItem(FIRST_REGISTRATION_DRAFT_KEY)
+    } catch {
+      // localStorage indisponível: segue sem rascunho
+    }
+    setDraftLoaded(true)
+  }, [])
+
+  useEffect(() => {
+    if (!draftLoaded) return
+    try {
+      if (hasDraftContent(values)) {
+        localStorage.setItem(
+          FIRST_REGISTRATION_DRAFT_KEY,
+          serializeDraft(values, Date.now())
+        )
+      } else {
+        localStorage.removeItem(FIRST_REGISTRATION_DRAFT_KEY)
+      }
+    } catch {
+      // localStorage indisponível: segue sem rascunho
+    }
+  }, [values, draftLoaded])
+
   useEffect(() => {
     if (!shouldFocusFirstError) return
 
@@ -45,8 +106,13 @@ export function useFirstRegistration() {
     const nextValues = { ...values, [field]: value }
     setValues(nextValues)
 
+    const notice = limitNotice(field, value)
+
     if (hasAttemptedSubmit) {
-      setErrors(validateForm(nextValues))
+      setErrors({
+        ...validateForm(nextValues),
+        ...(notice ? { [field]: notice } : {}),
+      })
       return
     }
 
@@ -61,6 +127,8 @@ export function useFirstRegistration() {
       previous.confirmPassword
         ? { confirmPassword: fieldErrors.confirmPassword ?? "" }
         : {}),
+      // aviso de limite aparece na hora (e some ao apagar, pela revalidação acima)
+      ...(notice ? { [field]: notice } : {}),
     }))
   }
 
@@ -97,6 +165,8 @@ export function useFirstRegistration() {
       email: values.email.trim(),
       password: values.password,
       options: {
+        // o link do e-mail confirma e já entra no app (sem passar pelo login)
+        emailRedirectTo: emailConfirmationRedirectUrl(),
         data: {
           first_name: values.firstName.trim(),
           sur_name: values.surName.trim(),
@@ -111,6 +181,14 @@ export function useFirstRegistration() {
       setIsSubmitting(false)
       return
     }
+
+    // cadastro criado: o rascunho não é mais necessário
+    try {
+      localStorage.removeItem(FIRST_REGISTRATION_DRAFT_KEY)
+    } catch {
+      // localStorage indisponível: nada a limpar
+    }
+    setDraftLoaded(false) // evita regravar o rascunho com os valores ainda na tela
 
     const photoFile = photo.image[0]?.file
     if (photoFile) {

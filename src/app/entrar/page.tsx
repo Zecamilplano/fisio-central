@@ -1,17 +1,24 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
+import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
 import Link from "next/link"
 import Button from "@/components/ui/buttonCustom"
 import { ShowPasswordToggle } from "@/components/ui/showPasswordToggle"
 import { EmailConfirmationNotice } from "@/components/auth/emailConfirmationNotice"
-import { PENDING_CONFIRMATION_EMAIL_KEY } from "@/lib/auth/emailConfirmation"
+import {
+  AFTER_CONFIRMATION_PATH,
+  PENDING_CONFIRMATION_EMAIL_KEY,
+} from "@/lib/auth/emailConfirmation"
 import { useLogin } from "@/hook/useLogin"
 import { cn } from "tailwind-variants"
 
 function Login() {
   const [invalidLink, setInvalidLink] = useState(false)
   const [idleLogout, setIdleLogout] = useState(false)
+  const [invalidSession, setInvalidSession] = useState(false)
+  const [emailConfirmed, setEmailConfirmed] = useState(false)
   // após o primeiro cadastro: e-mail que precisa ser confirmado
   const [signupEmail, setSignupEmail] = useState<string | null | undefined>(undefined)
   const [showPassword, setShowPassword] = useState(false)
@@ -22,6 +29,10 @@ function Login() {
     setInvalidLink(motivo === "link-invalido")
     // /entrar?motivo=inatividade vem do logout automático (2 semanas sem uso)
     setIdleLogout(motivo === "inatividade")
+    // /entrar?motivo=sessao-invalida: o usuário da sessão não existe mais
+    setInvalidSession(motivo === "sessao-invalida")
+    // /entrar?motivo=email-confirmado: link aberto em outro navegador/aparelho
+    setEmailConfirmed(motivo === "email-confirmado")
     // /entrar?motivo=confirmar-email vem do primeiro cadastro
     if (motivo === "confirmar-email") {
       let email: string | null = null
@@ -34,6 +45,54 @@ function Login() {
     }
   }, [])
 
+  const router = useRouter()
+  const loginState = useLogin()
+  // o login pelo formulário já redireciona sozinho (useLogin)
+  const submittingRef = useRef(false)
+  useEffect(() => {
+    submittingRef.current = loginState.submitting
+  }, [loginState.submitting])
+
+  // Sessão aberta sem usar o formulário (link de confirmação que caiu aqui, ou
+  // e-mail confirmado em outra aba): não faz sentido pedir login, segue direto.
+  useEffect(() => {
+    const supabase = createClient()
+    const motivo = new URLSearchParams(window.location.search).get("motivo")
+    const target =
+      motivo === "confirmar-email" ? AFTER_CONFIRMATION_PATH : "/listar-pacientes"
+    let done = false
+
+    function goToApp() {
+      if (done || submittingRef.current) return
+      done = true
+      router.replace(target)
+      router.refresh()
+    }
+
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session && (event === "SIGNED_IN" || event === "INITIAL_SESSION")) {
+        setTimeout(goToApp, 0) // fora do callback (recomendação da lib)
+      }
+    })
+
+    // confirmou em outra aba: ao voltar para esta, confere se já há sessão
+    function checkSession() {
+      if (document.visibilityState !== "visible") return
+      supabase.auth.getSession().then(({ data }) => {
+        if (data.session) goToApp()
+      })
+    }
+    window.addEventListener("focus", checkSession)
+    document.addEventListener("visibilitychange", checkSession)
+
+    return () => {
+      done = true
+      data.subscription.unsubscribe()
+      window.removeEventListener("focus", checkSession)
+      document.removeEventListener("visibilitychange", checkSession)
+    }
+  }, [router])
+
   const {
     values,
     errors,
@@ -43,10 +102,10 @@ function Login() {
     handleChange,
     handleBlur,
     handleSubmit,
-  } = useLogin()
+  } = loginState
 
   return (
-    <section className=" w-full h-full flex justify-center items-center">
+    <section className="w-full flex-1 flex justify-center items-center-safe py-4">
       <section className="bg-white flex justify-center items-center flex-col px-3 py-4 w-full max-w-[90%] min-h-110 md:w-120 md:max-h-screen overflow-y-auto rounded-md shadow-2xl">
         <header>
           <h1 className="py-6 text-3xl font-montserrat font-bold tracking-tight text-[#FFA726]">
@@ -60,6 +119,24 @@ function Login() {
           signupEmail !== undefined && (
             <EmailConfirmationNotice email={signupEmail} reason="signup" />
           )
+        )}
+
+        {emailConfirmed && (
+          <p
+            role="status"
+            className="font-open-sans mx-3 rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-800"
+          >
+            E-mail confirmado! Entre com seu e-mail e senha para continuar.
+          </p>
+        )}
+
+        {invalidSession && (
+          <p
+            role="status"
+            className="font-open-sans mx-3 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-800"
+          >
+            Sua sessão não é mais válida. Entre novamente.
+          </p>
         )}
 
         {idleLogout && (

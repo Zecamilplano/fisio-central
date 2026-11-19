@@ -53,8 +53,8 @@ function FirstRegistration() {
   }
 
   return (
-    <section className="flex-1 flex justify-center items-center">
-      <section className="bg-white rounded-md px-2 py-2 m-3 w-full max-w-210 h-full flex flex-col items-center">
+    <section className="flex-1 flex justify-center items-center-safe">
+      <section className="bg-white rounded-md px-2 py-2 m-3 w-full max-w-210 flex flex-col items-center">
         <header>
           <h1 className="py-6 text-2xl text-center md:text-3xl font-montserrat font-bold tracking-tight text-[#FFA726]">
             Cadastro da responsável pelo sistema

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { emailConfirmationRedirectUrl } from "@/lib/auth/emailConfirmation"
 
 const RESEND_COOLDOWN_SECONDS = 60
 
@@ -29,7 +30,11 @@ export function EmailConfirmationNotice({ email, reason }: EmailConfirmationNoti
     setIsSending(true)
     setFeedback(null)
 
-    const { error } = await createClient().auth.resend({ type: "signup", email })
+    const { error } = await createClient().auth.resend({
+      type: "signup",
+      email,
+      options: { emailRedirectTo: emailConfirmationRedirectUrl() },
+    })
 
     setIsSending(false)
     if (error) {
