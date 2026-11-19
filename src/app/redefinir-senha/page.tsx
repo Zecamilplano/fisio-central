@@ -10,6 +10,7 @@ import { useClinicStore } from "@/store/clinic/clinicStore"
 import Button from "@/components/ui/buttonCustom"
 import { hasRecentEmailProof } from "@/lib/auth/recoverySession"
 import { ShowPasswordToggle } from "@/components/ui/showPasswordToggle"
+import { profileLimits } from "@/data/fieldLimits"
 
 // a sessão precisa ter vindo do link de "Esqueci minha senha" há pouco tempo
 async function canChangePassword() {
@@ -25,8 +26,8 @@ type Errors = Partial<Record<Field, string>>
 function validate(password: string, confirmPassword: string): Errors {
   const errors: Errors = {}
   if (!password) errors.password = "Informe a nova senha."
-  else if (password.length < 8) errors.password = "A senha precisa ter pelo menos 8 caracteres."
-  else if (password.length > 64) errors.password = "Use no máximo 64 caracteres."
+  else if (password.length < profileLimits.passwordMin) errors.password = `A senha precisa ter pelo menos ${profileLimits.passwordMin} caracteres.`
+  else if (password.length > profileLimits.passwordMax) errors.password = `Use no máximo ${profileLimits.passwordMax} caracteres.`
 
   if (!confirmPassword) errors.confirmPassword = "Confirme a nova senha."
   else if (confirmPassword !== password) errors.confirmPassword = "As senhas não coincidem."
@@ -177,7 +178,7 @@ function ResetPassword() {
               }}
               onBlur={() => validateOnBlur("password")}
               autoComplete="new-password"
-              maxLength={64}
+              maxLength={profileLimits.passwordMax}
               autoFocus
               placeholder="Mínimo de 8 caracteres"
               aria-invalid={Boolean(errors.password)}
@@ -205,7 +206,7 @@ function ResetPassword() {
               }}
               onBlur={() => validateOnBlur("confirmPassword")}
               autoComplete="new-password"
-              maxLength={64}
+              maxLength={profileLimits.passwordMax}
               placeholder="Repita a nova senha"
               aria-invalid={Boolean(errors.confirmPassword)}
               aria-describedby={errors.confirmPassword ? "confirmPassword-error" : undefined}

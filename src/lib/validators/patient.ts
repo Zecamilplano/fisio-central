@@ -1,4 +1,5 @@
 import { PatientType } from "@/types"
+import { registerPatientLimits as limits } from "@/data/fieldLimits"
 
 export type PatientErrors = Partial<
   Record<
@@ -27,10 +28,10 @@ export function validatePatient(p: PatientType): PatientErrors {
   const errors: PatientErrors = {}
   const a = p.address
 
-  const firstName = checkRequired(p.firstName, "o primeiro nome", 2, 60)
+  const firstName = checkRequired(p.firstName, "o primeiro nome", 2, limits.firstName)
   if (firstName) errors.firstName = firstName
 
-  const surName = checkRequired(p.surName, "o sobrenome", 2, 80)
+  const surName = checkRequired(p.surName, "o sobrenome", 2, limits.surName)
   if (surName) errors.surName = surName
 
   const phone = onlyDigits(a.telephone)
@@ -38,22 +39,22 @@ export function validatePatient(p: PatientType): PatientErrors {
   else if (phone.length < 10 || phone.length > 11)
     errors.telephone = "Informe o DDD e o número (10 ou 11 dígitos)."
 
-  const street = checkRequired(a.street, "a rua", 3, 100)
+  const street = checkRequired(a.street, "a rua", 3, limits.street)
   if (street) errors.street = street
 
-  const neighborhood = checkRequired(a.neighborhood, "o bairro", 2, 60)
+  const neighborhood = checkRequired(a.neighborhood, "o bairro", 2, limits.neighborhood)
   if (neighborhood) errors.neighborhood = neighborhood
 
   if (!a.noNumber) {
     const n = a.addressNumber
     if (n === null)
       errors.addressNumber = 'Informe o número ou marque "sem número".'
-    else if (!Number.isInteger(n) || n <= 0 || n > 99999)
+    else if (!Number.isInteger(n) || n <= 0 || n > limits.addressNumber)
       errors.addressNumber = "Número inválido."
   }
 
-  if (normalizeText(a.referenceHouse).length > 150)
-    errors.referenceHouse = "Máximo de 150 caracteres."
+  if (normalizeText(a.referenceHouse).length > limits.referenceHouse)
+    errors.referenceHouse = `Máximo de ${limits.referenceHouse} caracteres.`
 
   return errors
 }

@@ -3,6 +3,7 @@ import type { PatientType } from "@/types/registerPatientsTypes"
 import { daysOfWeek } from "@/data"
 import { format, getDay, parseISO } from "date-fns"
 import { unformatPhone } from "@/utils/form/phone"
+import { registerPatientLimits } from "@/data/fieldLimits"
 
 export type FormErrors = Partial<
   Record<
@@ -19,12 +20,13 @@ export type FormErrors = Partial<
   >
 >
 
+// mesmos limites do cadastro (e do banco): fonte única em src/data/fieldLimits.ts
 export const characterLimits = {
-  firstName: 100,
-  surName: 100,
-  street: 150,
-  neighborhood: 100,
-  referenceHouse: 250,
+  firstName: registerPatientLimits.firstName,
+  surName: registerPatientLimits.surName,
+  street: registerPatientLimits.street,
+  neighborhood: registerPatientLimits.neighborhood,
+  referenceHouse: registerPatientLimits.referenceHouse,
 } as const
 
 export const inputBaseClass =
@@ -113,10 +115,10 @@ export function validatePatientProfile(form: PatientType): FormErrors {
     !form.address.noNumber &&
     (form.address.addressNumber === null ||
       !Number.isInteger(form.address.addressNumber) ||
-      form.address.addressNumber < 0 ||
-      form.address.addressNumber > 2147483647)
+      form.address.addressNumber < 1 ||
+      form.address.addressNumber > registerPatientLimits.addressNumber)
   ) {
-    errors.addressNumber = "Informe um número inteiro igual ou maior que zero."
+    errors.addressNumber = `Informe um número inteiro entre 1 e ${registerPatientLimits.addressNumber}, ou marque "Sem número".`
   }
   if (!normalized.neighborhood) {
     errors.neighborhood = "Informe o bairro."

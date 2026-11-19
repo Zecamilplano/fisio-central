@@ -1,6 +1,7 @@
 import type { PatientType } from "@/types/registerPatientsTypes"
 import { formatTelephone, unformatPhone } from "@/utils/form/phone"
 import { characterLimits, fieldClass, type FormErrors } from "./editPatientHelpers"
+import { registerPatientLimits } from "@/data/fieldLimits"
 
 type PatientDataFieldsProps = {
   form: PatientType
@@ -87,8 +88,8 @@ export function PatientDataFields({
         <input
           className={fieldClass(errors.addressNumber)}
           type="number"
-          min={0}
-          max={2147483647}
+          min={1}
+          max={registerPatientLimits.addressNumber}
           step={1}
           disabled={form.address.noNumber}
           value={form.address.noNumber ? "" : form.address.addressNumber ?? ""}

@@ -1,7 +1,7 @@
 import { WEEKDAY_NUMBER } from "@/utils/date/weekdays"
 import { assertCanEdit } from "@/lib/clinic/assertCanEdit"
 import { createClient } from "@/lib/supabase/client"
-import { registerPatientLimits } from "@/data/registerPatientLimits"
+import { registerPatientLimits } from "@/data/fieldLimits"
 import type { DayOfWeek, PaidKey, SchedulingForm } from "@/types"
 import type { StatusSessaoKey } from "@/data/optionsSessionsData"
 import { addDays, getDay } from "date-fns"

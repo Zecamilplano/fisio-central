@@ -9,6 +9,7 @@ import Button from "@/components/ui/buttonCustom"
 import { ShowPasswordToggle } from "@/components/ui/showPasswordToggle"
 import { useState } from "react"
 import { Camera, X } from "lucide-react"
+import { profileLimits } from "@/data/fieldLimits"
 
 function FirstRegistration() {
   const {
@@ -151,7 +152,7 @@ function FirstRegistration() {
                 placeholder="Digite seu primeiro nome"
                 required
                 minLength={2}
-                maxLength={60}
+                maxLength={profileLimits.firstName}
                 aria-invalid={Boolean(errors.firstName)}
                 aria-describedby={
                   errors.firstName ? "firstName-error" : undefined
@@ -178,7 +179,7 @@ function FirstRegistration() {
                 placeholder="Digite seu sobrenome"
                 required
                 minLength={2}
-                maxLength={80}
+                maxLength={profileLimits.surName}
                 aria-invalid={Boolean(errors.surName)}
                 aria-describedby={errors.surName ? "surName-error" : undefined}
                 data-error={Boolean(errors.surName)}
@@ -201,7 +202,7 @@ function FirstRegistration() {
               onBlur={() => handleBlur("email")}
               placeholder="Digite seu email"
               required
-              maxLength={254}
+              maxLength={profileLimits.email}
               aria-invalid={Boolean(errors.email)}
               aria-describedby={errors.email ? "email-error" : undefined}
               data-error={Boolean(errors.email)}
@@ -228,7 +229,7 @@ function FirstRegistration() {
                 autoComplete="new-password"
                 required
                 minLength={8}
-                maxLength={64}
+                maxLength={profileLimits.passwordMax}
                 aria-invalid={Boolean(errors.password)}
                 aria-describedby={
                   errors.password ? "password-error" : undefined
@@ -256,7 +257,7 @@ function FirstRegistration() {
                 autoComplete="new-password"
                 required
                 minLength={8}
-                maxLength={64}
+                maxLength={profileLimits.passwordMax}
                 aria-invalid={Boolean(errors.confirmPassword)}
                 aria-describedby={
                   errors.confirmPassword ? "confirmPassword-error" : undefined
@@ -295,7 +296,7 @@ function FirstRegistration() {
               placeholder="Digite seu número de registro"
               autoComplete="off"
               required
-              maxLength={30}
+              maxLength={profileLimits.crefito}
               aria-invalid={Boolean(errors.crefito)}
               aria-describedby={errors.crefito ? "crefito-error" : undefined}
               data-error={Boolean(errors.crefito)}

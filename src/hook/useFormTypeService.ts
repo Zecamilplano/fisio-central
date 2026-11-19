@@ -1,5 +1,5 @@
 import { ErrorTypeService, ServiceForm } from "@/types"
-import { registerPatientLimits } from "@/data/registerPatientLimits"
+import { registerPatientLimits } from "@/data/fieldLimits"
 import { useEffect, useRef, useState } from "react"
 import { touchRegistrationDraft } from "@/lib/drafts/registrationDraft"
 

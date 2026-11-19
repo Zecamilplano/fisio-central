@@ -5,7 +5,7 @@ import {
 } from "@/data/registerPatientData"
 import { useFormTypeService } from "@/hook/useFormTypeService"
 import { NumericFormat } from "react-number-format"
-import { registerPatientLimits } from "@/data/registerPatientLimits"
+import { registerPatientLimits } from "@/data/fieldLimits"
 
 type TypeOfServiceProps = {
   form: ReturnType<typeof useFormTypeService>

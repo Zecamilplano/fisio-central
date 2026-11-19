@@ -1,7 +1,7 @@
 "use client"
 import { PatientOptionalType, PatientType } from "@/types/registerPatientsTypes"
 import { formatTelephone, unformatPhone } from "@/utils/form/phone"
-import { registerPatientLimits } from "@/data/registerPatientLimits"
+import { registerPatientLimits } from "@/data/fieldLimits"
 import { useState, useRef, useEffect } from "react"
 import { usePatientForm } from "./usePatientForm"
 import { touchRegistrationDraft } from "@/lib/drafts/registrationDraft"

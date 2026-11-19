@@ -8,7 +8,7 @@ import { isSameDay, startOfDay } from "date-fns"
 import { PaymentType } from "@/types"
 import { cn } from "tailwind-variants"
 import { useEffect, useState } from "react"
-import { registerPatientLimits } from "@/data/registerPatientLimits"
+import { registerPatientLimits } from "@/data/fieldLimits"
 
 type SchedulingSessionsProps = {
   form: ReturnType<typeof useSchedulingSessions>

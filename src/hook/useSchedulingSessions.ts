@@ -9,7 +9,7 @@ import {
   TypeServiceType,
 } from "@/types"
 import { initialErrors } from "@/data/schedulingData"
-import { registerPatientLimits } from "@/data/registerPatientLimits"
+import { registerPatientLimits } from "@/data/fieldLimits"
 import {
   applyPaymentToSessions,
   buildSessions,

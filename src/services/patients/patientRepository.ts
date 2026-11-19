@@ -1,6 +1,6 @@
 import { assertCanEdit } from "@/lib/clinic/assertCanEdit"
 import { createClient } from "@/lib/supabase/client"
-import { registerPatientLimits } from "@/data/registerPatientLimits"
+import { registerPatientLimits } from "@/data/fieldLimits"
 import type {
   PackageSelectType,
   PatientType,

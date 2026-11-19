@@ -1,7 +1,7 @@
 "use client"
 import { Bookmark, MapPinHouse, Phone } from "lucide-react"
 import { useFormProfile } from "@/hook/useFormProfile"
-import { registerPatientLimits } from "@/data/registerPatientLimits"
+import { registerPatientLimits } from "@/data/fieldLimits"
 import { unformatPhone } from "@/utils/form/phone"
 import type { ClipboardEvent, KeyboardEvent } from "react"
 
