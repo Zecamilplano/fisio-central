@@ -3,6 +3,15 @@
 @theme {
   --font-montserrat: var(--font-montserrat);
   --font-open-sans: var(--font-open-sans);
+  /* altura do header (classe h-header); a lista de pacientes usa 100dvh - header */
+  --spacing-header: 3.75rem;
+}
+
+/* header maior a partir do md (logo h-16) */
+@media (width >= 48rem) {
+  :root {
+    --spacing-header: 5rem;
+  }
 }
 
 @layer base {

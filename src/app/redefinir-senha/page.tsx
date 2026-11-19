@@ -130,7 +130,7 @@ function ResetPassword() {
   }
 
   return (
-    <section className="w-full h-full flex justify-center items-center">
+    <section className="w-full flex-1 flex justify-center items-center-safe py-4">
       <section className="bg-white flex justify-center items-center flex-col px-3 py-8 w-full max-w-[90%] md:w-120 rounded-md shadow-2xl">
         <header className="text-center">
           <h1 className="pb-2 text-3xl font-montserrat font-bold tracking-tight text-[#FFA726]">

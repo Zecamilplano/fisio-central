@@ -163,9 +163,10 @@ export function SessionCard({
   }
   return (
     <>
+      {/* @container: o cartão escolhe o layout pela própria largura (container query) */}
       <li
         className={`
-        w-full rounded-2xl border border-[#EAECF0] bg-[#FCFCFD] px-4 py-3
+        @container w-full min-w-0 rounded-2xl border border-[#EAECF0] bg-[#FCFCFD] px-4 py-3
         transition-all duration-300 ease-in-out
         hover:border-[#D0D5DD] hover:shadow-sm
         ${
@@ -178,7 +179,7 @@ export function SessionCard({
       >
         <article className="flex min-w-0 items-start gap-2 sm:gap-3">
           <div className="flex min-w-0 flex-1 flex-col">
-            <div className="flex min-w-0 flex-col gap-3 pb-2 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex min-w-0 flex-col gap-3 pb-2 @2xl:flex-row @2xl:items-center @2xl:justify-between">
               <div className="flex min-w-0 items-start gap-3">
                   <div className="flex shrink-0 items-center gap-2">
                     <label className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-md border border-[#D0D5DD] bg-white">
@@ -245,7 +246,7 @@ export function SessionCard({
                   </div>
               </div>
 
-              <div className="hidden shrink-0 items-center justify-end gap-3 text-sm lg:flex">
+              <div className="hidden shrink-0 items-center justify-end gap-3 text-sm @2xl:flex">
                 <div className="flex flex-col items-start font-medium">
                   <span className="px-3 py-2 text-xs text-slate-600 uppercase">
                     Realização
@@ -291,7 +292,7 @@ export function SessionCard({
               </div>
             </div>
 
-            <div className="mb-2 flex flex-wrap items-center gap-2 lg:hidden">
+            <div className="mb-2 flex flex-wrap items-center gap-2 @2xl:hidden">
               <span
                 className={`rounded-full border px-2.5 py-1 text-xs font-medium capitalize ${statusRealizacao[session.finish].className}`}
               >

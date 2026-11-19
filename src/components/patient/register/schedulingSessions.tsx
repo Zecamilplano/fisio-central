@@ -135,9 +135,9 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
           </section>
 
           {/*Sessões já realizadas*/}
-          <section className="flex justify-center gap-2">
-            <div>
-              <label className="flex items-center gap-2 text-lg text-[#FFA726] text-center font-semibold">
+          <section className="grid w-full grid-cols-2 gap-3">
+            <div className="flex min-w-0 flex-col">
+              <label className="flex items-center gap-2 text-base sm:text-lg text-[#FFA726] font-semibold">
                 <CalendarDays size={16} />
                 Inicío de tudo
               </label>
@@ -154,12 +154,12 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
                 onChange={(e) =>
                   handleChange("initialDateSession", e.target.value)
                 }
-                className="w-38 text-[#333] border-2 border-[#D0D7DE]/80 focus:outline-[#FFA726] rounded-md py-2 px-3"
+                className="w-full min-w-0 text-[#333] border-2 border-[#D0D7DE]/80 focus:outline-[#FFA726] rounded-md py-2 px-2 sm:px-3"
               />
             </div>
 
-            <div className="flex justify-center flex-col ">
-              <h2 className="text-lg text-[#FFA726] text-center font-semibold">
+            <div className="flex min-w-0 flex-col">
+              <h2 className="text-base sm:text-lg text-[#FFA726] font-semibold">
                 Sessões já realizadas
               </h2>
               <input
@@ -174,18 +174,18 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
                   handleChange("totalSessions", e.target.value === "" ? "" : e.target.valueAsNumber)
                 }}
                 aria-invalid={schedulingFormErrors.totalSessions.length > 0}
-                className={`w-52 flex self-center text-[#333] placeholder:text-text-gray-400 border-2 border-solid ${schedulingFormErrors.totalSessions.length > 0 ? "border-red-500" : "border-[#D0D7DE]/80"} focus:outline-[#FFA726] rounded-md py-2 pl-2`}
+                className={`w-full min-w-0 text-[#333] placeholder:text-text-gray-400 border-2 border-solid ${schedulingFormErrors.totalSessions.length > 0 ? "border-red-500" : "border-[#D0D7DE]/80"} focus:outline-[#FFA726] rounded-md py-2 pl-2`}
               />
               {schedulingFormErrors.totalSessions.map((error, index) => <p key={index} role="alert" aria-live="polite" className="mt-1 text-sm text-red-600">{error}</p>)}
             </div>
           </section>
 
           {/*Data inicial e horário*/}
-          <section className="flex justify-center items-start gap-4">
+          <section className="grid w-full grid-cols-2 items-start gap-3">
             <div className="flex min-w-0 flex-col gap-2">
               <label
                 htmlFor="package-start-date"
-                className="flex items-center gap-2 text-lg text-[#FFA726] text-center font-semibold"
+                className="flex items-center gap-2 text-base sm:text-lg text-[#FFA726] font-semibold"
               >
                 <CalendarDays size={16} />
                 Data inicial
@@ -210,7 +210,7 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
                 onChange={(e) =>
                   handleChange("package.startDate", e.target.value)
                 }
-                className={`w-38 rounded-md border-2 px-3 py-2 text-[#333] focus:outline-[#FFA726] ${
+                className={`w-full min-w-0 rounded-md border-2 px-2 sm:px-3 py-2 text-[#333] focus:outline-[#FFA726] ${
                   schedulingFormErrors.startDate.length > 0
                     ? "border-red-500"
                     : "border-[#D0D7DE]/80"
@@ -232,7 +232,7 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
             <div className="flex min-w-0 flex-col gap-2">
               <label
                 htmlFor="package-default-time"
-                className="flex items-center gap-2 text-lg text-[#FFA726] text-center font-semibold"
+                className="flex items-center gap-2 text-base sm:text-lg text-[#FFA726] font-semibold"
               >
                 <Clock3 size={16} /> Horário
               </label>
@@ -250,7 +250,7 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
                 onChange={(e) =>
                   handleChange("package.defaultTime", e.target.value)
                 }
-                className={`rounded-md border-2 px-3 py-2 text-[#333] focus:outline-[#FFA726] ${
+                className={`w-full min-w-0 rounded-md border-2 px-2 sm:px-3 py-2 text-[#333] focus:outline-[#FFA726] ${
                   schedulingFormErrors.defaultTime.length > 0
                     ? "border-red-500"
                     : "border-[#D0D7DE]/80"
@@ -271,7 +271,7 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
           </section>
 
           {/*Quantas vezes na semana*/}
-          <fieldset className="font-open-sans flex justify-center gap-4">
+          <fieldset className="font-open-sans flex justify-center gap-2 sm:gap-4">
             <legend className="text-lg text-[#FFA726] text-center font-semibold">
               Quantas vezes na semana
             </legend>
@@ -328,7 +328,7 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
           ))}
 
           {/*Dias das seções na semana*/}
-          <fieldset className="font-open-sans w-full flex flex-wrap justify-center gap-6">
+          <fieldset className="font-open-sans w-full flex flex-wrap justify-center gap-3 sm:gap-6">
             <legend className="text-lg text-[#FFA726] text-center font-semibold mb-3">
               Dias das sessões na semana
             </legend>
@@ -347,7 +347,7 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
                   key={day}
                   htmlFor={day}
                   className={`
-                  w-30 py-2 px-5 text-xl text-center rounded-md capitalize select-none
+                  w-[calc(50%-0.375rem)] sm:w-30 py-2 px-2 sm:px-5 text-lg sm:text-xl text-center rounded-md capitalize select-none
                   ${selectedDays[day] ? "bg-[#FBA731] text-white" : "bg-[#D9D9D9] text-[#2D2D2D]"}
                   ${isDisabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}
 
@@ -581,12 +581,15 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
             </div>
           )}
           <ul
-            className={`flex flex-col gap-3 rounded-t-lg pr-2 pt-1 ${sessions.length >= 4 && "h-68 overflow-y-scroll"}`}
+            // relative: os rótulos sr-only (position: absolute) das sessões ficam
+            // presos na lista; sem isso eles "vazavam" para baixo do cartão na
+            // posição sem rolagem e esticavam a página (espaço verde vazio)
+            className={`relative flex flex-col gap-3 rounded-t-lg pr-2 pt-1 ${sessions.length >= 4 ? "h-68 overflow-y-scroll" : ""}`}
           >
             {sessions.map((session, index) => (
               <li key={index}>
-                <article className="flex justify-between items-center gap-3 font-open-sans bg-[#FBA731] py-3 px-3 rounded-lg">
-                  <header className="flex items-center gap-3 ">
+                <article className="flex flex-wrap justify-between items-center gap-3 font-open-sans bg-[#FBA731] py-3 px-3 rounded-lg">
+                  <header className="flex min-w-0 items-center gap-3">
                     <span className="w-8 h-8 bg-[#FFEDD4] text-[#2D2D2D] text-lg flex flex-row justify-center items-center rounded-[50%]">
                       {session.sessionNumber}
                     </span>

@@ -18,7 +18,7 @@ function StatusPage({
   children,
 }: StatusPageProps) {
   return (
-    <section className="w-full h-full flex justify-center items-center px-4">
+    <section className="w-full flex-1 flex justify-center items-center-safe px-4 py-4">
       <section className="bg-white w-full max-w-120 rounded-md shadow-2xl px-6 py-10 flex flex-col items-center text-center">
         <span
           aria-hidden="true"

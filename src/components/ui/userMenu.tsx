@@ -150,7 +150,8 @@ export function UserMenu() {
   const menuId = useId()
   const containerRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
-  const [user, setUser] = useState<UserInfo | null>(null)
+  // undefined = carregando; null = ninguém logado
+  const [user, setUser] = useState<UserInfo | null | undefined>(undefined)
   const [isOpen, setIsOpen] = useState(false)
   const [isLeaving, setIsLeaving] = useState(false)
 
@@ -220,10 +221,15 @@ export function UserMenu() {
     }
   }
 
-  if (!user) return null
+  if (user === null) return null
+  // enquanto carrega, reserva o espaço do avatar (o header já fica no layout com
+  // usuário, sem a logo "pular" do centro para a esquerda)
+  if (user === undefined) {
+    return <div data-user-menu aria-hidden="true" className="size-10 md:size-12" />
+  }
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} data-user-menu className="relative">
       <button
         ref={buttonRef}
         type="button"

@@ -1,10 +1,6 @@
 import type { NextConfig } from "next"
 
-type RemotePatterns = NonNullable<
-  NonNullable<NextConfig["images"]>["remotePatterns"]
->
-
-function getSupabaseImagePattern(): RemotePatterns {
+function getSupabaseImagePattern() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   if (!supabaseUrl) return []
 
@@ -15,7 +11,8 @@ function getSupabaseImagePattern(): RemotePatterns {
 
     return [
       {
-        protocol: imageProtocol,
+        // o if acima garante que é "http" ou "https" (tipo exigido pelo Next)
+        protocol: imageProtocol as "http" | "https",
         hostname,
         pathname: "/storage/v1/object/**",
       },

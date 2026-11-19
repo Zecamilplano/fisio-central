@@ -335,7 +335,9 @@ function ListPatient() {
   }, [isCompactViewport, isShowingPatient, selectedPatientId])
 
   return (
-    <section className="font-open-sans flex h-full min-h-0 flex-col">
+    // altura exata da tela abaixo do header: a lista e os detalhes rolam por
+    // dentro (o resto do app rola pelo body)
+    <section className="font-open-sans flex h-[calc(100dvh-var(--spacing-header))] min-h-0 flex-col">
       {/*Barra de pesquisa | botão adicionar paciente*/}
       <div
         className={`overflow-hidden transition-[max-height,opacity] duration-300 ease-in-out motion-reduce:duration-0 ${isShowingPatient

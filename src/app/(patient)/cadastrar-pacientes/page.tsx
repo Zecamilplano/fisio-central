@@ -272,9 +272,9 @@ function RegisterPatient() {
   }, [])
 
   return (
-    <section className=" flex justify-center items-center">
+    <section className="flex justify-center">
       <section
-        className="bg-white rounded-md px-2 py-2 m-3 w-full max-w-210 h-full flex flex-col items-center"
+        className="bg-white rounded-md px-2 py-2 m-3 w-full max-w-210 flex flex-col items-center"
         aria-labelledby="titulo-cadastro"
       >
         <div className="mt-4 flex w-full max-w-180 items-center justify-center px-3">
@@ -308,7 +308,9 @@ function RegisterPatient() {
           </nav>
         </div>
 
-        <details className="mt-2 w-full max-w-180 px-3 font-open-sans text-xs text-[#8C7B6B]">
+        {/* atalhos só fazem sentido com teclado: escondido em celular/tablet
+            (tela de toque) e em telas pequenas */}
+        <details className="mt-2 hidden w-full max-w-180 px-3 font-open-sans text-xs text-[#8C7B6B] md:pointer-fine:block">
           <summary className="cursor-pointer select-none text-center hover:text-[#FFA726]">
             Atalhos de teclado
           </summary>
