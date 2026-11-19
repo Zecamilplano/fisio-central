@@ -8,6 +8,8 @@ type EvolutionPainSectionProps = {
 
   warningBefore?: string
   warningAfter?: string
+  // erro de validação (ex.: só um dos dois campos preenchido)
+  error?: string
 
   onChangeBefore: (value: number | null) => void
   onChangeAfter: (value: number | null) => void
@@ -18,6 +20,7 @@ export default function EvolutionPainSection({
   painAfter,
   warningBefore,
   warningAfter,
+  error,
   onChangeBefore,
   onChangeAfter,
 }: EvolutionPainSectionProps) {
@@ -26,6 +29,7 @@ export default function EvolutionPainSection({
       title="Escala de dor (EVA)"
       optional="opcional"
       icon={<Activity size={20} />}
+      error={error}
     >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="flex flex-col">

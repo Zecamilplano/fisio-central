@@ -31,6 +31,8 @@ export function useEvolutionForm({
     initialData ? structuredClone(initialData) : createEmptyEvolution()
   )
   const [errors, setErrors] = useState<EvolutionFormErrors>({})
+  // muda a cada envio com erro: o formulário usa para rolar até o 1º erro
+  const [failedSubmitCount, setFailedSubmitCount] = useState(0)
 
   // compara com o conteúdo inicial (ou com o formulário vazio, na criação)
   const isDirty = useMemo(
@@ -143,7 +145,10 @@ export function useEvolutionForm({
 
     setErrors(newErrors)
 
-    if (Object.keys(newErrors).length > 0) return
+    if (Object.keys(newErrors).length > 0) {
+      setFailedSubmitCount((count) => count + 1)
+      return
+    }
 
     const normalizedForm = normalizeEvolutionData(form)
 
@@ -429,6 +434,28 @@ export function useEvolutionForm({
     }))
   }
 
+  // Erros já exibidos são revalidados a cada alteração: somem assim que o campo
+  // é corrigido (ou trocam de mensagem). Erros novos só aparecem ao enviar.
+  useEffect(() => {
+    setErrors((previous) => {
+      const shownFields = Object.keys(previous) as (keyof EvolutionFormErrors)[]
+      if (shownFields.length === 0) return previous
+
+      const current = validateForm()
+      const next: EvolutionFormErrors = {}
+      for (const field of shownFields) {
+        if (current[field]) next[field] = current[field]
+      }
+
+      const unchanged =
+        shownFields.length === Object.keys(next).length &&
+        shownFields.every((field) => next[field] === previous[field])
+      return unchanged ? previous : next
+    })
+    // validateForm lê o "form" desta renderização
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form])
+
   useEffect(() => {
     return () => {
       if (errorTimeoutRef.current) {
@@ -440,7 +467,11 @@ export function useEvolutionForm({
   return {
     form,
     errors,
+    failedSubmitCount,
     isSaving,
+    // pronto para salvar: tudo válido e, na edição, com alguma alteração
+    canSave:
+      Object.keys(validateForm()).length === 0 && (mode === "create" || isDirty),
     temporaryWarning,
     showWarning,
 

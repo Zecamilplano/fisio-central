@@ -246,13 +246,14 @@ export default function EvolutionListSection({
         </button>
       </div>
 
-      <p className="mt-4 text-xs leading-5 text-slate-500">
+      {/* atalhos de teclado: escondidos em telas de toque */}
+      <p className="mt-4 hidden text-xs leading-5 text-slate-500 pointer-fine:block">
         <strong>Atalhos:</strong> Enter adiciona • Alt + ↑/↓ navega • Alt +
         Delete remove • Shift + Delete limpa todos.
       </p>
 
       {error && (
-        <p className="mt-2 text-sm font-medium text-red-600">{error}</p>
+        <p role="alert" className="mt-2 text-sm font-medium text-red-600">{error}</p>
       )}
     </EvolutionSection>
   )

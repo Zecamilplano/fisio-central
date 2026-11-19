@@ -208,8 +208,10 @@ export default function EvolutionExerciseSection({
       optional="obrigatorio"
       icon={<Dumbbell size={20} />}
     >
-      <div className="overflow-hidden rounded-xl border border-slate-200">
-        <div className="grid grid-cols-[1fr_1fr_44px] bg-emerald-50 text-sm font-semibold text-emerald-800">
+      {/* @container: em telas estreitas cada exercício vira um bloco (nome em
+          cima, séries/carga embaixo, lixeira ao lado); largo, volta a ser tabela */}
+      <div className="@container overflow-hidden rounded-xl border border-slate-200">
+        <div className="hidden grid-cols-[minmax(0,1fr)_minmax(0,1fr)_44px] bg-emerald-50 text-sm font-semibold text-emerald-800 @md:grid">
           <div className="border-r border-slate-200 px-3 py-2">Exercício</div>
 
           <div className="border-r border-slate-200 px-3 py-2">
@@ -222,7 +224,7 @@ export default function EvolutionExerciseSection({
         {exercises.map((exercise) => (
           <div
             key={exercise.id}
-            className="grid grid-cols-[1fr_1fr_44px] border-t border-slate-200"
+            className="grid grid-cols-[minmax(0,1fr)_44px] border-t border-slate-200 nth-2:border-t-0 @md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_44px] @md:nth-2:border-t"
           >
             <input
               ref={(element) => {
@@ -248,7 +250,7 @@ export default function EvolutionExerciseSection({
               }}
               placeholder="Exercício"
               aria-label={`Nome do exercício. Máximo de ${NAME_MAX_LENGTH} caracteres`}
-              className="border-r border-slate-200 px-3 py-2 text-sm outline-none focus:bg-emerald-50"
+              className="col-start-1 row-start-1 min-w-0 border-b border-slate-100 px-3 py-2 text-sm outline-none focus:bg-emerald-50 @md:border-b-0 @md:border-r @md:border-slate-200"
             />
 
             <input
@@ -259,7 +261,7 @@ export default function EvolutionExerciseSection({
                   details: null,
                 }
 
-                inputRefs.current[exercise.id].name = element
+                inputRefs.current[exercise.id].details = element
               }}
               value={exercise.details}
               maxLength={DETAILS_MAX_LENGTH}
@@ -274,15 +276,15 @@ export default function EvolutionExerciseSection({
               onKeyDown={(event) => {
                 handleExerciseKeyDown(event, exercise, "details")
               }}
-              placeholder="3x10, 20 kg..."
-              className="border-r border-slate-200 px-3 py-2 text-sm outline-none focus:bg-emerald-50"
+              placeholder="Séries / carga (ex.: 3x10, 20 kg)"
+              className="col-start-1 row-start-2 min-w-0 px-3 py-2 text-sm outline-none focus:bg-emerald-50 @md:col-start-2 @md:row-start-1 @md:border-r @md:border-slate-200"
             />
 
             <button
               type="button"
               onClick={() => onRemove(exercise.id)}
               aria-label="Remover exercício"
-              className="flex items-center justify-center text-slate-400 transition hover:bg-red-50 hover:text-red-500"
+              className="col-start-2 row-span-2 row-start-1 flex items-center justify-center border-l border-slate-200 text-slate-400 transition hover:bg-red-50 hover:text-red-500 @md:col-start-3 @md:row-span-1 @md:border-l-0"
             >
               <Trash2 size={17} />
             </button>
@@ -339,7 +341,8 @@ export default function EvolutionExerciseSection({
         )}
       </div>
 
-      <p className="mt-3 text-xs text-slate-500">
+      {/* atalhos de teclado: escondidos em telas de toque */}
+      <p className="mt-3 hidden text-xs text-slate-500 pointer-fine:block">
         <strong>Atalhos</strong>: Enter adiciona • Alt + ↑/↓ navega • Alt +
         Delete remove • Shift + Delete limpa todos.
       </p>

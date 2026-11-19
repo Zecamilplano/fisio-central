@@ -39,7 +39,9 @@ export default function EvolutionSection({
 
       {children}
       {error && (
-        <p className="mt-2 text-sm font-medium text-red-600">{error}</p>
+        <p role="alert" className="mt-2 text-sm font-medium text-red-600">
+          {error}
+        </p>
       )}
     </section>
   )

@@ -1,5 +1,7 @@
 "use client"
 
+import { useEffect, useRef } from "react"
+
 import { Activity, AlertTriangle, ClipboardList, Target } from "lucide-react"
 
 import EvolutionExerciseSection from "./components/evolutionExerciseSection"
@@ -32,7 +34,9 @@ function EvolutionForm({
   const {
     form,
     errors,
+    failedSubmitCount,
     isSaving,
+    canSave,
     temporaryWarning,
     showWarning,
 
@@ -62,8 +66,24 @@ function EvolutionForm({
     onDirtyChange,
   })
 
+  // Envio com erro: rola até o 1º erro e foca o 1º campo da seção dele
+  const formRef = useRef<HTMLFormElement>(null)
+  useEffect(() => {
+    if (failedSubmitCount === 0) return
+    requestAnimationFrame(() => {
+      const firstError = formRef.current?.querySelector<HTMLElement>('[role="alert"]')
+      if (!firstError) return
+      const section = firstError.closest("section") ?? firstError
+      section.scrollIntoView({ behavior: "smooth", block: "center" })
+      section
+        .querySelector<HTMLElement>("input, textarea, select")
+        ?.focus({ preventScroll: true })
+    })
+  }, [failedSubmitCount])
+
   return (
     <form
+      ref={formRef}
       onSubmit={handleSubmit}
       onKeyDown={handleFormKeyDown}
       className="rounded-3xl bg-white"
@@ -242,6 +262,7 @@ function EvolutionForm({
                 ? temporaryWarning.message
                 : undefined
             }
+            error={errors.painScale}
             onChangeBefore={updatePainBefore}
             onChangeAfter={updatePainAfter}
           />
@@ -271,6 +292,7 @@ function EvolutionForm({
         <EvolutionFormFooter
           mode={mode}
           isSaving={isSaving}
+          canSave={canSave}
           onCancel={onCancel}
         />
     </form>
