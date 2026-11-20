@@ -93,18 +93,8 @@ export async function updateSession(request: NextRequest) {
     return redirect
   }
 
-  // 1b. primeiro cadastro só enquanto o banco não tiver nenhum usuário
-  if (pathname.startsWith("/primeiro-cadastro")) {
-    const { data: isOpen, error } = await supabase.rpc("is_first_setup_open")
-    if (error || !isOpen) {
-      const url = request.nextUrl.clone()
-      url.pathname = "/entrar"
-      url.search = ""
-      const redirect = NextResponse.redirect(url)
-      supabaseResponse.cookies.getAll().forEach((c) => redirect.cookies.set(c))
-      return redirect
-    }
-  }
+  // 1b. /primeiro-cadastro fica sempre acessível: quem barra os e-mails não
+  //     liberados é o banco (trigger block_signup_after_first_user + allowlist)
 
   // 2. logado em /entrar (sem ?motivo) -> tela inicial
   if (

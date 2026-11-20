@@ -249,6 +249,15 @@ function Login() {
                 Esqueci minha senha
               </Link>
             </p>
+            <p className="mt-3 text-center font-open-sans text-sm text-[#8C7B6B]">
+              Recebeu acesso?{" "}
+              <Link
+                href="/primeiro-cadastro"
+                className="font-semibold text-[#E65100] underline underline-offset-2"
+              >
+                Criar conta
+              </Link>
+            </p>
           </footer>
         </form>
       </section>

@@ -6,11 +6,17 @@ import { createClient } from "@/lib/supabase/client"
 import { useClinicStore } from "@/store/clinic/clinicStore"
 import { CreateClinicModal } from "./createClinicModal"
 import { ensureRegistrationDraftOwner } from "@/lib/drafts/registrationDraft"
+import { signOutAndCleanUp } from "@/lib/auth/logout"
+import { StatusPage, primaryActionClassName } from "@/components/ui/statusPage"
+import { UserX } from "lucide-react"
 
 export function ClinicGate({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const status = useClinicStore((s) => s.status)
   const [loadError, setLoadError] = useState(false)
+  // conta sem clínica e sem liberação para criar uma (ex.: paciente ainda não
+  // ligado ao cadastro, ou o super admin, que não participa de clínicas)
+  const [noClinicAccess, setNoClinicAccess] = useState(false)
 
   async function loadMembership() {
     setLoadError(false)
@@ -47,9 +53,21 @@ export function ClinicGate({ children }: { children: React.ReactNode }) {
       if (error) throw error
 
       if (!data) {
-        useClinicStore.getState().setNeedsClinic()
+        // só quem teve o e-mail liberado como dona de clínica cria a própria
+        const { data: canCreate, error: canCreateError } =
+          await supabase.rpc("can_create_clinic")
+        if (canCreateError) throw canCreateError
+
+        if (canCreate) {
+          setNoClinicAccess(false)
+          useClinicStore.getState().setNeedsClinic()
+        } else {
+          setNoClinicAccess(true)
+        }
         return
       }
+
+      setNoClinicAccess(false)
 
       useClinicStore.getState().setReady(data.clinic_id, data.role)
     } catch (error) {
@@ -70,6 +88,28 @@ export function ClinicGate({ children }: { children: React.ReactNode }) {
         <p>Não foi possível carregar os dados da clínica.</p>
         <button onClick={loadMembership}>Tentar novamente</button>
       </div>
+    )
+  }
+
+  if (noClinicAccess) {
+    return (
+      <StatusPage
+        icon={UserX}
+        title="Conta sem clínica"
+        description="Sua conta ainda não está vinculada a uma clínica. Se você é paciente, peça para a clínica liberar seu acesso."
+      >
+        <button
+          type="button"
+          onClick={async () => {
+            await signOutAndCleanUp().catch(() => {})
+            router.replace("/entrar")
+            router.refresh()
+          }}
+          className={primaryActionClassName}
+        >
+          Sair
+        </button>
+      </StatusPage>
     )
   }
 

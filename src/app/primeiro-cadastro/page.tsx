@@ -57,8 +57,11 @@ function FirstRegistration() {
       <section className="bg-white rounded-md px-2 py-2 m-3 w-full max-w-210 flex flex-col items-center">
         <header>
           <h1 className="py-6 text-2xl text-center md:text-3xl font-montserrat font-bold tracking-tight text-[#FFA726]">
-            Cadastro da responsável pelo sistema
+            Criar conta
           </h1>
+          <p className="-mt-4 pb-4 text-center font-open-sans text-sm text-[#8C7B6B]">
+            Use o e-mail que foi liberado para você.
+          </p>
         </header>
 
         <form

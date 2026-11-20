@@ -40,7 +40,7 @@ export function CreateClinicModal({ onCreated }: { onCreated: () => void }) {
     if (error) {
       setError(
         error.message.includes("not allowed")
-          ? "Já existe uma clínica cadastrada. Peça acesso ao administrador."
+          ? "Seu e-mail não está liberado para criar uma clínica, ou você já tem uma."
           : error.message.includes("invalid clinic name")
             ? "Nome inválido. Use entre 3 e 100 caracteres."
             : "Não foi possível criar a clínica. Tente novamente."

@@ -1,7 +1,8 @@
 export function mapSignUpError(error: { code?: string; message?: string }) {
-  // bloqueio do trigger block_signup_after_first_user (o Auth devolve erro genérico de banco)
+  // bloqueio do trigger block_signup_after_first_user: e-mail fora da lista de
+  // liberação (o Auth devolve um erro genérico de banco)
   if (error.message?.includes("Database error saving new user")) {
-    return "O cadastro inicial já foi feito. Entre com sua conta."
+    return "Este e-mail não foi liberado para cadastro. Fale com quem te enviou o acesso."
   }
 
   switch (error.code) {
