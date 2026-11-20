@@ -340,7 +340,8 @@ function ListPatient() {
     <section className="font-open-sans flex h-[calc(100dvh-var(--spacing-header))] min-h-0 flex-col">
       {/*Barra de pesquisa | botão adicionar paciente*/}
       <div
-        className={`overflow-hidden transition-[max-height,opacity] duration-300 ease-in-out motion-reduce:duration-0 ${isShowingPatient
+        // shrink-0: a barra nunca encolhe (senão era cortada quando faltava altura)
+        className={`shrink-0 overflow-hidden transition-[max-height,opacity] duration-300 ease-in-out motion-reduce:duration-0 ${isShowingPatient
           ? "invisible max-h-0 opacity-0 lg:visible lg:max-h-none lg:overflow-visible lg:opacity-100"
           : "visible max-h-48 opacity-100 lg:max-h-none"
           }`}
@@ -356,7 +357,11 @@ function ListPatient() {
             event.currentTarget.scrollLeft = 0
           }
         }}
-        className="relative pr-2 pb-2 flex min-h-0 flex-1 overflow-hidden lg:items-stretch lg:min-h-130"
+        // margem (não padding): o overflow-hidden corta na borda do padding, então
+        // com padding o painel da lista, deslizado para fora, aparecia como uma
+        // faixa na esquerda. No celular, com paciente aberto a barra de pesquisa
+        // some, então o painel ganha margem no topo para não colar no header.
+        className={`relative mx-2 mb-2 flex min-h-0 flex-1 overflow-hidden lg:items-stretch lg:ml-0 ${isShowingPatient ? "mt-2 lg:mt-0" : ""}`}
       >
         <div
           aria-hidden={isCompactViewport && isShowingPatient}

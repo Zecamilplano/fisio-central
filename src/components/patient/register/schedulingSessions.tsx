@@ -137,12 +137,18 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
           {/*Sessões já realizadas*/}
           <section className="grid w-full grid-cols-2 gap-3">
             <div className="flex min-w-0 flex-col">
-              <label className="flex items-center gap-2 text-base sm:text-lg text-[#FFA726] font-semibold">
-                <CalendarDays size={16} />
-                Inicío de tudo
+              {/* min-h igual nos dois rótulos: "Sessões já realizadas" quebra em
+                  2 linhas no celular e desalinhava os campos */}
+              <label
+                htmlFor="initial-date-session"
+                className="flex min-h-12 items-end gap-2 pb-1 text-base leading-tight text-[#FFA726] font-semibold sm:min-h-0 sm:text-lg"
+              >
+                <CalendarDays size={16} className="mb-0.5 shrink-0" />
+                Início de tudo
               </label>
 
               <input
+                id="initial-date-session"
                 type="date"
                 value={
                   schedulingForm.initialDateSession
@@ -159,9 +165,12 @@ function SchedulingSessions({ form }: SchedulingSessionsProps) {
             </div>
 
             <div className="flex min-w-0 flex-col">
-              <h2 className="text-base sm:text-lg text-[#FFA726] font-semibold">
+              <label
+                htmlFor="sessions-already-completed"
+                className="flex min-h-12 items-end pb-1 text-base leading-tight text-[#FFA726] font-semibold sm:min-h-0 sm:text-lg"
+              >
                 Sessões já realizadas
-              </h2>
+              </label>
               <input
                 id="sessions-already-completed"
                 type="number"
