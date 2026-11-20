@@ -7,6 +7,7 @@ import {
 } from "@/components/firstRegistration/index"
 import Button from "@/components/ui/buttonCustom"
 import { ShowPasswordToggle } from "@/components/ui/showPasswordToggle"
+import { PasswordHint } from "@/components/ui/passwordHint"
 import { useState } from "react"
 import { Camera, X } from "lucide-react"
 import { profileLimits } from "@/data/fieldLimits"
@@ -24,6 +25,15 @@ function FirstRegistration() {
   } = useFirstRegistration()
   const selectedPhoto = photo.image[0]
   const [showPassword, setShowPassword] = useState(false)
+
+  // retorno em tempo real da senha: aparece ao digitar e cede lugar ao erro
+  const missingChars = Math.max(
+    0,
+    profileLimits.passwordMin - values.password.length
+  )
+  const showPasswordHint = Boolean(values.password) && !errors.password
+  const showConfirmHint =
+    Boolean(values.confirmPassword) && !errors.confirmPassword
 
   const labelClassName = "text-base text-[#FFA726] font-medium w-full pl-1"
   const baseInputClassName =
@@ -231,16 +241,30 @@ function FirstRegistration() {
                 placeholder="Digite sua senha"
                 autoComplete="new-password"
                 required
-                minLength={8}
+                minLength={profileLimits.passwordMin}
                 maxLength={profileLimits.passwordMax}
                 aria-invalid={Boolean(errors.password)}
                 aria-describedby={
-                  errors.password ? "password-error" : undefined
+                  errors.password
+                    ? "password-error"
+                    : showPasswordHint
+                      ? "password-hint"
+                      : undefined
                 }
                 data-error={Boolean(errors.password)}
                 className={inputClassName("password")}
               />
               {errorMessage("password")}
+              {showPasswordHint && (
+                <PasswordHint
+                  id="password-hint"
+                  ok={missingChars === 0}
+                  okText={`Pelo menos ${profileLimits.passwordMin} caracteres`}
+                  pendingText={`Faltam ${missingChars} ${
+                    missingChars === 1 ? "caractere" : "caracteres"
+                  } (mínimo ${profileLimits.passwordMin})`}
+                />
+              )}
             </div>
 
             <div className="flex w-full flex-col gap-1">
@@ -259,16 +283,28 @@ function FirstRegistration() {
                 placeholder="Confirme sua senha"
                 autoComplete="new-password"
                 required
-                minLength={8}
+                minLength={profileLimits.passwordMin}
                 maxLength={profileLimits.passwordMax}
                 aria-invalid={Boolean(errors.confirmPassword)}
                 aria-describedby={
-                  errors.confirmPassword ? "confirmPassword-error" : undefined
+                  errors.confirmPassword
+                    ? "confirmPassword-error"
+                    : showConfirmHint
+                      ? "confirmPassword-hint"
+                      : undefined
                 }
                 data-error={Boolean(errors.confirmPassword)}
                 className={inputClassName("confirmPassword")}
               />
               {errorMessage("confirmPassword")}
+              {showConfirmHint && (
+                <PasswordHint
+                  id="confirmPassword-hint"
+                  ok={values.confirmPassword === values.password}
+                  okText="As senhas coincidem"
+                  pendingText="As senhas ainda não coincidem"
+                />
+              )}
             </div>
           </fieldset>
           <div className="-mt-3 flex">
