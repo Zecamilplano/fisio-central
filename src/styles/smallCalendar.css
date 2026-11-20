@@ -1,5 +1,7 @@
 .react-calendar {
-  width: 320px;
+  /* nunca mais largo que a tela (celular de 320–360 px) */
+  width: min(320px, calc(100vw - 16px));
+  max-width: 100%;
   border: none;
   border-radius: 24px;
   padding: 18px;
@@ -74,4 +76,11 @@
 /* Dias vizinhos */
 .react-calendar__month-view__days__day--neighboringMonth {
   color: #cbd5e1;
+}
+
+/* telas estreitas: menos respiro interno para os dias caberem */
+@media (max-width: 360px) {
+  .date-picker-popover .react-calendar {
+    padding: 12px;
+  }
 }
