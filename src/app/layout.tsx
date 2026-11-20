@@ -3,6 +3,7 @@ import "./globals.css"
 import { Montserrat, Open_Sans } from "next/font/google"
 import Header from "@/components/ui/header"
 import { ToastContainer } from "react-toastify"
+import { PasteTrim } from "@/components/ui/pasteTrim"
 
 export const metadata: Metadata = {
   title: {
@@ -40,6 +41,8 @@ export default function RootLayout({
             tela, não cria rolagem lateral nem deixa o header "curto" */}
         <main className="flex min-w-0 flex-1 flex-col overflow-x-clip bg-green-700">{children}</main>
         <ToastContainer style={{ zIndex: 10000 }} />
+        {/* texto colado entra sem espaços nas pontas em todos os campos */}
+        <PasteTrim />
       </body>
     </html>
   )
